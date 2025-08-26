@@ -236,12 +236,69 @@ function isValidBase64(str) {
 }
 
 /**
- * Check if string is a valid pairing code
+ * Check if string is a valid pairing code (supports both UUID and short format)
  */
 function isValidPairingCode(code) {
+  if (typeof code !== 'string') {
+    return false;
+  }
+  
+  // Check for UUID format
+  if (isValidUUID(code)) {
+    return true;
+  }
+  
+  // Check for short format (12-character hex)
+  if (code.length === 12 && /^[0-9a-f]{12}$/i.test(code)) {
+    return true;
+  }
+  
+  // Legacy 6-digit numeric format (for backward compatibility)
+  if (code.length === 6 && /^\d{6}$/.test(code)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Check if string is a valid UUID format pairing code
+ */
+function isValidUUIDPairingCode(code) {
+  return isValidUUID(code);
+}
+
+/**
+ * Check if string is a valid short format pairing code
+ */
+function isValidShortPairingCode(code) {
+  return typeof code === 'string' && 
+         code.length === 12 && 
+         /^[0-9a-f]{12}$/i.test(code);
+}
+
+/**
+ * Check if string is a valid legacy numeric pairing code
+ */
+function isValidLegacyPairingCode(code) {
   return typeof code === 'string' && 
          code.length === 6 && 
          /^\d{6}$/.test(code);
+}
+
+/**
+ * Detect pairing code format
+ */
+function detectPairingCodeFormat(code) {
+  if (isValidUUID(code)) {
+    return 'uuid';
+  } else if (isValidShortPairingCode(code)) {
+    return 'short';
+  } else if (isValidLegacyPairingCode(code)) {
+    return 'legacy';
+  } else {
+    return 'unknown';
+  }
 }
 
 /**
@@ -338,6 +395,10 @@ module.exports = {
   isValidPublicKey,
   isValidBase64,
   isValidPairingCode,
+  isValidUUIDPairingCode,
+  isValidShortPairingCode,
+  isValidLegacyPairingCode,
+  detectPairingCodeFormat,
   isValidTrustLevel,
   sanitizeInput,
   isValidIPAddress,

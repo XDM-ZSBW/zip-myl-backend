@@ -158,22 +158,32 @@ try {
   // Pairing code generation
   app.post('/api/v1/encrypted/devices/pairing-code', (req, res) => {
     try {
-      const { deviceId } = req.body;
+      const { deviceId, format = 'uuid', expiresIn = 600 } = req.body;
       
       if (!deviceId) {
         return res.status(400).json({
           error: 'Missing deviceId'
         });
       }
+
+      // Validate format parameter
+      if (format && !['uuid', 'short', 'legacy'].includes(format.toLowerCase())) {
+        return res.status(400).json({
+          error: 'Invalid format parameter',
+          message: 'Format must be "uuid", "short", or "legacy"'
+        });
+      }
       
-      const masterlessKeyService = require('./services/masterlessKeyService');
-      const pairingCode = masterlessKeyService.generateSecureToken(6);
+      const encryptionService = require('./services/encryptionService');
+      const pairingCode = encryptionService.generatePairingCode(format.toLowerCase());
+      const expiresAt = new Date(Date.now() + expiresIn * 1000);
       
       res.json({
         success: true,
         pairingCode: pairingCode,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-        expiresIn: 600,
+        format: format.toLowerCase(),
+        expiresAt: expiresAt.toISOString(),
+        expiresIn: expiresIn,
         message: 'Pairing code generated successfully'
       });
     } catch (error) {
@@ -195,6 +205,19 @@ try {
           required: ['deviceId', 'pairingCode']
         });
       }
+
+      // Validate pairing code format
+      const { detectPairingCodeFormat } = require('./utils/validation');
+      const codeFormat = detectPairingCodeFormat(pairingCode);
+      
+      if (codeFormat === 'unknown') {
+        return res.status(400).json({
+          error: 'Invalid pairing code format'
+        });
+      }
+
+      // In a real implementation, you would verify the pairing code against the database
+      // For now, we'll just validate the format and return success
       
       res.json({
         success: true,
@@ -208,6 +231,7 @@ try {
           deviceType: 'chrome-extension',
           deviceVersion: '2.0.0'
         },
+        pairingCodeFormat: codeFormat,
         message: 'Devices paired successfully'
       });
     } catch (error) {

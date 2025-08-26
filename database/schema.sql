@@ -40,8 +40,9 @@ CREATE TABLE IF NOT EXISTS device_trust (
 -- Pairing Codes Table
 CREATE TABLE IF NOT EXISTS pairing_codes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  code VARCHAR(6) UNIQUE NOT NULL,
+  code VARCHAR(36) UNIQUE NOT NULL, -- Support both UUID (36 chars) and short format (12 chars)
   device_id VARCHAR(255) NOT NULL,
+  format VARCHAR(10) DEFAULT 'uuid', -- 'uuid' or 'short'
   expires_at TIMESTAMP NOT NULL,
   is_used BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -108,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_pairing_codes_code ON pairing_codes(code);
 CREATE INDEX IF NOT EXISTS idx_pairing_codes_expires ON pairing_codes(expires_at);
 CREATE INDEX IF NOT EXISTS idx_pairing_codes_device ON pairing_codes(device_id);
 CREATE INDEX IF NOT EXISTS idx_pairing_codes_used ON pairing_codes(is_used);
+CREATE INDEX IF NOT EXISTS idx_pairing_codes_format ON pairing_codes(format);
 
 CREATE INDEX IF NOT EXISTS idx_key_exchanges_source ON key_exchanges(source_device_id);
 CREATE INDEX IF NOT EXISTS idx_key_exchanges_target ON key_exchanges(target_device_id);

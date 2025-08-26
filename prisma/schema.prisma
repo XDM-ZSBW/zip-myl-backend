@@ -73,23 +73,73 @@ model Session {
 
 model Device {
   id          String   @id @default(uuid()) @db.Uuid
+  deviceId    String   @unique @map("device_id") // External device identifier
+  deviceType  String   @map("device_type")
+  deviceVersion String @map("device_version")
   fingerprint String   @unique
-  ipAddress   String   @map("ip_address")
-  userAgent   String?  @map("user_agent")
+  publicKey   String   @map("public_key")
+  encryptedMetadata String? @map("encrypted_metadata")
+  capabilities Json?   @default("[]")
   isActive    Boolean  @default(true) @map("is_active")
-  lastSeen    DateTime @map("last_seen")
+  lastSeen    DateTime @default(now()) @map("last_seen")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   sessions    Session[]
   auditLogs   AuditLog[]
+  pairingCodes PairingCode[]
+  deviceTrustSource DeviceTrust[] @relation("SourceDevice")
+  deviceTrustTarget DeviceTrust[] @relation("TargetDevice")
 
+  @@index([deviceId])
   @@index([fingerprint])
-  @@index([ipAddress])
+  @@index([deviceType])
   @@index([isActive])
   @@index([lastSeen])
   @@map("devices")
+}
+
+model PairingCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  deviceId  String   @map("device_id")
+  format    String   @default("uuid")
+  expiresAt DateTime @map("expires_at")
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  device    Device   @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+
+  @@index([code])
+  @@index([expiresAt])
+  @@index([deviceId])
+  @@index([isUsed])
+  @@index([format])
+  @@map("pairing_codes")
+}
+
+model DeviceTrust {
+  id                String   @id @default(uuid()) @db.Uuid
+  sourceDeviceId    String   @map("source_device_id")
+  targetDeviceId    String   @map("target_device_id")
+  trustLevel        Int      @default(1) @map("trust_level")
+  encryptedTrustData String? @map("encrypted_trust_data")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sourceDevice      Device   @relation("SourceDevice", fields: [sourceDeviceId], references: [deviceId], onDelete: Cascade)
+  targetDevice      Device   @relation("TargetDevice", fields: [targetDeviceId], references: [deviceId], onDelete: Cascade)
+
+  @@unique([sourceDeviceId, targetDeviceId])
+  @@index([sourceDeviceId])
+  @@index([targetDeviceId])
+  @@index([isActive])
+  @@index([trustLevel])
+  @@map("device_trust")
 }
 
 model Client {

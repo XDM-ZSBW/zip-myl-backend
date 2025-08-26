@@ -185,13 +185,14 @@ class TrustService {
   /**
    * Generate a pairing code for device trust
    */
-  async generatePairingCode(deviceId, expiresInMinutes = 10) {
+  async generatePairingCode(deviceId, expiresInMinutes = 10, format = 'uuid') {
     try {
-      const pairingCode = encryptionService.generatePairingToken();
+      const pairingCode = encryptionService.generatePairingCode(format);
       const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
 
       this.pendingPairings.set(pairingCode, {
         deviceId,
+        format,
         expiresAt,
         createdAt: new Date()
       });
@@ -201,7 +202,7 @@ class TrustService {
         this.pendingPairings.delete(pairingCode);
       }, expiresInMinutes * 60 * 1000);
 
-      return { pairingCode, expiresAt };
+      return { pairingCode, format, expiresAt };
     } catch (error) {
       logger.error('Error generating pairing code:', error);
       throw error;

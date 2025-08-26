@@ -2,7 +2,8 @@ const { logger } = require('../utils/logger');
 const deviceFingerprintingService = require('../services/deviceFingerprintingService');
 const keyManagementService = require('../services/keyManagementService');
 const trustService = require('../services/trustService');
-const { validateDeviceRegistration, validatePairingCode } = require('../utils/validation');
+const encryptionService = require('../services/encryptionService');
+const { validateDeviceRegistration, validatePairingCode, detectPairingCodeFormat } = require('../utils/validation');
 
 /**
  * Device Registration Controller
@@ -101,8 +102,16 @@ class DeviceRegistrationController {
    */
   async generatePairingCode(req, res) {
     try {
-      const { deviceId } = req.body;
+      const { deviceId, format = 'uuid', expiresIn } = req.body;
       const authDeviceId = req.deviceId; // From middleware
+
+      // Validate format parameter
+      if (format && !['uuid', 'short', 'legacy'].includes(format.toLowerCase())) {
+        return res.status(400).json({
+          error: 'Invalid format parameter',
+          message: 'Format must be "uuid", "short", or "legacy"'
+        });
+      }
 
       // Validate device exists and is active
       const device = await this.findDeviceById(deviceId);
@@ -120,27 +129,36 @@ class DeviceRegistrationController {
         });
       }
 
-      // Generate pairing code
-      const pairingCode = this.generatePairingCode();
-      const expiresAt = new Date(Date.now() + this.pairingCodeExpiry);
+      // Calculate expiration time
+      const expiryTime = expiresIn ? parseInt(expiresIn) * 1000 : this.pairingCodeExpiry;
+      const expiresAt = new Date(Date.now() + expiryTime);
 
-      // Store pairing code
+      // Generate pairing code based on format
+      const pairingCode = encryptionService.generatePairingCode(format.toLowerCase());
+      const codeFormat = format.toLowerCase();
+
+      // Store pairing code with format information
       await this.storePairingCode({
         code: pairingCode,
         deviceId,
+        format: codeFormat,
         expiresAt
       });
 
       // Log pairing code generation
-      await this.logAuditEvent(authDeviceId, 'pairing_code_generated', 'device', deviceId);
+      await this.logAuditEvent(authDeviceId, 'pairing_code_generated', 'device', deviceId, {
+        format: codeFormat,
+        expiresIn: expiryTime / 1000
+      });
 
-      logger.info(`Pairing code generated for device: ${deviceId}`);
+      logger.info(`Pairing code generated for device: ${deviceId} (format: ${codeFormat})`);
 
       res.json({
         success: true,
         pairingCode,
+        format: codeFormat,
         expiresAt: expiresAt.toISOString(),
-        expiresIn: this.pairingCodeExpiry / 1000 // seconds
+        expiresIn: expiryTime / 1000 // seconds
       });
 
     } catch (error) {
@@ -178,8 +196,15 @@ class DeviceRegistrationController {
         });
       }
 
-      // Verify pairing code
-      const pairingData = await this.verifyPairingCode(pairingCode);
+      // Detect pairing code format and verify
+      const codeFormat = detectPairingCodeFormat(pairingCode);
+      if (codeFormat === 'unknown') {
+        return res.status(400).json({
+          error: 'Invalid pairing code format'
+        });
+      }
+
+      const pairingData = await this.verifyPairingCode(pairingCode, codeFormat);
       if (!pairingData) {
         return res.status(400).json({
           error: 'Invalid or expired pairing code'
@@ -365,10 +390,14 @@ class DeviceRegistrationController {
   // Helper methods
 
   /**
-   * Generate a 6-digit pairing code
+   * Generate a pairing code (legacy method - now uses encryptionService)
+   * @deprecated Use encryptionService.generatePairingCode() instead
    */
-  generatePairingCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  generatePairingCode(format = 'legacy') {
+    if (format === 'legacy') {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    return encryptionService.generatePairingCode(format);
   }
 
   /**
@@ -438,12 +467,14 @@ class DeviceRegistrationController {
   }
 
   async storePairingCode(pairingData) {
-    // TODO: Implement database insert
+    // TODO: Implement database insert with format support
+    // INSERT INTO pairing_codes (code, device_id, format, expires_at) VALUES (?, ?, ?, ?)
     return pairingData;
   }
 
-  async verifyPairingCode(code) {
-    // TODO: Implement database query
+  async verifyPairingCode(code, format = 'unknown') {
+    // TODO: Implement database query with format support
+    // SELECT * FROM pairing_codes WHERE code = ? AND format = ? AND expires_at > NOW() AND is_used = false
     return null;
   }
 

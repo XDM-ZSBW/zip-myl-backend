@@ -142,13 +142,20 @@ class DeviceTrustController {
    */
   async generatePairingCode(req, res) {
     try {
-      const { deviceId } = req.body;
-      const { expiresInMinutes = 10 } = req.body;
+      const { deviceId, format = 'uuid', expiresInMinutes = 10 } = req.body;
 
       if (!deviceId) {
         return res.status(400).json({
           error: 'Missing required fields',
           message: 'deviceId is required'
+        });
+      }
+
+      // Validate format parameter
+      if (format && !['uuid', 'short', 'legacy'].includes(format.toLowerCase())) {
+        return res.status(400).json({
+          error: 'Invalid format parameter',
+          message: 'Format must be "uuid", "short", or "legacy"'
         });
       }
 
@@ -160,11 +167,12 @@ class DeviceTrustController {
         });
       }
 
-      const result = await trustService.generatePairingCode(deviceId, expiresInMinutes);
+      const result = await trustService.generatePairingCode(deviceId, expiresInMinutes, format.toLowerCase());
 
       res.json({
         success: true,
         pairingCode: result.pairingCode,
+        format: result.format,
         expiresAt: result.expiresAt,
         message: 'Pairing code generated successfully'
       });

@@ -91,6 +91,43 @@ class EncryptionService {
   }
 
   /**
+   * Generate a UUID v4 pairing code
+   */
+  generateUUIDPairingCode() {
+    return crypto.randomUUID();
+  }
+
+  /**
+   * Generate a short format pairing code (12-character hex)
+   */
+  generateShortPairingCode() {
+    return crypto.randomBytes(6).toString('hex');
+  }
+
+  /**
+   * Generate pairing code based on format
+   */
+  generatePairingCode(format = 'uuid') {
+    switch (format.toLowerCase()) {
+      case 'uuid':
+        return this.generateUUIDPairingCode();
+      case 'short':
+        return this.generateShortPairingCode();
+      case 'legacy':
+        return this.generateLegacyPairingCode();
+      default:
+        return this.generateUUIDPairingCode(); // Default to UUID
+    }
+  }
+
+  /**
+   * Generate a legacy 6-digit numeric pairing code
+   */
+  generateLegacyPairingCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  /**
    * Hash a password for secure storage
    */
   hashPassword(password, salt) {
