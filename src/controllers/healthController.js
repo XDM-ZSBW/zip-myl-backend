@@ -4,6 +4,20 @@ const { config } = require('../utils/config');
 const healthCheck = async (req, res, next) => {
   try {
     const startTime = Date.now();
+    
+    // Check if this is a simple health check request
+    const isSimpleCheck = req.query.simple === 'true' || req.headers['user-agent']?.includes('health-check');
+    
+    if (isSimpleCheck) {
+      // Simple health check for load balancers and monitoring
+      res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
+      return;
+    }
+    
     const responseTime = Date.now() - startTime;
     
     const health = {
@@ -16,6 +30,7 @@ const healthCheck = async (req, res, next) => {
       services: {
         database: { status: 'not_configured' },
         cache: { status: 'not_configured' },
+        secrets: { status: 'configured' },
       },
       system: {
         memory: {
@@ -27,6 +42,22 @@ const healthCheck = async (req, res, next) => {
         platform: process.platform,
         nodeVersion: process.version,
       },
+      api: {
+        endpoints: {
+          auth: '/api/v1/auth',
+          device: '/api/v1/device',
+          admin: '/api/v1/admin',
+          docs: '/docs',
+          health: '/health'
+        },
+        features: [
+          'anonymous-device-auth',
+          'zero-knowledge-architecture',
+          'rate-limiting',
+          'api-key-management',
+          'audit-logging'
+        ]
+      }
     };
 
     res.status(200).json(health);

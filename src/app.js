@@ -14,6 +14,10 @@ const apiRoutes = require('./routes/api');
 const healthRoutes = require('./routes/health');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const docsRoutes = require('./routes/docs');
+const openApiRoutes = require('./routes/openapi');
+const rootRoutes = require('./routes/root');
+const botRoutes = require('./routes/bot');
 
 // Load environment variables
 dotenv.config();
@@ -57,6 +61,13 @@ app.use(validateRequestSize('10mb'));
 // Rate limiting
 app.use(endpointRateLimit);
 
+// Bot-friendly routes (before API routes)
+app.use('/bot', botRoutes);
+
+// Documentation routes (before API routes)
+app.use('/docs', docsRoutes);
+app.use('/api/docs', openApiRoutes);
+
 // Health check endpoint (before API routes)
 app.use('/health', healthRoutes);
 
@@ -69,25 +80,16 @@ app.use('/api/v1/admin', adminRoutes);
 // API routes
 app.use('/api', apiRoutes);
 
+// Root routes (must be after API routes)
+app.use('/', rootRoutes);
+
 // Metrics endpoint
 app.get('/metrics', (req, res) => {
   res.set('Content-Type', 'text/plain');
   res.send('# Metrics endpoint - Prometheus metrics will be available here');
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Myl.Zip Backend Service',
-    version: '1.0.0',
-    status: 'operational',
-    endpoints: {
-      health: '/health',
-      api: '/api',
-      metrics: '/metrics'
-    }
-  });
-});
+// Root endpoint is now handled by rootRoutes
 
 // 404 handler
 app.use('*', (req, res) => {
