@@ -286,6 +286,54 @@ try {
     }
   });
   
+  // Extension compatibility endpoint - device-registration/pair
+  app.post('/api/v1/device-registration/pair', (req, res) => {
+    try {
+      const { deviceId, pairingCode, encryptedTrustData } = req.body;
+      
+      if (!deviceId || !pairingCode) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          required: ['deviceId', 'pairingCode']
+        });
+      }
+
+      // Validate pairing code format (UUID only)
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      
+      if (!uuidPattern.test(pairingCode)) {
+        return res.status(400).json({
+          error: 'Invalid pairing code format',
+          message: 'Only UUID format pairing codes are supported'
+        });
+      }
+
+      // In a real implementation, you would verify the pairing code against the database
+      // For now, we'll validate the format and return success
+      
+      res.json({
+        success: true,
+        trustRelationship: {
+          id: 'trust-' + Date.now(),
+          trustLevel: 1,
+          createdAt: new Date().toISOString()
+        },
+        pairedDevice: {
+          deviceId: 'paired-device-' + Date.now(),
+          deviceType: 'chrome-extension',
+          deviceVersion: '2.0.0'
+        },
+        pairingCodeFormat: 'uuid',
+        message: 'Devices paired successfully'
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: 'Device pairing failed',
+        message: error.message
+      });
+    }
+  });
+  
   // Get trusted devices
   app.get('/api/v1/encrypted/devices/trusted', (req, res) => {
     try {
