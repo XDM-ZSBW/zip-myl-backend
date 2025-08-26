@@ -94,6 +94,20 @@
             margin: 10px 0;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .endpoint:hover {
+            background: #e3f2fd;
+            border-color: #4a9eff;
+            transform: translateX(2px);
+        }
+        
+        .endpoint-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
         
         .method {
@@ -218,92 +232,160 @@
         <div class="services-grid">
             <div class="service-card">
                 <h3>🔐 Authentication</h3>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/api/v1/auth/login
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/api/v1/auth/register
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/api/v1/auth/refresh
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/api/v1/auth/logout
-                </div>
+                <a href="/api/v1/auth/login" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/auth/login
+                    </div>
+                </a>
+                <a href="/api/v1/auth/register" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/auth/register
+                    </div>
+                </a>
+                <a href="/api/v1/auth/refresh" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/auth/refresh
+                    </div>
+                </a>
+                <a href="/api/v1/auth/logout" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/auth/logout
+                    </div>
+                </a>
             </div>
             
             <div class="service-card">
                 <h3>💭 Thoughts</h3>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/api/v1/thoughts
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/api/v1/thoughts
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/api/v1/thoughts/:id
-                </div>
-                <div class="endpoint">
-                    <span class="method put">PUT</span>/api/v1/thoughts/:id
-                </div>
-                <div class="endpoint">
-                    <span class="method delete">DELETE</span>/api/v1/thoughts/:id
-                </div>
+                <a href="/api/v1/thoughts" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/api/v1/thoughts
+                    </div>
+                </a>
+                <a href="/api/v1/thoughts" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/thoughts
+                    </div>
+                </a>
+                <a href="/api/v1/thoughts/1" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/api/v1/thoughts/:id
+                    </div>
+                </a>
+                <a href="/api/v1/thoughts/1" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method put">PUT</span>/api/v1/thoughts/:id
+                    </div>
+                </a>
+                <a href="/api/v1/thoughts/1" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method delete">DELETE</span>/api/v1/thoughts/:id
+                    </div>
+                </a>
             </div>
             
             <div class="service-card">
                 <h3>🤖 Bot Interface</h3>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/bot/status
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/bot/process
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/bot/health
-                </div>
+                <a href="/bot/status" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/bot/status
+                    </div>
+                </a>
+                <a href="/bot/process" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/bot/process
+                    </div>
+                </a>
+                <a href="/bot/health" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/bot/health
+                    </div>
+                </a>
             </div>
             
             <div class="service-card">
                 <h3>📊 Health & Monitoring</h3>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/health
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/health/live
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/health/ready
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/metrics
-                </div>
+                <a href="/health" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/health
+                    </div>
+                </a>
+                <a href="/health/live" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/health/live
+                    </div>
+                </a>
+                <a href="/health/ready" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/health/ready
+                    </div>
+                </a>
+                <a href="/metrics" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/metrics
+                    </div>
+                </a>
             </div>
             
             <div class="service-card">
                 <h3>🔧 Admin</h3>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/api/v1/admin/stats
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/api/v1/admin/users
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>/api/v1/admin/cleanup
-                </div>
+                <a href="/api/v1/admin/stats" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/api/v1/admin/stats
+                    </div>
+                </a>
+                <a href="/api/v1/admin/users" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/api/v1/admin/users
+                    </div>
+                </a>
+                <a href="/api/v1/admin/cleanup" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/admin/cleanup
+                    </div>
+                </a>
+            </div>
+            
+            <div class="service-card">
+                <h3>🔒 Encrypted Endpoints</h3>
+                <a href="/api/v1/encrypted/devices/register" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/encrypted/devices/register
+                    </div>
+                </a>
+                <a href="/api/v1/encrypted/thoughts" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/encrypted/thoughts
+                    </div>
+                </a>
+                <a href="/api/v1/encrypted/thoughts" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/api/v1/encrypted/thoughts
+                    </div>
+                </a>
+                <a href="/api/v1/encrypted/share" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method post">POST</span>/api/v1/encrypted/share
+                    </div>
+                </a>
             </div>
             
             <div class="service-card">
                 <h3>📚 Documentation</h3>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/docs
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/api/docs
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>/minimal
-                </div>
+                <a href="/docs" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/docs
+                    </div>
+                </a>
+                <a href="/api/docs" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/api/docs
+                    </div>
+                </a>
+                <a href="/minimal" target="_blank" class="endpoint-link">
+                    <div class="endpoint">
+                        <span class="method get">GET</span>/minimal
+                    </div>
+                </a>
             </div>
         </div>
         
@@ -386,7 +468,26 @@
                 }
                 
                 const response = await fetch(endpoint, options);
-                const data = await response.json();
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        data = await response.json();
+                    } catch (jsonError) {
+                        data = { error: 'Invalid JSON response', details: jsonError.message };
+                    }
+                } else {
+                    // Handle non-JSON responses (HTML, text, etc.)
+                    const text = await response.text();
+                    data = { 
+                        error: 'Non-JSON response', 
+                        contentType: contentType || 'unknown',
+                        content: text.substring(0, 500) + (text.length > 500 ? '...' : '')
+                    };
+                }
                 
                 responseEl.textContent = `Status: ${response.status} ${response.statusText}\n\n${JSON.stringify(data, null, 2)}`;
                 
