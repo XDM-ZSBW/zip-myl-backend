@@ -1,10 +1,14 @@
 const express = require('express');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Basic middleware
 app.use(express.json());
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Simple health check
 app.get('/health', (req, res) => {

@@ -4,6 +4,7 @@ const cors = require('cors');
 const compression = require('compression');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const path = require('path');
 
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -55,6 +56,9 @@ app.use(morgan('combined', {
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Security middleware
 app.use(sanitizeInput);
