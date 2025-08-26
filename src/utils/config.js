@@ -40,7 +40,13 @@ const config = {
   
   // CORS configuration
   cors: {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000', 'http://localhost:8080'],
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+      'http://localhost:3000', 
+      'http://localhost:8080',
+      /^chrome-extension:\/\/.*$/,
+      /^moz-extension:\/\/.*$/,
+      /^safari-extension:\/\/.*$/
+    ],
     credentials: true,
     optionsSuccessStatus: 200,
   },
