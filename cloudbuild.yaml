@@ -22,7 +22,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--port'
-      - '3000'
+      - '8080'
       - '--memory'
       - '512Mi'
       - '--cpu'
