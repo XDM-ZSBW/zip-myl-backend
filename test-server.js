@@ -15,6 +15,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Import and mount device registration routes
+try {
+  const deviceRegistrationRoutes = require('./src/routes/deviceRegistration');
+  app.use('/api/v1/encrypted/devices', deviceRegistrationRoutes);
+  console.log('✅ Device registration routes loaded');
+} catch (error) {
+  console.log('⚠️  Device registration routes not available:', error.message);
+}
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({

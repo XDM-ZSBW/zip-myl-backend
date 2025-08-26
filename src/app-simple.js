@@ -17,9 +17,13 @@ app.get('/health', (req, res) => {
 
 // Import encrypted routes
 const encryptedRoutes = require('./routes/encrypted');
+const deviceRegistrationRoutes = require('./routes/deviceRegistration');
 
 // Mount encrypted routes
 app.use('/api/v1/encrypted', encryptedRoutes);
+
+// Mount device registration routes
+app.use('/api/v1/encrypted/devices', deviceRegistrationRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

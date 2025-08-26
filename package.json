@@ -1,7 +1,7 @@
 {
   "name": "zip-myl-backend",
   "version": "2.0.0",
-  "description": "Production-ready Node.js backend service for the Myl.Zip ecosystem with end-to-end encryption, device trust management, Google Secret Manager integration, and secure cloud deployment.",
+  "description": "Enhanced Myl.Zip Backend Service v2.0.0 with Device Registration, Trust Management, RSA-OAEP Encryption, and Comprehensive Security Monitoring",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",

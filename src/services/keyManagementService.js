@@ -108,9 +108,9 @@ class KeyManagementService {
   }
 
   /**
-   * Generate a key pair for device communication
+   * Generate a key pair for device communication with RSA-OAEP
    */
-  generateKeyPair() {
+  generateKeyPair(deviceId = null) {
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {
@@ -123,12 +123,59 @@ class KeyManagementService {
       }
     });
 
+    const keyId = deviceId ? this.generateKeyId(deviceId) : crypto.randomUUID();
+    
     return {
       publicKey,
       privateKey,
-      keyId: crypto.randomUUID(),
-      createdAt: Date.now()
+      keyId,
+      algorithm: 'RSA-OAEP',
+      keySize: 2048,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + this.keyRotationInterval
     };
+  }
+
+  /**
+   * Generate a unique key ID for a device
+   */
+  generateKeyId(deviceId, type = 'rsa') {
+    const keyData = `${deviceId}:${type}:${Date.now()}`;
+    return crypto.createHash('sha256').update(keyData).digest('hex').substring(0, 16);
+  }
+
+  /**
+   * Encrypt data with RSA-OAEP
+   */
+  encryptWithRSA(data, publicKey) {
+    try {
+      const encrypted = crypto.publicEncrypt({
+        key: publicKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256'
+      }, Buffer.from(data, 'utf8'));
+      
+      return encrypted.toString('base64');
+    } catch (error) {
+      throw new Error(`RSA encryption failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Decrypt data with RSA-OAEP
+   */
+  decryptWithRSA(encryptedData, privateKey) {
+    try {
+      const decrypted = crypto.privateDecrypt({
+        key: privateKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256'
+      }, Buffer.from(encryptedData, 'base64'));
+      
+      return decrypted.toString('utf8');
+    } catch (error) {
+      throw new Error(`RSA decryption failed: ${error.message}`);
+    }
   }
 
   /**
