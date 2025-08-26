@@ -15,12 +15,23 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Import encrypted routes
+const encryptedRoutes = require('./routes/encrypted');
+
+// Mount encrypted routes
+app.use('/api/v1/encrypted', encryptedRoutes);
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'Myl.Zip Backend Service',
     version: '1.0.0',
-    status: 'operational'
+    status: 'operational',
+    features: {
+      endToEndEncryption: true,
+      deviceTrust: true,
+      crossDeviceSharing: true
+    }
   });
 });
 
