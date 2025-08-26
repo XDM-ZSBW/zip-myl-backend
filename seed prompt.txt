@@ -1,0 +1,201 @@
+Here's a comprehensive prompt for Cursor to build the `zip-myl-backend` project:
+
+## 🚀 **Cursor Prompt: Build Myl.Zip Backend Service**
+
+```
+Create a production-ready Node.js backend service for the Myl.Zip ecosystem with the following specifications:
+
+## Project Structure
+Create a new project called `zip-myl-backend` with this exact structure:
+
+```
+zip-myl-backend/
+├── src/
+│   ├── controllers/
+│   │   ├── thoughtsController.js
+│   │   ├── healthController.js
+│   │   └── index.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   ├── validation.js
+│   │   ├── rateLimiter.js
+│   │   ├── errorHandler.js
+│   │   └── cors.js
+│   ├── models/
+│   │   ├── Thought.js
+│   │   └── index.js
+│   ├── routes/
+│   │   ├── api.js
+│   │   ├── thoughts.js
+│   │   └── health.js
+│   ├── services/
+│   │   ├── thoughtService.js
+│   │   ├── databaseService.js
+│   │   └── cacheService.js
+│   ├── utils/
+│   │   ├── logger.js
+│   │   ├── config.js
+│   │   └── helpers.js
+│   └── app.js
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── fixtures/
+├── scripts/
+│   ├── deploy.sh
+│   ├── migrate.js
+│   └── seed.js
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       └── deploy.yml
+├── .dockerignore
+├── .gitignore
+├── .env.example
+├── .env.production
+├── Dockerfile
+├── cloudbuild.yaml
+├── package.json
+├── package-lock.json
+├── README.md
+└── service.yaml
+```
+
+## Core Requirements
+
+### 1. API Endpoints
+- POST /api/thoughts - Save thought with metadata
+- GET /api/thoughts - Retrieve thoughts with pagination/filtering
+- PUT /api/thoughts/:id - Update thought
+- DELETE /api/thoughts/:id - Delete thought
+- GET /health - Health check endpoint
+- GET /metrics - Prometheus metrics
+
+### 2. Technology Stack
+- Node.js 18+ with Express.js
+- PostgreSQL with Prisma ORM
+- Redis for caching
+- JWT authentication
+- Winston logging
+- Helmet security
+- Rate limiting
+- CORS configuration
+
+### 3. Production Features
+- Docker containerization
+- Google Cloud Run deployment
+- Environment-based configuration
+- Database migrations
+- Health checks
+- Metrics collection
+- Error handling
+- Request validation
+- Rate limiting
+- Security headers
+
+### 4. Data Model
+Thought model with fields:
+- id (UUID)
+- content (text)
+- metadata (JSON)
+- userId (optional)
+- url (string)
+- timestamp (datetime)
+- createdAt (datetime)
+- updatedAt (datetime)
+
+### 5. Security
+- JWT token validation
+- Rate limiting per IP/user
+- Input sanitization
+- SQL injection prevention
+- XSS protection
+- CORS configuration
+- Security headers
+
+### 6. Performance
+- Database connection pooling
+- Redis caching
+- Response compression
+- Request timeouts
+- Memory usage monitoring
+
+### 7. Monitoring
+- Health check endpoints
+- Prometheus metrics
+- Structured logging
+- Error tracking
+- Performance monitoring
+
+## File Specifications
+
+### package.json
+Include production dependencies:
+- express, helmet, cors, compression
+- prisma, @prisma/client
+- redis, ioredis
+- jsonwebtoken, bcryptjs
+- winston, morgan
+- express-rate-limit
+- joi (validation)
+- dotenv
+
+### Dockerfile
+Multi-stage build optimized for Google Cloud Run:
+- Node.js 18 Alpine base
+- Production dependencies only
+- Non-root user
+- Health check
+- Proper signal handling
+
+### cloudbuild.yaml
+Google Cloud Build configuration for automated deployment
+
+### .gitignore
+Standard Node.js ignores plus:
+- .env files
+- logs/
+- coverage/
+- .nyc_output/
+- node_modules/
+- dist/
+- build/
+
+### .dockerignore
+Optimize Docker build context
+
+## Code Style
+- ES6+ modules
+- Async/await patterns
+- Error-first callbacks
+- Consistent naming conventions
+- Minimal inline comments
+- Production-ready error handling
+- Proper HTTP status codes
+- RESTful API design
+
+## Deployment
+- Google Cloud Run ready
+- Environment variable configuration
+- Database connection handling
+- Graceful shutdown
+- Health check endpoints
+- Metrics collection
+
+Create this as a complete, production-ready service that can be deployed to Google Cloud Run immediately. Focus on clean, maintainable code with proper error handling and security measures.
+```
+
+## 📋 **Additional Instructions for Cursor**
+
+After creating the project, also add these specific requirements:
+
+1. **Set up the repository**: Initialize git and create remote repository
+2. **Configure CI/CD**: GitHub Actions for automated testing and deployment
+3. **Environment setup**: Create `.env.example` with all required variables
+4. **Database schema**: Prisma schema with proper migrations
+5. **API documentation**: OpenAPI/Swagger specification
+6. **Testing setup**: Jest configuration with test database
+7. **Monitoring**: Prometheus metrics and health checks
+8. **Security**: Rate limiting, CORS, and authentication middleware
+
+This prompt will create a production-ready backend service that integrates seamlessly with your existing Myl.Zip Chromium extension and can be deployed to Google Cloud Run with minimal additional configuration.
