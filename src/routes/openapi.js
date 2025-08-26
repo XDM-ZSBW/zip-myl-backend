@@ -23,7 +23,7 @@ const openApiSpec = {
       description: 'Production server'
     },
     {
-      url: 'https://zip-myl-backend-658472087761.us-central1.run.app',
+      url: 'https://api.myl.zip',
       description: 'Cloud Run service'
     }
   ],

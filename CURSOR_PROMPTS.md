@@ -1,7 +1,7 @@
 # Cursor Prompts for Myl.Zip End-to-End Encryption Implementation
 ## Updated for Production Deployment v2.0.0
 
-**Production Backend URL:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app`
+**Production Backend URL:** `https://api.myl.zip`
 **API Base:** `/api/v1/encrypted`
 
 ## 🚀 Chrome Extension Implementation
@@ -20,7 +20,7 @@ Requirements:
 
 2. Update content.js to:
    - Encrypt all thought data before sending to backend
-   - Only send encrypted blobs to https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted/thoughts
+   - Only send encrypted blobs to https://api.myl.zip/api/v1/encrypted/thoughts
    - Handle device registration and trust management
    - Implement cross-device thought sharing
 
@@ -47,7 +47,7 @@ Requirements:
    - Device permission management (read/write/share)
    - Trust status indicators
 
-The extension should work with the production backend at https://zip-myl-backend-lz77o54vea-uc.a.run.app and support sharing thoughts with other trusted devices (Obsidian, mobile apps, etc.).
+The extension should work with the production backend at https://api.myl.zip and support sharing thoughts with other trusted devices (Obsidian, mobile apps, etc.).
 ```
 
 ### Prompt 2: Chrome Extension UI Updates
@@ -116,7 +116,7 @@ Requirements:
    - Syncs thoughts with trusted devices
 
 4. Add settings tab with:
-   - Backend URL configuration (default: https://zip-myl-backend-lz77o54vea-uc.a.run.app)
+   - Backend URL configuration (default: https://api.myl.zip)
    - Device trust management
    - Encryption key management
    - Cross-device sharing preferences
@@ -224,7 +224,7 @@ Requirements:
    - Session management
    - Auto-lock functionality
 
-The app should work seamlessly with the Chrome extension and Obsidian plugin through the production backend at https://zip-myl-backend-lz77o54vea-uc.a.run.app.
+The app should work seamlessly with the Chrome extension and Obsidian plugin through the production backend at https://api.myl.zip.
 ```
 
 ## 🔧 Backend Integration
@@ -243,7 +243,7 @@ Requirements:
 
 2. Implement device registration flow:
    - Generate device fingerprint
-   - Register with backend at https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted/devices/register
+   - Register with backend at https://api.myl.zip/api/v1/encrypted/devices/register
    - Handle trust establishment
    - Store device credentials securely
 
@@ -380,12 +380,12 @@ The documentation should clearly explain how end-to-end encryption protects user
 
 ## 🔗 Backend Endpoints
 
-- **Base URL:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted`
+- **Base URL:** `https://api.myl.zip/api/v1/encrypted`
 - **Device Management:** `/devices/*`
 - **Thought Management:** `/thoughts/*`
 - **Cross-Device Sharing:** `/share/*`
-- **Health Check:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app/health`
-- **API Documentation:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app/docs`
+- **Health Check:** `https://api.myl.zip/health`
+- **API Documentation:** `https://api.myl.zip/docs`
 
 All endpoints require device trust verification and handle only encrypted data.
 
@@ -407,9 +407,9 @@ Update the Myl.Zip Chrome extension to integrate with the production backend dep
 
 Requirements:
 1. Update API configuration to use production endpoints:
-   - Base URL: https://zip-myl-backend-lz77o54vea-uc.a.run.app
-   - Health check: https://zip-myl-backend-lz77o54vea-uc.a.run.app/health
-   - Encrypted API: https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted
+   - Base URL: https://api.myl.zip
+   - Health check: https://api.myl.zip/health
+   - Encrypted API: https://api.myl.zip/api/v1/encrypted
 
 2. Implement production-ready error handling:
    - Handle HTTPS certificate validation
@@ -451,7 +451,7 @@ Update the Myl.Zip Obsidian plugin to work with the production backend deploymen
 
 Requirements:
 1. Update backend configuration:
-   - Default URL: https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - Default URL: https://api.myl.zip
    - API endpoints: /api/v1/encrypted/*
    - Health check integration
    - Production authentication
@@ -496,7 +496,7 @@ Update the Myl.Zip mobile app to integrate with the production backend deploymen
 
 Requirements:
 1. Update API configuration:
-   - Production base URL: https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - Production base URL: https://api.myl.zip
    - HTTPS certificate pinning
    - Production authentication flow
    - Secure token management
@@ -541,7 +541,7 @@ Create a production-ready API client for Myl.Zip that works with the deployed ba
 
 Requirements:
 1. Create production API client (apiClient.js) that:
-   - Connects to https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - Connects to https://api.myl.zip
    - Handles HTTPS certificate validation
    - Implements proper error handling
    - Supports offline mode with local storage
