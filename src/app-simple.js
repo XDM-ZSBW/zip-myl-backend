@@ -4,6 +4,42 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// CORS configuration for Chrome extensions
+app.use((req, res, next) => {
+  // Allow requests from Chrome extensions
+  const origin = req.headers.origin;
+  
+  // Allow Chrome extension origins
+  if (origin && (
+    origin.startsWith('chrome-extension://') ||
+    origin.startsWith('moz-extension://') ||
+    origin.startsWith('safari-extension://') ||
+    origin.startsWith('http://localhost:') ||
+    origin.startsWith('https://localhost:') ||
+    origin === 'https://myl.zip' ||
+    origin === 'https://app.myl.zip' ||
+    origin === 'https://admin.myl.zip'
+  )) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    // Allow requests with no origin (like curl, Postman, etc.)
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -198,11 +234,11 @@ try {
     }
   });
   
-  // Extension compatibility endpoint - device-registration/pairing-codes (UUID only)
+    // Extension compatibility endpoint - device-registration/pairing-codes (UUID only)
   app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
     try {
       const { deviceId, format = 'uuid', expiresIn = 300 } = req.body;
-      
+
       if (!deviceId) {
         return res.status(400).json({
           error: 'Missing deviceId'
@@ -216,11 +252,25 @@ try {
           message: 'Only UUID format is supported for security reasons'
         });
       }
-      
+
       const encryptionService = require('./services/encryptionService');
       const pairingCode = encryptionService.generatePairingCode('uuid');
       const expiresAt = new Date(Date.now() + expiresIn * 1000);
-      
+
+      // Store the pairing code for verification (in-memory for testing)
+      // In production, this would be stored in a database
+      if (!global.pairingCodes) {
+        global.pairingCodes = new Map();
+      }
+
+      global.pairingCodes.set(pairingCode, {
+        deviceId: deviceId,
+        format: 'uuid',
+        expiresAt: expiresAt.toISOString(),
+        createdAt: new Date().toISOString(),
+        used: false
+      });
+
       res.json({
         success: true,
         pairingCode: pairingCode,
@@ -308,9 +358,44 @@ try {
         });
       }
 
-      // In a real implementation, you would verify the pairing code against the database
-      // For now, we'll validate the format and return success
-      
+      // For testing purposes, we'll implement a simple in-memory pairing code store
+      // In production, this would be stored in a database
+      if (!global.pairingCodes) {
+        global.pairingCodes = new Map();
+      }
+
+      // Check if the pairing code exists and is valid
+      const pairingData = global.pairingCodes.get(pairingCode);
+      if (!pairingData) {
+        return res.status(400).json({
+          error: 'Invalid or expired pairing code',
+          message: 'The pairing code does not exist or has expired'
+        });
+      }
+
+      // Check if the pairing code has expired
+      if (new Date() > new Date(pairingData.expiresAt)) {
+        global.pairingCodes.delete(pairingCode);
+        return res.status(400).json({
+          error: 'Invalid or expired pairing code',
+          message: 'The pairing code has expired'
+        });
+      }
+
+      // Check if the pairing code has already been used
+      if (pairingData.used) {
+        return res.status(400).json({
+          error: 'Invalid or expired pairing code',
+          message: 'The pairing code has already been used'
+        });
+      }
+
+      // Mark the pairing code as used (one-time use)
+      pairingData.used = true;
+      pairingData.usedBy = deviceId;
+      pairingData.usedAt = new Date().toISOString();
+
+      // Return success with the paired device information
       res.json({
         success: true,
         trustRelationship: {
@@ -319,7 +404,7 @@ try {
           createdAt: new Date().toISOString()
         },
         pairedDevice: {
-          deviceId: 'paired-device-' + Date.now(),
+          deviceId: pairingData.deviceId,
           deviceType: 'chrome-extension',
           deviceVersion: '2.0.0'
         },
