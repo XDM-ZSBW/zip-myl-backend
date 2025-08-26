@@ -1,5 +1,5 @@
-import express from 'express';
-import thoughtsRoutes from './thoughts.js';
+const express = require('express');
+const thoughtsRoutes = require('./thoughts');
 
 const router = express.Router();
 
@@ -30,4 +30,4 @@ router.get('/v1', (req, res) => {
 // Backward compatibility - mount v1 routes at root level
 router.use('/thoughts', thoughtsRoutes);
 
-export default router;
+module.exports = router;

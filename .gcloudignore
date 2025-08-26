@@ -1,0 +1,20 @@
+# Include everything by default, then exclude specific items
+# This ensures package.json and other essential files are included
+
+# Exclude these directories
+node_modules/
+.git/
+.obsidian/
+.github/
+scripts/
+tests/
+
+# Exclude these files
+*.log
+.env*
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# But DO NOT exclude package.json, package-lock.json, src/, prisma/, Dockerfile

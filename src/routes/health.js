@@ -1,5 +1,5 @@
-import express from 'express';
-import { healthController } from '../controllers/healthController.js';
+const express = require('express');
+const { healthController } = require('../controllers/healthController');
 
 const router = express.Router();
 
@@ -12,4 +12,4 @@ router.get('/ready', healthController.readinessCheck);
 // GET /health/live - Kubernetes liveness probe
 router.get('/live', healthController.livenessCheck);
 
-export default router;
+module.exports = router;

@@ -1,7 +1,7 @@
-import express from 'express';
-import { thoughtsController } from '../controllers/thoughtsController.js';
-import { authenticateToken, optionalAuth } from '../middleware/auth.js';
-import { validateRequest, schemas } from '../middleware/validation.js';
+const express = require('express');
+const { thoughtsController } = require('../controllers/thoughtsController');
+const { authenticateToken, optionalAuth } = require('../middleware/auth');
+const { validateRequest, schemas } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -42,4 +42,4 @@ router.delete(
   thoughtsController.deleteThought
 );
 
-export default router;
+module.exports = router;

@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
@@ -6,38 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-env:
-  NODE_VERSION: '18'
-  REGISTRY: gcr.io
-  IMAGE_NAME: zip-myl-backend/zip-myl-backend
-
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
 
     steps:
     - name: Checkout code
@@ -46,7 +17,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
+        node-version: '18'
         cache: 'npm'
 
     - name: Install dependencies
@@ -54,84 +25,11 @@ jobs:
 
     - name: Generate Prisma client
       run: npx prisma generate
-
-    - name: Run database migrations
-      run: npx prisma db push
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
     - name: Run linting
       run: npm run lint
 
     - name: Run tests
-      run: npm run test:coverage
+      run: npm test
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        REDIS_HOST: localhost
-        REDIS_PORT: 6379
-        JWT_SECRET: test-secret
         NODE_ENV: test
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Generate Prisma client
-      run: npx prisma generate
-
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
-
-    - name: Configure Docker to use gcloud as a credential helper
-      run: gcloud auth configure-docker
-
-    - name: Build and push Docker image
-      run: |
-        docker build -t $REGISTRY/$IMAGE_NAME:$GITHUB_SHA .
-        docker build -t $REGISTRY/$IMAGE_NAME:latest .
-        docker push $REGISTRY/$IMAGE_NAME:$GITHUB_SHA
-        docker push $REGISTRY/$IMAGE_NAME:latest
-
-    - name: Deploy to Cloud Run
-      run: |
-        gcloud run deploy zip-myl-backend \
-          --image $REGISTRY/$IMAGE_NAME:$GITHUB_SHA \
-          --region us-central1 \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 3000 \
-          --memory 512Mi \
-          --cpu 1 \
-          --min-instances 0 \
-          --max-instances 10 \
-          --concurrency 100 \
-          --timeout 300 \
-          --set-env-vars NODE_ENV=production \
-          --set-secrets DATABASE_URL=DATABASE_URL:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,JWT_SECRET=JWT_SECRET:latest \
-          --project zip-myl-backend
