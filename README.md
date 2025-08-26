@@ -1,15 +1,23 @@
 # Myl.Zip Backend Service
 
-A production-ready Node.js backend service for the Myl.Zip ecosystem, providing thought tracking, authentication, and cloud deployment capabilities.
+A production-ready Node.js backend service for the Myl.Zip ecosystem, providing comprehensive ID and access management, thought tracking, and cloud deployment capabilities.
 
 ## 🚀 Features
 
+### 🔐 Authentication & Access Management
+- **Anonymous Device-Based Authentication**: UUID-based device identification with JWT tokens
+- **Zero-Knowledge Architecture**: Client-side encryption with server-side data protection
+- **Role-Based Access Control**: Anonymous, admin, and service roles with granular permissions
+- **API Key Management**: Comprehensive API key system for different client types
+- **Session Management**: JWT-based sessions with refresh token mechanism
+- **Rate Limiting**: Redis-based distributed rate limiting per device and API key
+
+### 📝 Core Features
 - **Thought Management**: Create, read, update, and delete thoughts with metadata
-- **Authentication**: JWT-based authentication with optional user management
 - **Caching**: Redis-based caching for improved performance
 - **Database**: PostgreSQL with Prisma ORM for robust data management
-- **Security**: Rate limiting, CORS, input validation, and security headers
-- **Monitoring**: Health checks, metrics, and structured logging
+- **Security**: Comprehensive security middleware with input validation
+- **Monitoring**: Health checks, metrics, audit logging, and structured logging
 - **Deployment**: Docker containerization with Google Cloud Run support
 - **Testing**: Comprehensive unit and integration tests
 
@@ -69,11 +77,15 @@ A production-ready Node.js backend service for the Myl.Zip ecosystem, providing 
 | `REDIS_HOST` | Redis host | `localhost` |
 | `REDIS_PORT` | Redis port | `6379` |
 | `JWT_SECRET` | JWT signing secret | Required |
+| `JWT_REFRESH_SECRET` | JWT refresh token secret | Required |
+| `INTERNAL_API_KEY` | Internal API key | Required |
 | `CORS_ORIGIN` | Allowed CORS origins | `http://localhost:3000` |
 
 ### Feature Flags
 
-- `ENABLE_AUTH`: Enable/disable authentication (default: `false`)
+- `ENABLE_AUTH`: Enable/disable authentication (default: `true`)
+- `ENABLE_DEVICE_AUTH`: Enable device-based authentication (default: `true`)
+- `ENABLE_API_KEY_AUTH`: Enable API key authentication (default: `true`)
 - `ENABLE_CACHING`: Enable/disable Redis caching (default: `true`)
 - `ENABLE_METRICS`: Enable/disable metrics collection (default: `true`)
 
@@ -84,7 +96,45 @@ A production-ready Node.js backend service for the Myl.Zip ecosystem, providing 
 http://localhost:3000
 ```
 
-### Endpoints
+### Authentication Endpoints
+
+#### Device Registration
+```bash
+POST /api/v1/auth/device/register
+```
+
+#### Token Management
+```bash
+POST /api/v1/auth/login          # Login with refresh token
+POST /api/v1/auth/refresh        # Refresh access token
+POST /api/v1/auth/logout         # Logout device
+POST /api/v1/auth/validate       # Validate token
+```
+
+#### Device Management
+```bash
+GET /api/v1/auth/device/info     # Get device information
+PUT /api/v1/auth/device/update   # Update device
+DELETE /api/v1/auth/device/revoke # Revoke device access
+```
+
+### Admin Endpoints (Require API Key)
+
+#### API Key Management
+```bash
+POST /api/v1/admin/keys/create   # Create API key
+GET /api/v1/admin/keys/list      # List API keys
+PUT /api/v1/admin/keys/:id/update # Update API key
+DELETE /api/v1/admin/keys/:id/revoke # Revoke API key
+```
+
+#### System Management
+```bash
+GET /api/v1/admin/stats/system   # System statistics
+GET /api/v1/admin/audit/logs     # Audit logs
+```
+
+### Core API Endpoints
 
 #### Health Check
 - `GET /health` - Comprehensive health check
@@ -104,20 +154,22 @@ http://localhost:3000
 
 ### Request/Response Examples
 
-#### Create Thought
+#### Register Device
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/device/register \
+  -H "Content-Type: application/json"
+```
+
+#### Create Thought (with authentication)
 ```bash
 curl -X POST http://localhost:3000/api/thoughts \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access-token>" \
   -d '{
     "content": "This is a test thought",
     "metadata": {"source": "api", "tags": ["test"]},
     "url": "https://example.com"
   }'
-```
-
-#### Get Thoughts
-```bash
-curl "http://localhost:3000/api/thoughts?page=1&limit=10"
 ```
 
 ## 🧪 Testing
@@ -131,6 +183,10 @@ npm run test:coverage
 
 # Run tests in watch mode
 npm run test:watch
+
+# Run authentication tests
+npm test tests/unit/auth.test.js
+npm test tests/integration/auth.test.js
 ```
 
 ## 🐳 Docker
@@ -145,51 +201,41 @@ docker run -p 3000:3000 \
   -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
   -e REDIS_HOST="redis-host" \
   -e JWT_SECRET="your-secret" \
+  -e JWT_REFRESH_SECRET="your-refresh-secret" \
+  -e INTERNAL_API_KEY="your-api-key" \
   zip-myl-backend
-```
-
-### Docker Compose
-```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
 ```
 
 ## ☁️ Google Cloud Run Deployment
 
-### Prerequisites
-1. Google Cloud Project with billing enabled
-2. Cloud Run API enabled
-3. Container Registry API enabled
-4. Service account with appropriate permissions
+### Project Configuration
+- **Project ID**: `zip-myl-backend`
+- **Project Number**: `658472087761`
+- **Region**: `us-central1`
 
-### Deploy
+### Quick Setup
 ```bash
-# Set environment variables
-export GOOGLE_CLOUD_PROJECT_ID="your-project-id"
-export DATABASE_URL="your-database-url"
-export JWT_SECRET="your-jwt-secret"
+# Run the setup script
+chmod +x scripts/setup-gcp.sh
+./scripts/setup-gcp.sh
 
-# Deploy using the script
-./scripts/deploy.sh
+# Deploy the application
+chmod +x scripts/deploy-gcp.sh
+./scripts/deploy-gcp.sh
 ```
 
 ### Manual Deployment
 ```bash
 # Build and push image
-gcloud builds submit --tag gcr.io/$PROJECT_ID/zip-myl-backend
+gcloud builds submit --tag gcr.io/zip-myl-backend/zip-myl-backend
 
 # Deploy to Cloud Run
 gcloud run deploy zip-myl-backend \
-  --image gcr.io/$PROJECT_ID/zip-myl-backend \
+  --image gcr.io/zip-myl-backend/zip-myl-backend \
   --region us-central1 \
   --platform managed \
-  --allow-unauthenticated
+  --allow-unauthenticated \
+  --project zip-myl-backend
 ```
 
 ## 🔄 CI/CD
@@ -199,11 +245,12 @@ The project includes GitHub Actions workflows for:
 - **CD Pipeline**: Automated deployment to Google Cloud Run
 
 ### Required Secrets
-- `GCP_PROJECT_ID`: Google Cloud Project ID
 - `GCP_SA_KEY`: Service Account JSON key
 - `DATABASE_URL`: Production database URL
 - `REDIS_PASSWORD`: Redis password
 - `JWT_SECRET`: JWT signing secret
+- `JWT_REFRESH_SECRET`: JWT refresh token secret
+- `INTERNAL_API_KEY`: Internal API key
 
 ## 📊 Monitoring
 
@@ -215,39 +262,69 @@ The project includes GitHub Actions workflows for:
 ### Metrics
 - **Prometheus**: `GET /metrics`
 - **Application**: Custom metrics for requests, errors, and performance
+- **Authentication**: Device registration, login attempts, token usage
+- **Security**: Rate limit violations, failed authentications
 
 ### Logging
 - **Structured Logging**: JSON format in production
 - **Log Levels**: debug, info, warn, error
 - **Request Logging**: Morgan middleware with Winston
+- **Audit Logging**: Comprehensive security event logging
 
 ## 🛡️ Security
 
-- **Rate Limiting**: Configurable per-IP rate limits
-- **CORS**: Configurable cross-origin resource sharing
-- **Input Validation**: Joi schema validation
+### Authentication & Authorization
+- **Anonymous Device Authentication**: UUID-based with device fingerprinting
+- **JWT Tokens**: Short-lived access tokens (15min) with refresh tokens (7 days)
+- **API Key Management**: Role-based permissions with rate limiting
+- **Zero-Knowledge Architecture**: Client-side encryption with server-side protection
+
+### Security Features
+- **Rate Limiting**: Redis-based distributed rate limiting
+- **Input Validation**: Joi schema validation with XSS protection
 - **Security Headers**: Helmet.js security middleware
-- **Authentication**: JWT-based authentication (optional)
-- **SQL Injection**: Prisma ORM protection
-- **XSS Protection**: Input sanitization
+- **SQL Injection Protection**: Prisma ORM with parameterized queries
+- **CSRF Protection**: Token-based CSRF protection
+- **Audit Logging**: Comprehensive security event tracking
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Client App    │    │   Load Balancer │    │   Cloud Run     │
-│                 │◄──►│                 │◄──►│                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-                       ┌─────────────────┐            │
-                       │     Redis       │◄───────────┤
-                       │    (Cache)      │            │
-                       └─────────────────┘            │
-                                                       │
-                       ┌─────────────────┐            │
-                       │   PostgreSQL    │◄───────────┘
-                       │   (Database)    │
-                       └─────────────────┘
+│   Client App    │    │   Admin Panel   │    │  Service APIs   │
+└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
+          │                      │                      │
+          │ Device Auth          │ API Key Auth         │ API Key Auth
+          │                      │                      │
+          └──────────────────────┼──────────────────────┘
+                                 │
+                    ┌─────────────▼─────────────┐
+                    │     Express.js App        │
+                    │  ┌─────────────────────┐  │
+                    │  │  Authentication     │  │
+                    │  │  Middleware         │  │
+                    │  └─────────────────────┘  │
+                    │  ┌─────────────────────┐  │
+                    │  │  Rate Limiting      │  │
+                    │  │  Middleware         │  │
+                    │  └─────────────────────┘  │
+                    │  ┌─────────────────────┐  │
+                    │  │  Validation         │  │
+                    │  │  Middleware         │  │
+                    │  └─────────────────────┘  │
+                    └─────────────┬─────────────┘
+                                  │
+                    ┌─────────────▼─────────────┐
+                    │     Database Layer        │
+                    │  ┌─────────────────────┐  │
+                    │  │  PostgreSQL         │  │
+                    │  │  (Prisma ORM)       │  │
+                    │  └─────────────────────┘  │
+                    │  ┌─────────────────────┐  │
+                    │  │  Redis Cache        │  │
+                    │  │  (Rate Limiting)    │  │
+                    │  └─────────────────────┘  │
+                    └───────────────────────────┘
 ```
 
 ## 📁 Project Structure
@@ -255,20 +332,44 @@ The project includes GitHub Actions workflows for:
 ```
 zip-myl-backend/
 ├── src/
+│   ├── auth/            # Authentication services
+│   │   ├── deviceAuth.js      # Device authentication
+│   │   ├── jwtService.js      # JWT token management
+│   │   └── sessionManager.js  # Session management
 │   ├── controllers/     # Request handlers
+│   │   ├── authController.js  # Authentication endpoints
+│   │   └── adminController.js # Admin endpoints
 │   ├── middleware/      # Express middleware
-│   ├── models/         # Data models
+│   │   ├── auth.js           # Authentication middleware
+│   │   ├── rateLimiter.js    # Rate limiting
+│   │   ├── apiKeyValidator.js # API key validation
+│   │   └── validation.js     # Input validation
 │   ├── routes/         # API routes
+│   │   ├── auth.js          # Authentication routes
+│   │   └── admin.js         # Admin routes
 │   ├── services/       # Business logic
 │   ├── utils/          # Utilities
+│   │   └── security.js      # Security utilities
 │   └── app.js          # Application entry point
 ├── tests/              # Test files
+│   ├── unit/           # Unit tests
+│   └── integration/    # Integration tests
 ├── scripts/            # Deployment scripts
+│   ├── setup-gcp.sh   # Google Cloud setup
+│   └── deploy-gcp.sh  # Google Cloud deployment
 ├── .github/workflows/  # CI/CD workflows
 ├── prisma/             # Database schema
 ├── .obsidian/          # Obsidian vault configuration
 └── docs/               # Documentation
+    ├── AUTHENTICATION.md    # Authentication documentation
+    └── DEPLOYMENT.md        # Deployment guide
 ```
+
+## 📖 Documentation
+
+- **[Authentication System](AUTHENTICATION.md)**: Comprehensive authentication documentation
+- **[Deployment Guide](DEPLOYMENT.md)**: Google Cloud deployment instructions
+- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)**: Technical implementation details
 
 ## 🤝 Contributing
 
