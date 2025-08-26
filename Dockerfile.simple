@@ -26,4 +26,4 @@ ENV NODE_ENV=production
 ENV PORT=8080
 
 # Start the application
-CMD ["node", "src/app.js"]
+CMD ["node", "src/app-simple.js"]
