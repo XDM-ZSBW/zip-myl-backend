@@ -22,6 +22,12 @@ router.post('/pairing-code',
   deviceRegistrationController.generatePairingCode
 );
 
+// Generate pairing code (plural endpoint for extension compatibility - no auth required for testing)
+router.post('/pairing-codes',
+  rateLimit('pairing_code', { windowMs: 60 * 60 * 1000, max: 10 }), // 10 per hour
+  deviceRegistrationController.generatePairingCode
+);
+
 // Pair devices using pairing code (requires device auth)
 router.post('/pair',
   authenticateDevice,

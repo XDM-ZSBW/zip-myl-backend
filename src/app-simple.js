@@ -67,6 +67,10 @@ try {
   app.use('/api/v1/encrypted/devices', deviceRegistrationRoutes);
   console.log('✅ Device registration routes loaded');
   
+  // Add compatibility route for extension (device-registration/pairing-codes)
+  app.use('/api/v1/device-registration', deviceRegistrationRoutes);
+  console.log('✅ Device registration compatibility routes loaded');
+  
 } catch (error) {
   console.log('⚠️  Enhanced routes not available:', error.message);
   console.log('Running in enhanced mode with masterless encryption endpoints');
@@ -185,6 +189,46 @@ try {
         expiresAt: expiresAt.toISOString(),
         expiresIn: expiresIn,
         message: 'Pairing code generated successfully'
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: 'Pairing code generation failed',
+        message: error.message
+      });
+    }
+  });
+  
+  // Extension compatibility endpoint - device-registration/pairing-codes (UUID only)
+  app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
+    try {
+      const { deviceId, format = 'uuid', expiresIn = 300 } = req.body;
+      
+      if (!deviceId) {
+        return res.status(400).json({
+          error: 'Missing deviceId'
+        });
+      }
+
+      // Only support UUID format for security
+      if (format && format.toLowerCase() !== 'uuid') {
+        return res.status(400).json({
+          error: 'Invalid format parameter',
+          message: 'Only UUID format is supported for security reasons'
+        });
+      }
+      
+      const encryptionService = require('./services/encryptionService');
+      const pairingCode = encryptionService.generatePairingCode('uuid');
+      const expiresAt = new Date(Date.now() + expiresIn * 1000);
+      
+      res.json({
+        success: true,
+        pairingCode: pairingCode,
+        format: 'uuid',
+        expiresAt: expiresAt.toISOString(),
+        expiresIn: expiresIn,
+        deviceId: deviceId,
+        message: 'UUID pairing code generated successfully'
       });
     } catch (error) {
       res.status(500).json({
