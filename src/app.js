@@ -18,6 +18,7 @@ const docsRoutes = require('./routes/docs');
 const openApiRoutes = require('./routes/openapi');
 const rootRoutes = require('./routes/root');
 const botRoutes = require('./routes/bot');
+const testRoutes = require('./routes/test');
 
 // Load environment variables
 dotenv.config();
@@ -60,6 +61,9 @@ app.use(validateRequestSize('10mb'));
 
 // Rate limiting
 app.use(endpointRateLimit);
+
+// Test route
+app.use('/test', testRoutes);
 
 // Bot-friendly routes (before API routes)
 app.use('/bot', botRoutes);
