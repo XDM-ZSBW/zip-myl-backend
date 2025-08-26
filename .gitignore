@@ -71,3 +71,8 @@ temp/
 
 # Obsidian
 .obsidian/
+
+# Google Cloud Service Account Keys
+*.json
+github-actions-key.json
+service-account*.json
