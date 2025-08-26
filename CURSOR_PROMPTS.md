@@ -1,4 +1,8 @@
 # Cursor Prompts for Myl.Zip End-to-End Encryption Implementation
+## Updated for Production Deployment v2.0.0
+
+**Production Backend URL:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app`
+**API Base:** `/api/v1/encrypted`
 
 ## 🚀 Chrome Extension Implementation
 
@@ -16,7 +20,7 @@ Requirements:
 
 2. Update content.js to:
    - Encrypt all thought data before sending to backend
-   - Only send encrypted blobs to http://localhost:3000/api/v1/encrypted/thoughts
+   - Only send encrypted blobs to https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted/thoughts
    - Handle device registration and trust management
    - Implement cross-device thought sharing
 
@@ -43,7 +47,7 @@ Requirements:
    - Device permission management (read/write/share)
    - Trust status indicators
 
-The extension should work with the backend at http://localhost:3000 and support sharing thoughts with other trusted devices (Obsidian, mobile apps, etc.).
+The extension should work with the production backend at https://zip-myl-backend-lz77o54vea-uc.a.run.app and support sharing thoughts with other trusted devices (Obsidian, mobile apps, etc.).
 ```
 
 ### Prompt 2: Chrome Extension UI Updates
@@ -112,7 +116,7 @@ Requirements:
    - Syncs thoughts with trusted devices
 
 4. Add settings tab with:
-   - Backend URL configuration (default: http://localhost:3000)
+   - Backend URL configuration (default: https://zip-myl-backend-lz77o54vea-uc.a.run.app)
    - Device trust management
    - Encryption key management
    - Cross-device sharing preferences
@@ -220,7 +224,7 @@ Requirements:
    - Session management
    - Auto-lock functionality
 
-The app should work seamlessly with the Chrome extension and Obsidian plugin through the backend at http://localhost:3000.
+The app should work seamlessly with the Chrome extension and Obsidian plugin through the production backend at https://zip-myl-backend-lz77o54vea-uc.a.run.app.
 ```
 
 ## 🔧 Backend Integration
@@ -239,7 +243,7 @@ Requirements:
 
 2. Implement device registration flow:
    - Generate device fingerprint
-   - Register with backend at http://localhost:3000/api/v1/encrypted/devices/register
+   - Register with backend at https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted/devices/register
    - Handle trust establishment
    - Store device credentials securely
 
@@ -376,9 +380,201 @@ The documentation should clearly explain how end-to-end encryption protects user
 
 ## 🔗 Backend Endpoints
 
-- **Base URL:** `http://localhost:3000/api/v1/encrypted`
+- **Base URL:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted`
 - **Device Management:** `/devices/*`
 - **Thought Management:** `/thoughts/*`
 - **Cross-Device Sharing:** `/share/*`
+- **Health Check:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app/health`
+- **API Documentation:** `https://zip-myl-backend-lz77o54vea-uc.a.run.app/docs`
 
 All endpoints require device trust verification and handle only encrypted data.
+
+## 🔐 Production Security Features
+
+- **Google Secret Manager Integration** - All secrets stored securely
+- **End-to-End Encryption** - AES-256-GCM with PBKDF2 key derivation
+- **Device Trust Management** - Cross-device pairing with secure codes
+- **Security Headers** - CSP, HSTS, XSS protection
+- **Audit Logging** - All security events logged
+- **Rate Limiting** - Protection against abuse
+
+## 🚀 Updated Prompts for Production Deployment
+
+### Prompt 9: Chrome Extension - Production Integration
+
+```
+Update the Myl.Zip Chrome extension to integrate with the production backend deployment.
+
+Requirements:
+1. Update API configuration to use production endpoints:
+   - Base URL: https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - Health check: https://zip-myl-backend-lz77o54vea-uc.a.run.app/health
+   - Encrypted API: https://zip-myl-backend-lz77o54vea-uc.a.run.app/api/v1/encrypted
+
+2. Implement production-ready error handling:
+   - Handle HTTPS certificate validation
+   - Implement proper CORS handling
+   - Add retry logic for network failures
+   - Handle rate limiting responses
+
+3. Update device registration flow:
+   - Register with production backend
+   - Handle production authentication
+   - Implement secure token storage
+   - Add device fingerprinting for production
+
+4. Add production security features:
+   - Certificate pinning for backend
+   - Secure storage of device credentials
+   - Implement proper key rotation
+   - Add audit logging for security events
+
+5. Update UI for production status:
+   - Show connection status to production backend
+   - Display security indicators
+   - Add production-specific settings
+   - Implement proper error messaging
+
+6. Add production testing:
+   - Test with production backend
+   - Validate encryption with live service
+   - Test cross-device sharing
+   - Verify security compliance
+
+The extension should work seamlessly with the production backend while maintaining all security features.
+```
+
+### Prompt 10: Obsidian Plugin - Production Backend Integration
+
+```
+Update the Myl.Zip Obsidian plugin to work with the production backend deployment.
+
+Requirements:
+1. Update backend configuration:
+   - Default URL: https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - API endpoints: /api/v1/encrypted/*
+   - Health check integration
+   - Production authentication
+
+2. Implement production-ready synchronization:
+   - Handle HTTPS connections
+   - Implement proper error handling
+   - Add retry logic for failed requests
+   - Handle rate limiting gracefully
+
+3. Update device trust management:
+   - Register with production backend
+   - Handle production device tokens
+   - Implement secure credential storage
+   - Add production-specific trust flows
+
+4. Add production security features:
+   - Certificate validation
+   - Secure key storage in Obsidian
+   - Implement audit logging
+   - Add security status indicators
+
+5. Update settings for production:
+   - Production backend configuration
+   - Security settings
+   - Device management
+   - Sync preferences
+
+6. Add production testing:
+   - Test with live backend
+   - Validate encryption
+   - Test cross-device sync
+   - Verify security compliance
+
+The plugin should provide a seamless experience with the production backend while maintaining security.
+```
+
+### Prompt 11: Mobile App - Production Backend Integration
+
+```
+Update the Myl.Zip mobile app to integrate with the production backend deployment.
+
+Requirements:
+1. Update API configuration:
+   - Production base URL: https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - HTTPS certificate pinning
+   - Production authentication flow
+   - Secure token management
+
+2. Implement production-ready networking:
+   - Handle HTTPS connections
+   - Implement proper error handling
+   - Add retry logic and offline support
+   - Handle rate limiting responses
+
+3. Update device registration:
+   - Register with production backend
+   - Handle production device tokens
+   - Implement secure credential storage
+   - Add biometric authentication
+
+4. Add production security features:
+   - Certificate pinning
+   - Secure key storage in keychain
+   - Implement audit logging
+   - Add security status indicators
+
+5. Update UI for production:
+   - Show connection status
+   - Display security indicators
+   - Add production settings
+   - Implement proper error handling
+
+6. Add production testing:
+   - Test with live backend
+   - Validate encryption
+   - Test cross-device sharing
+   - Verify security compliance
+
+The mobile app should work seamlessly with the production backend while maintaining security.
+```
+
+### Prompt 12: API Client - Production Integration
+
+```
+Create a production-ready API client for Myl.Zip that works with the deployed backend.
+
+Requirements:
+1. Create production API client (apiClient.js) that:
+   - Connects to https://zip-myl-backend-lz77o54vea-uc.a.run.app
+   - Handles HTTPS certificate validation
+   - Implements proper error handling
+   - Supports offline mode with local storage
+
+2. Implement production authentication:
+   - Device token management
+   - Secure credential storage
+   - Token refresh handling
+   - Production-specific auth flows
+
+3. Add production security features:
+   - Certificate pinning
+   - Request signing
+   - Rate limiting compliance
+   - Audit logging
+
+4. Implement production error handling:
+   - Network connectivity issues
+   - Backend service unavailability
+   - Rate limiting responses
+   - Authentication failures
+
+5. Add production monitoring:
+   - Connection status tracking
+   - Performance monitoring
+   - Error reporting
+   - Security event logging
+
+6. Create production testing:
+   - Integration tests with live backend
+   - Security validation
+   - Performance testing
+   - Cross-platform compatibility
+
+The API client should work across all client applications and maintain consistent security standards.
+```
