@@ -24,6 +24,7 @@ const testRoutes = require('./routes/test');
 const minimalRoutes = require('./routes/minimal');
 const encryptedRoutes = require('./routes/encrypted');
 const thoughtsRoutes = require('./routes/thoughts');
+const enhancedTrustNetworkRoutes = require('./routes/enhancedTrustNetwork');
 
 // Load environment variables
 dotenv.config();
@@ -99,6 +100,11 @@ app.use('/api', apiRoutes);
 
 // API v2 routes (Multi-Client Ecosystem)
 app.use('/api', apiV2Routes);
+
+// Enhanced Trust Network routes
+console.log('Loading Enhanced Trust Network routes...');
+app.use('/api', enhancedTrustNetworkRoutes);
+console.log('Enhanced Trust Network routes loaded successfully');
 
 // Encrypted routes (device registration, pairing, thoughts)
 console.log('Loading encrypted routes...');
