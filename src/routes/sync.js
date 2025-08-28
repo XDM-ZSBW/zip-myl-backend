@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateDevice } = require('../middleware/auth');
-const { syncRateLimit } = require('../middleware/rateLimiter');
+const { generalRateLimit } = require('../middleware/rateLimiter');
 
 // Real-time sync status
 router.get('/status',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     res.json({
       success: true,
@@ -24,7 +24,7 @@ router.get('/status',
 // Get sync changes since last sync
 router.get('/changes',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { since, limit = 100 } = req.query;
 
@@ -44,7 +44,7 @@ router.get('/changes',
 // Push local changes to server
 router.post('/push',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { changes, deviceId, timestamp } = req.body;
 
@@ -64,7 +64,7 @@ router.post('/push',
 // Pull changes from server
 router.post('/pull',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { since, deviceId, lastKnownVersion } = req.body;
 
@@ -79,12 +79,12 @@ router.post('/pull',
       },
     });
   },
-),
+);
 
 // Resolve sync conflicts
 router.post('/resolve',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { conflicts, resolution } = req.body;
 
@@ -98,12 +98,12 @@ router.post('/resolve',
       },
     });
   },
-),
+);
 
 // Get sync history
 router.get('/history',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { limit = 50, offset = 0 } = req.query;
 
@@ -119,12 +119,12 @@ router.get('/history',
       },
     });
   },
-),
+);
 
 // Force full sync
 router.post('/full-sync',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId, force = false } = req.body;
 
@@ -139,12 +139,12 @@ router.post('/full-sync',
       },
     });
   },
-),
+);
 
 // Get sync statistics
 router.get('/stats',
   authenticateDevice,
-  syncRateLimit,
+  generalRateLimit,
   (req, res) => {
     // TODO: Implement sync statistics
     res.json({

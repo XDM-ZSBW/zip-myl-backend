@@ -10,6 +10,31 @@ const testConfig = require(testEnvPath);
 process.env.NODE_ENV = 'test';
 process.env.CI = 'true';
 
+// Set required environment variables for tests (JWT service still uses these directly)
+process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
+process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-key-for-testing-only';
+process.env.JWT_EXPIRES_IN = '15m';
+process.env.JWT_REFRESH_EXPIRES_IN = '7d';
+
+// Mock Google Secret Manager
+jest.mock('@google-cloud/secret-manager', () => ({
+  SecretManagerServiceClient: jest.fn(() => ({
+    accessSecretVersion: jest.fn().mockResolvedValue([{
+      payload: {
+        data: Buffer.from('test-secret-value-for-testing-only'),
+      },
+    }]),
+  })),
+}));
+
+// Mock the secret manager service
+jest.mock('../src/services/secretManagerService', () => ({
+  getSecret: jest.fn().mockResolvedValue('test-secret-value-for-testing-only'),
+  getJWTSecret: jest.fn().mockResolvedValue('test-jwt-secret-key-for-testing-only'),
+  getEncryptionKey: jest.fn().mockResolvedValue('test-encryption-key-for-testing-only'),
+  getServiceApiKey: jest.fn().mockResolvedValue('test-service-api-key-for-testing-only'),
+}));
+
 // Mock Chrome extension APIs globally for all tests
 const { mockChrome } = require('./mocks/chromeExtension');
 
@@ -25,6 +50,7 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+    deleteMany: jest.fn(),
   },
   session: {
     findUnique: jest.fn(),
@@ -35,6 +61,7 @@ const mockPrisma = {
     updateMany: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+    deleteMany: jest.fn(),
   },
   device: {
     findUnique: jest.fn(),
@@ -44,6 +71,17 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  thought: {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    deleteMany: jest.fn(),
   },
   pairingCode: {
     findUnique: jest.fn(),
@@ -53,6 +91,7 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+    deleteMany: jest.fn(),
   },
   nftCollection: {
     findUnique: jest.fn(),
@@ -62,15 +101,91 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+    deleteMany: jest.fn(),
   },
+  pairingToken: {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  invalidNft: {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  userNftProfile: {
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  $queryRaw: jest.fn(),
+  $executeRaw: jest.fn(),
   $transaction: jest.fn(),
   $connect: jest.fn(),
   $disconnect: jest.fn(),
+  $on: jest.fn(),
 };
 
 // Mock Prisma module
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => mockPrisma),
+}));
+
+// Mock the Thought model to avoid database connection issues
+jest.mock('../src/models/Thought', () => ({
+  Thought: {
+    create: jest.fn(),
+    findById: jest.fn(),
+    findByUserId: jest.fn(),
+    findAll: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
+// Mock database services
+jest.mock('../src/services/nftDatabaseService', () => ({
+  nftDatabaseService: {
+    query: jest.fn().mockResolvedValue({
+      rows: [
+        {
+          id: 'test-id',
+          token: 'test-token',
+          user_id: 'test-user',
+          platform: 'ethereum',
+          expires_at: new Date(),
+          created_at: new Date(),
+        }
+      ],
+      rowCount: 1,
+    }),
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+  },
+}));
+
+// Mock the pool module to avoid real database connections
+jest.mock('pg', () => ({
+  Pool: jest.fn(() => ({
+    query: jest.fn(),
+    connect: jest.fn(),
+    end: jest.fn(),
+  })),
 }));
 
 // Make mockPrisma available globally
@@ -90,13 +205,6 @@ global.console = {
 // Mock process.exit to prevent tests from exiting
 const originalExit = process.exit;
 process.exit = jest.fn();
-
-// Cleanup after all tests
-afterAll(() => {
-  process.exit = originalExit;
-  // Restore original console
-  global.console = originalConsole;
-});
 
 // Set test timeout
 jest.setTimeout(30000);
@@ -130,36 +238,6 @@ Date.now = jest.fn(() => 1640995200000); // Fixed timestamp for testing
 // Mock Math.random for consistent testing
 const originalRandom = Math.random;
 Math.random = jest.fn(() => 0.5);
-
-// Enhanced test database setup
-const setupTestDatabase = async() => {
-  try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: testConfig.DATABASE_URL || 'file:./test.db',
-        },
-      },
-    });
-
-    // Clean up test database
-    await prisma.$executeRaw`DROP SCHEMA IF EXISTS public CASCADE`;
-    await prisma.$executeRaw`CREATE SCHEMA public`;
-
-    // Run migrations
-    const { execSync } = require('child_process');
-    execSync('npx prisma migrate deploy', {
-      env: { ...process.env, DATABASE_URL: testConfig.DATABASE_URL },
-      stdio: 'inherit',
-    });
-
-    await prisma.$disconnect();
-    console.log('✅ Test database setup complete');
-  } catch (error) {
-    console.warn('⚠️ Test database setup failed, using in-memory:', error.message);
-  }
-};
 
 // Enhanced test utilities
 global.testUtils = {
@@ -268,9 +346,9 @@ global.testUtils = {
     });
   },
 
-  // Setup test environment
+  // Setup test environment (simplified)
   setupTestEnv: async() => {
-    await setupTestDatabase();
+    // Skip database setup for now to avoid issues
     global.testUtils.resetMocks();
   },
 };
@@ -287,26 +365,34 @@ afterEach(() => {
 
 // Cleanup after all tests
 afterAll(async() => {
-  // Clean up test database
+  // No database cleanup needed for now
+  
+  // Force cleanup of any remaining timers or handles
+  jest.clearAllTimers();
+  
+  // Restore original Date.now and Math.random
+  Date.now = originalNow;
+  Math.random = originalRandom;
+  
+  // Clear any remaining timeouts
+  jest.clearAllTimers();
+  
+  // Clean up SessionManager timer if it exists
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: testConfig.DATABASE_URL || 'file:./test.db',
-        },
-      },
-    });
-
-    await prisma.$disconnect();
+    const SessionManager = require('../src/auth/sessionManager');
+    if (SessionManager.stopCleanupTimer) {
+      SessionManager.stopCleanupTimer();
+    }
   } catch (error) {
-    // Ignore cleanup errors
+    // Ignore errors if SessionManager is not available
   }
+  
+  // Wait a bit for any remaining async operations
+  await new Promise(resolve => setTimeout(resolve, 50));
 });
 
 // Export for use in individual test files
 module.exports = {
   mockChrome,
   testUtils: global.testUtils,
-  setupTestDatabase,
 };

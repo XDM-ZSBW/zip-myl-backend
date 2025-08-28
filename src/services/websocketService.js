@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const { authenticateDevice } = require('../middleware/auth');
 
 /**

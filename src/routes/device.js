@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateDevice } = require('../middleware/auth');
-const { deviceRateLimit } = require('../middleware/rateLimiter');
+const { generalRateLimit } = require('../middleware/rateLimiter');
 
 // Get all devices for user
 router.get('/',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     // TODO: Implement device listing
     res.json({
@@ -23,7 +23,7 @@ router.get('/',
 // Get specific device details
 router.get('/:deviceId',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 
@@ -50,7 +50,7 @@ router.get('/:deviceId',
 // Update device information
 router.put('/:deviceId',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
     const { deviceType, deviceVersion, capabilities, metadata } = req.body;
@@ -74,7 +74,7 @@ router.put('/:deviceId',
 // Deactivate device
 router.put('/:deviceId/deactivate',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 
@@ -94,7 +94,7 @@ router.put('/:deviceId/deactivate',
 // Reactivate device
 router.put('/:deviceId/reactivate',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 
@@ -114,7 +114,7 @@ router.put('/:deviceId/reactivate',
 // Get device sessions
 router.get('/:deviceId/sessions',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
@@ -136,7 +136,7 @@ router.get('/:deviceId/sessions',
 // Revoke device session
 router.delete('/:deviceId/sessions/:sessionId',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId, sessionId } = req.params;
 
@@ -156,7 +156,7 @@ router.delete('/:deviceId/sessions/:sessionId',
 // Get device trust relationships
 router.get('/:deviceId/trust',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 
@@ -175,7 +175,7 @@ router.get('/:deviceId/trust',
 // Establish trust with another device
 router.post('/:deviceId/trust',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
     const { targetDeviceId, trustLevel, encryptedTrustData } = req.body;
@@ -198,7 +198,7 @@ router.post('/:deviceId/trust',
 // Remove trust relationship
 router.delete('/:deviceId/trust/:targetDeviceId',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId, targetDeviceId } = req.params;
 
@@ -218,7 +218,7 @@ router.delete('/:deviceId/trust/:targetDeviceId',
 // Get device capabilities
 router.get('/:deviceId/capabilities',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 
@@ -244,7 +244,7 @@ router.get('/:deviceId/capabilities',
 // Update device capabilities
 router.put('/:deviceId/capabilities',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
     const { capabilities, supportedFormats, maxFileSize, syncInterval } = req.body;
@@ -267,7 +267,7 @@ router.put('/:deviceId/capabilities',
 // Get device statistics
 router.get('/:deviceId/stats',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 
@@ -291,7 +291,7 @@ router.get('/:deviceId/stats',
 // Ping device (update last seen)
 router.post('/:deviceId/ping',
   authenticateDevice,
-  deviceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { deviceId } = req.params;
 

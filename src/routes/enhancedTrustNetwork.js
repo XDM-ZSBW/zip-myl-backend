@@ -6,29 +6,25 @@ const {
   authenticateDeviceOptional,
   logAuthEvent,
 } = require('../middleware/auth');
-const {
-  enhancedTrustNetworkRateLimit,
-  enhancedSitesRateLimit,
-  permissionsRateLimit,
-} = require('../middleware/rateLimiter');
+const { generalRateLimit } = require('../middleware/rateLimiter');
 
 // Enhanced Sites Configuration Endpoints
 // GET /api/sites/enhanced - Get all enhanced sites
 router.get('/sites/enhanced',
-  enhancedSitesRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.getEnhancedSites,
 );
 
 // GET /api/sites/enhanced/:domain - Get enhanced site by domain
 router.get('/sites/enhanced/:domain',
-  enhancedSitesRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.getEnhancedSiteByDomain,
 );
 
 // POST /api/sites/enhanced - Create or update enhanced site
 router.post('/sites/enhanced',
   authenticateDevice,
-  enhancedSitesRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_site_upsert'),
   enhancedTrustNetworkController.upsertEnhancedSite,
 );
@@ -36,7 +32,7 @@ router.post('/sites/enhanced',
 // PUT /api/sites/enhanced/:siteId - Update enhanced site
 router.put('/sites/enhanced/:siteId',
   authenticateDevice,
-  enhancedSitesRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_site_update'),
   enhancedTrustNetworkController.updateEnhancedSite,
 );
@@ -44,7 +40,7 @@ router.put('/sites/enhanced/:siteId',
 // DELETE /api/sites/enhanced/:siteId - Delete enhanced site
 router.delete('/sites/enhanced/:siteId',
   authenticateDevice,
-  enhancedSitesRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_site_delete'),
   enhancedTrustNetworkController.deleteEnhancedSite,
 );
@@ -53,34 +49,34 @@ router.delete('/sites/enhanced/:siteId',
 // GET /api/auth/permissions/:userId - Get user permissions
 router.get('/auth/permissions/:userId',
   authenticateDevice,
-  permissionsRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.getUserPermissions,
 );
 
 // POST /api/auth/permissions/validate - Validate permissions for a site
 router.post('/auth/permissions/validate',
-  permissionsRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.validatePermissions,
 );
 
 // Enhanced Authentication State Endpoints
 // POST /api/auth/device/register - Enhanced device registration
 router.post('/auth/device/register',
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_device_register'),
   enhancedTrustNetworkController.upsertEnhancedAuthState,
 );
 
 // POST /api/auth/device/authenticate - Enhanced device authentication
 router.post('/auth/device/authenticate',
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_device_authenticate'),
   enhancedTrustNetworkController.verifyEnhancedAuthState,
 );
 
 // POST /api/auth/device/verify - Enhanced device verification
 router.post('/auth/device/verify',
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_device_verify'),
   enhancedTrustNetworkController.verifyEnhancedAuthState,
 );
@@ -88,7 +84,7 @@ router.post('/auth/device/verify',
 // POST /api/auth/device/deauthenticate - Enhanced device deauthentication
 router.post('/auth/device/deauthenticate',
   authenticateDevice,
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   logAuthEvent('enhanced_device_deauthenticate'),
   async(req, res) => {
     try {
@@ -121,13 +117,13 @@ router.post('/auth/device/deauthenticate',
 // Enhanced Feature Usage Logging Endpoints
 // POST /api/enhanced/features/log - Log feature usage
 router.post('/enhanced/features/log',
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.logFeatureUsage,
 );
 
 // POST /api/enhanced/sites/log - Log site access
 router.post('/enhanced/sites/log',
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.logSiteAccess,
 );
 
@@ -135,14 +131,14 @@ router.post('/enhanced/sites/log',
 // GET /api/enhanced/stats/sites - Get enhanced sites statistics
 router.get('/enhanced/stats/sites',
   authenticateDevice,
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.getEnhancedSitesStats,
 );
 
 // GET /api/enhanced/stats/permissions - Get user permissions statistics
 router.get('/enhanced/stats/permissions',
   authenticateDevice,
-  enhancedTrustNetworkRateLimit,
+  generalRateLimit,
   enhancedTrustNetworkController.getUserPermissionsStats,
 );
 

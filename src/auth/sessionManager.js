@@ -1,14 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 const prisma = new PrismaClient();
 
 class SessionManager {
   constructor() {
     this.maxSessionsPerDevice = parseInt(process.env.MAX_SESSIONS_PER_DEVICE) || 5;
-    this.sessionCleanupInterval = parseInt(process.env.SESSION_CLEANUP_INTERVAL) || 3600000; // 1 hour
-    this.startCleanupTimer();
+    this.sessionCleanupInterval = 60 * 60 * 1000; // 1 hour
+    this.cleanupTimer = null; // Store timer ID for cleanup
+    
+    // Only start cleanup timer if not in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      this.startCleanupTimer();
+    }
   }
 
   /**
@@ -300,13 +305,28 @@ class SessionManager {
    * Start cleanup timer
    */
   startCleanupTimer() {
-    setInterval(async() => {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+    
+    this.cleanupTimer = setInterval(async() => {
       await this.cleanupExpiredSessions();
     }, this.sessionCleanupInterval);
 
     logger.info('Session cleanup timer started', {
       interval: this.sessionCleanupInterval,
     });
+  }
+
+  /**
+   * Stop cleanup timer
+   */
+  stopCleanupTimer() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+      logger.info('Session cleanup timer stopped');
+    }
   }
 
   /**

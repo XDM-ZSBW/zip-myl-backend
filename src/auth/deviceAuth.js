@@ -2,9 +2,16 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
-const prisma = new PrismaClient();
+// Lazy load Prisma to allow mocking in tests
+let prisma = null;
+const getPrisma = () => {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+};
 
 class DeviceAuthService {
   constructor() {
@@ -38,7 +45,7 @@ class DeviceAuthService {
       const ip = req.ip || req.connection.remoteAddress || '';
 
       // Check if device already exists
-      const existingDevice = await prisma.device.findFirst({
+      const existingDevice = await getPrisma().device.findFirst({
         where: {
           OR: [
             { fingerprint: deviceFingerprint },
@@ -53,7 +60,7 @@ class DeviceAuthService {
       }
 
       // Create new device
-      const device = await prisma.device.create({
+      const device = await getPrisma().device.create({
         data: {
           id: deviceId,
           fingerprint: deviceFingerprint,
@@ -94,7 +101,7 @@ class DeviceAuthService {
       );
 
       // Store session in database
-      const session = await prisma.session.create({
+      const session = await getPrisma().session.create({
         data: {
           deviceId,
           accessToken: crypto.createHash('sha256').update(accessToken).digest('hex'),

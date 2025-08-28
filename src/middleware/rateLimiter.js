@@ -1,62 +1,69 @@
 const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
 const Redis = require('ioredis');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
+const config = require('../utils/config');
 
 // Redis client for rate limiting with fallback
 let redis = null;
 let redisStore = null;
 let useRedis = false;
 
-// Initialize Redis connection
+// Initialize Redis for rate limiting (with better test environment handling)
 const initializeRedis = () => {
+  // In test environment, skip Redis and use memory store
+  if (process.env.NODE_ENV === 'test') {
+    logger.info('Test environment detected, using memory-based rate limiting');
+    return null;
+  }
+
   try {
-    if (process.env.REDIS_HOST || process.env.REDIS_PASSWORD) {
-      redis = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        password: process.env.REDIS_PASSWORD,
-        retryDelayOnFailover: 100,
-        maxRetriesPerRequest: 3,
-        lazyConnect: true, // Don't connect immediately
-        retryDelayOnClusterDown: 100,
-        enableOfflineQueue: false,
-      });
-
-      redis.on('error', (error) => {
-        logger.warn('Redis connection error in rate limiter, falling back to memory', {
-          error: error.message,
-          fallback: 'memory',
-        });
-        useRedis = false;
-      });
-
-      redis.on('connect', () => {
-        logger.info('Rate limiter Redis connection established');
-        useRedis = true;
-      });
-
-      redis.on('ready', () => {
-        logger.info('Rate limiter Redis ready');
-        useRedis = true;
-      });
-
-      // Test connection
-      redis.ping().then(() => {
-        useRedis = true;
-        logger.info('Rate limiter Redis connection test successful');
-      }).catch(() => {
-        logger.warn('Rate limiter Redis connection test failed, using memory fallback');
-        useRedis = false;
-      });
-
-      redisStore = new RedisStore({
-        sendCommand: (...args) => redis.call(...args),
-      });
-    } else {
+    if (!config.redis || !config.redis.host) {
       logger.info('No Redis configuration found, using memory-based rate limiting');
-      useRedis = false;
+      return null;
     }
+
+    redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: process.env.REDIS_PORT || 6379,
+      password: process.env.REDIS_PASSWORD,
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true, // Don't connect immediately
+      retryDelayOnClusterDown: 100,
+      enableOfflineQueue: false,
+    });
+
+    redis.on('error', (error) => {
+      logger.warn('Redis connection error in rate limiter, falling back to memory', {
+        error: error.message,
+        fallback: 'memory',
+      });
+      useRedis = false;
+    });
+
+    redis.on('connect', () => {
+      logger.info('Rate limiter Redis connection established');
+      useRedis = true;
+    });
+
+    redis.on('ready', () => {
+      logger.info('Rate limiter Redis ready');
+      useRedis = true;
+    });
+
+    // Test connection
+    redis.ping().then(() => {
+      useRedis = true;
+      logger.info('Rate limiter Redis connection test successful');
+    }).catch(() => {
+      logger.warn('Rate limiter Redis connection test failed, using memory fallback');
+      useRedis = false;
+    });
+
+    redisStore = new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    });
   } catch (error) {
     logger.warn('Failed to initialize Redis, using memory fallback', { error: error.message });
     useRedis = false;

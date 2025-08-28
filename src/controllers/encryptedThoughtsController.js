@@ -1,4 +1,4 @@
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const trustService = require('../services/trustService');
 const encryptionService = require('../services/encryptionService');
 

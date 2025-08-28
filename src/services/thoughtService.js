@@ -1,6 +1,6 @@
 const { Thought } = require('../models/Thought');
 const cacheService = require('./cacheService');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 
 class ThoughtService {

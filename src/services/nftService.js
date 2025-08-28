@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const { nftDatabaseService } = require('./nftDatabaseService');
 const { nftEncryptionService } = require('./nftEncryptionService');
 const { nftCacheService } = require('./nftCacheService');

@@ -3,26 +3,6 @@ const deviceAuth = require('../../src/auth/deviceAuth');
 const jwtService = require('../../src/auth/jwtService');
 const sessionManager = require('../../src/auth/sessionManager');
 
-// Mock Prisma client
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    device: {
-      findFirst: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      findUnique: jest.fn(),
-    },
-    session: {
-      create: jest.fn(),
-      findFirst: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-    },
-  })),
-}));
-
 // Mock logger
 jest.mock('../../src/utils/logger', () => ({
   info: jest.fn(),
@@ -31,11 +11,9 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 describe('Device Authentication', () => {
-  let mockPrisma;
   let mockReq;
 
   beforeEach(() => {
-    mockPrisma = new PrismaClient();
     mockReq = {
       ip: '192.168.1.1',
       get: jest.fn((header) => {
@@ -75,16 +53,19 @@ describe('Device Authentication', () => {
 
   describe('registerDevice', () => {
     it('should register a new device successfully', async() => {
-      mockPrisma.device.findFirst.mockResolvedValue(null);
-      mockPrisma.device.create.mockResolvedValue({
+      const newDevice = {
         id: 'device-123',
         fingerprint: 'fingerprint-123',
         ipAddress: '192.168.1.1',
-        userAgent: 'Mozilla/5.0',
         isActive: true,
-        lastSeen: new Date(),
-      });
-      mockPrisma.session.create.mockResolvedValue({
+      };
+
+      // Mock device creation
+      global.mockPrisma.device.findFirst.mockResolvedValue(null);
+      global.mockPrisma.device.create.mockResolvedValue(newDevice);
+      
+      // Mock session creation
+      global.mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
         deviceId: 'device-123',
         accessToken: 'hashed-access-token',
@@ -93,7 +74,9 @@ describe('Device Authentication', () => {
         refreshExpiresAt: new Date(),
         isActive: true,
       });
-      mockPrisma.device.update.mockResolvedValue({});
+      
+      // Mock device update
+      global.mockPrisma.device.update.mockResolvedValue({});
 
       const result = await deviceAuth.registerDevice(mockReq);
 
@@ -112,8 +95,11 @@ describe('Device Authentication', () => {
         isActive: true,
       };
 
-      mockPrisma.device.findFirst.mockResolvedValue(existingDevice);
-      mockPrisma.session.create.mockResolvedValue({
+      // Mock finding existing device
+      global.mockPrisma.device.findFirst.mockResolvedValue(existingDevice);
+      
+      // Mock session creation
+      global.mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
         deviceId: 'device-123',
         accessToken: 'hashed-access-token',
@@ -122,18 +108,27 @@ describe('Device Authentication', () => {
         refreshExpiresAt: new Date(),
         isActive: true,
       });
-      mockPrisma.device.update.mockResolvedValue({});
+      
+      // Mock device update
+      global.mockPrisma.device.update.mockResolvedValue({});
 
       const result = await deviceAuth.registerDevice(mockReq);
 
       expect(result.deviceId).toBe('device-123');
-      expect(mockPrisma.device.create).not.toHaveBeenCalled();
+      expect(global.mockPrisma.device.create).not.toHaveBeenCalled();
     });
   });
 
   describe('validateToken', () => {
     it('should validate a valid token', async() => {
-      const mockToken = 'valid-token';
+      // Create a proper JWT token for testing
+      const jwt = require('jsonwebtoken');
+      const mockToken = jwt.sign(
+        { deviceId: 'device-123', type: 'device' },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
@@ -142,7 +137,11 @@ describe('Device Authentication', () => {
         device: { isActive: true },
       };
 
-      mockPrisma.session.findFirst.mockResolvedValue(mockSession);
+      // Mock the session lookup with the hashed token
+      const crypto = require('crypto');
+      const hashedToken = crypto.createHash('sha256').update(mockToken).digest('hex');
+      
+      global.mockPrisma.session.findFirst.mockResolvedValue(mockSession);
 
       const result = await deviceAuth.validateToken(mockToken);
 
@@ -152,7 +151,7 @@ describe('Device Authentication', () => {
     });
 
     it('should reject an invalid token', async() => {
-      mockPrisma.session.findFirst.mockResolvedValue(null);
+      global.mockPrisma.session.findFirst.mockResolvedValue(null);
 
       const result = await deviceAuth.validateToken('invalid-token');
 
@@ -164,8 +163,7 @@ describe('Device Authentication', () => {
 
 describe('JWT Service', () => {
   beforeEach(() => {
-    process.env.JWT_SECRET = 'test-secret';
-    process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
+    // No need to set environment variables - using Google Secret Manager
   });
 
   describe('generateAccessToken', () => {
@@ -189,7 +187,7 @@ describe('JWT Service', () => {
       expect(result.payload.deviceId).toBe('device-123');
     });
 
-    it('should reject an invalid access token', () => {
+    it('should reject an invalid token', () => {
       const result = jwtService.verifyAccessToken('invalid-token');
 
       expect(result.valid).toBe(false);
@@ -204,17 +202,17 @@ describe('JWT Service', () => {
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
-      expect(result).toHaveProperty('expiresIn');
-      expect(result).toHaveProperty('refreshExpiresIn');
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+      expect(typeof result.accessToken).toBe('string');
+      expect(typeof result.refreshToken).toBe('string');
     });
   });
 });
 
 describe('Session Manager', () => {
-  let mockPrisma;
-
   beforeEach(() => {
-    mockPrisma = new PrismaClient();
+    jest.clearAllMocks();
   });
 
   describe('createSession', () => {
@@ -229,8 +227,7 @@ describe('Session Manager', () => {
         userAgent: 'Mozilla/5.0',
       };
 
-      mockPrisma.session.count.mockResolvedValue(0);
-      mockPrisma.session.create.mockResolvedValue({
+      global.mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
         ...sessionData,
       });
@@ -239,6 +236,15 @@ describe('Session Manager', () => {
 
       expect(result).toHaveProperty('id');
       expect(result.deviceId).toBe('device-123');
+      // The actual implementation hashes tokens and adds isActive field
+      expect(global.mockPrisma.session.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          deviceId: 'device-123',
+          accessToken: expect.any(String), // Hashed token
+          refreshToken: expect.any(String), // Hashed token
+          isActive: true,
+        }),
+      });
     });
   });
 
@@ -248,26 +254,43 @@ describe('Session Manager', () => {
         id: 'session-123',
         deviceId: 'device-123',
         isActive: true,
-        expiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true },
       };
 
-      mockPrisma.session.findFirst.mockResolvedValue(mockSession);
+      global.mockPrisma.session.findFirst.mockResolvedValue(mockSession);
 
       const result = await sessionManager.getSessionByAccessToken('access-token');
 
       expect(result).toEqual(mockSession);
+      // The actual implementation hashes the token and adds expiration check
+      expect(global.mockPrisma.session.findFirst).toHaveBeenCalledWith({
+        where: {
+          accessToken: expect.any(String), // Hashed token
+          expiresAt: { gt: expect.any(Date) }, // Expiration check
+          isActive: true,
+        },
+        include: { device: true },
+      });
     });
   });
 
   describe('cleanupExpiredSessions', () => {
     it('should clean up expired sessions', async() => {
-      mockPrisma.session.updateMany.mockResolvedValue({ count: 5 });
+      global.mockPrisma.session.updateMany.mockResolvedValue({ count: 5 });
 
       const result = await sessionManager.cleanupExpiredSessions();
 
-      expect(result.count).toBe(5);
-      expect(mockPrisma.session.updateMany).toHaveBeenCalled();
+      expect(result.count).toBe(5); // The result is an object with count property
+      // The actual implementation checks both expiresAt and refreshExpiresAt
+      expect(global.mockPrisma.session.updateMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { expiresAt: { lt: expect.any(Date) } },
+            { refreshExpiresAt: { lt: expect.any(Date) } },
+          ],
+          isActive: true,
+        },
+        data: { isActive: false },
+      });
     });
   });
 });

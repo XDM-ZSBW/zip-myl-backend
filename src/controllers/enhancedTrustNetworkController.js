@@ -1,5 +1,5 @@
 const enhancedTrustNetworkService = require('../services/enhancedTrustNetworkService');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 class EnhancedTrustNetworkController {
   /**

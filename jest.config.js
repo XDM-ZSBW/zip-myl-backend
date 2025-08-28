@@ -37,6 +37,12 @@ module.exports = {
   maxWorkers: '50%',
   maxConcurrency: 5,
   
+  // Force exit to prevent hanging
+  forceExit: true,
+  
+  // Detect open handles
+  detectOpenHandles: true,
+  
   // Verbose output for debugging
   verbose: true,
   

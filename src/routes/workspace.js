@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateDevice } = require('../middleware/auth');
-const { workspaceRateLimit } = require('../middleware/rateLimiter');
+const { generalRateLimit } = require('../middleware/rateLimiter');
 
 // Get all workspaces for device
 router.get('/',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     // TODO: Implement workspace listing
     res.json({
@@ -23,7 +23,7 @@ router.get('/',
 // Create new workspace
 router.post('/',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { name, description, type, settings, clientPlatform } = req.body;
 
@@ -47,7 +47,7 @@ router.post('/',
 // Get specific workspace
 router.get('/:workspaceId',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
 
@@ -72,7 +72,7 @@ router.get('/:workspaceId',
 // Update workspace
 router.put('/:workspaceId',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { name, description, settings } = req.body;
@@ -95,7 +95,7 @@ router.put('/:workspaceId',
 // Delete workspace
 router.delete('/:workspaceId',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
 
@@ -115,7 +115,7 @@ router.delete('/:workspaceId',
 // Get workspace members
 router.get('/:workspaceId/members',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
 
@@ -135,7 +135,7 @@ router.get('/:workspaceId/members',
 // Add member to workspace
 router.post('/:workspaceId/members',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { email, role, permissions } = req.body;
@@ -160,7 +160,7 @@ router.post('/:workspaceId/members',
 // Remove member from workspace
 router.delete('/:workspaceId/members/:memberId',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId, memberId } = req.params;
 
@@ -181,7 +181,7 @@ router.delete('/:workspaceId/members/:memberId',
 // Get workspace settings
 router.get('/:workspaceId/settings',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
 
@@ -205,7 +205,7 @@ router.get('/:workspaceId/settings',
 // Update workspace settings
 router.put('/:workspaceId/settings',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { settings } = req.body;
@@ -226,7 +226,7 @@ router.put('/:workspaceId/settings',
 // Get workspace activity
 router.get('/:workspaceId/activity',
   authenticateDevice,
-  workspaceRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { limit = 50, offset = 0 } = req.query;

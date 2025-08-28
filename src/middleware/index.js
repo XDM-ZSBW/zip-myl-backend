@@ -1,70 +1,48 @@
 // Enhanced Rate Limiting
-const {
-  generalExtensionLimit,
-  authExtensionLimit,
-  pairingCodeLimit,
-  deviceRegistrationLimit,
-  nftLimit,
-  smartExtensionRateLimit,
-  bypassExtensionRateLimit,
-} = require('./enhancedRateLimiter');
+const enhancedRateLimiter = require('./enhancedRateLimiter');
 
 // Extension Validation
-const {
-  validateExtension,
-  requireExtensionPermissions,
-  bypassRateLimitForTrusted,
-  validateExtensionId,
-  detectExtensionType,
-  isTrustedExtension,
-} = require('./extensionValidation');
+const extensionValidation = require('./extensionValidation');
 
 // Request Logging
-const {
-  requestLogger,
-  errorLogger,
-  performanceLogger,
-  extensionAnalytics,
-  extractRequestInfo,
-  sanitizeData,
-} = require('./requestLogger');
+const requestLogger = require('./requestLogger');
 
 // Existing middleware
-const { corsConfig } = require('./cors');
-const { endpointRateLimit } = require('./rateLimiter');
-const { sanitizeInput, validateRequestSize } = require('./validation');
-const { errorHandler } = require('./errorHandler');
+const corsConfig = require('./cors');
+const rateLimiter = require('./rateLimiter');
+const validation = require('./validation');
+const errorHandler = require('./errorHandler');
 
 module.exports = {
   // Enhanced Rate Limiting
-  generalExtensionLimit,
-  authExtensionLimit,
-  pairingCodeLimit,
-  deviceRegistrationLimit,
-  nftLimit,
-  smartExtensionRateLimit,
-  bypassExtensionRateLimit,
+  generalExtensionLimit: enhancedRateLimiter.generalExtensionLimit,
+  authExtensionLimit: enhancedRateLimiter.authExtensionLimit,
+  pairingCodeLimit: enhancedRateLimiter.pairingCodeLimit,
+  deviceRegistrationLimit: enhancedRateLimiter.deviceRegistrationLimit,
+  nftLimit: enhancedRateLimiter.nftLimit,
+  smartExtensionRateLimit: enhancedRateLimiter.smartExtensionRateLimit,
+  bypassExtensionRateLimit: enhancedRateLimiter.bypassExtensionRateLimit,
 
   // Extension Validation
-  validateExtension,
-  requireExtensionPermissions,
-  bypassRateLimitForTrusted,
-  validateExtensionId,
-  detectExtensionType,
-  isTrustedExtension,
+  validateExtension: extensionValidation.validateExtension,
+  requireExtensionPermissions: extensionValidation.requireExtensionPermissions,
+  bypassRateLimitForTrusted: extensionValidation.bypassRateLimitForTrusted,
+  validateExtensionId: extensionValidation.validateExtensionId,
+  detectExtensionType: extensionValidation.detectExtensionType,
+  isTrustedExtension: extensionValidation.isTrustedExtension,
 
   // Request Logging
-  requestLogger,
-  errorLogger,
-  performanceLogger,
-  extensionAnalytics,
-  extractRequestInfo,
-  sanitizeData,
+  requestLogger: requestLogger.requestLogger,
+  errorLogger: requestLogger.errorLogger,
+  performanceLogger: requestLogger.performanceLogger,
+  extensionAnalytics: requestLogger.extensionAnalytics,
+  extractRequestInfo: requestLogger.extractRequestInfo,
+  sanitizeData: requestLogger.sanitizeData,
 
   // Existing Middleware
   corsConfig,
-  endpointRateLimit,
-  sanitizeInput,
-  validateRequestSize,
+  endpointRateLimit: rateLimiter.endpointRateLimit,
+  sanitizeInput: validation.sanitizeInput,
+  validateRequestSize: validation.validateRequestSize,
   errorHandler,
 };

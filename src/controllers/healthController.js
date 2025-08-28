@@ -1,5 +1,5 @@
-const { logger } = require('../utils/logger');
-const { config } = require('../utils/config');
+const logger = require('../utils/logger');
+const config = require('../utils/config');
 
 // Service health check functions
 const checkDatabaseConnection = async() => {

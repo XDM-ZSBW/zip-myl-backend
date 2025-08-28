@@ -1,7 +1,7 @@
 const express = require('express');
 const { validateExtension } = require('../middleware');
 const nftQueueService = require('../services/nftQueueService');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 

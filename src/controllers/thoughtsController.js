@@ -1,5 +1,5 @@
 const { thoughtService } = require('../services/thoughtService');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 const createThought = async(req, res, next) => {
   try {

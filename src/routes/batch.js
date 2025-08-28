@@ -1,6 +1,6 @@
 const express = require('express');
 const { validateExtension } = require('../middleware');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const { validateBatchOperations } = require('../middleware/validation');
 
 const router = express.Router();

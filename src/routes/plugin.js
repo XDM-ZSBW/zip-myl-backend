@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateDevice } = require('../middleware/auth');
-const { pluginRateLimit } = require('../middleware/rateLimiter');
+const { generalRateLimit } = require('../middleware/rateLimiter');
 
 // Get available plugins for client platform
 router.get('/',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { platform, category, search } = req.query;
     const clientPlatform = platform || req.clientPlatform;
@@ -29,7 +29,7 @@ router.get('/',
 // Get specific plugin details
 router.get('/:pluginId',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { pluginId } = req.params;
 
@@ -56,7 +56,7 @@ router.get('/:pluginId',
 // Install plugin for device
 router.post('/:pluginId/install',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { pluginId } = req.params;
     const { version, settings } = req.body;
@@ -79,7 +79,7 @@ router.post('/:pluginId/install',
 // Uninstall plugin from device
 router.delete('/:pluginId/install',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { pluginId } = req.params;
 
@@ -99,7 +99,7 @@ router.delete('/:pluginId/install',
 // Update plugin settings
 router.put('/:pluginId/settings',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { pluginId } = req.params;
     const { settings } = req.body;
@@ -120,7 +120,7 @@ router.put('/:pluginId/settings',
 // Get plugin settings
 router.get('/:pluginId/settings',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { pluginId } = req.params;
 
@@ -139,7 +139,7 @@ router.get('/:pluginId/settings',
 // Get installed plugins for device
 router.get('/installed/list',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     // TODO: Implement installed plugins listing
     res.json({
@@ -156,7 +156,7 @@ router.get('/installed/list',
 // Update installed plugin
 router.put('/installed/:pluginId/update',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { pluginId } = req.params;
     const { version } = req.body;
@@ -178,7 +178,7 @@ router.put('/installed/:pluginId/update',
 // Get plugin categories
 router.get('/categories/list',
   authenticateDevice,
-  pluginRateLimit,
+  generalRateLimit,
   (req, res) => {
     const { platform } = req.query;
     const clientPlatform = platform || req.clientPlatform;

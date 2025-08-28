@@ -11,8 +11,8 @@ dotenv.config();
 
 // Import configuration and utilities
 const config = require('./utils/config');
-const { logger } = require('./utils/logger');
-const { errorHandler } = require('./middleware/errorHandler');
+const logger = require('./utils/logger');
+const errorHandler = require('./middleware/errorHandler');
 const { endpointRateLimit } = require('./middleware/rateLimiter');
 const { corsConfig } = require('./middleware/cors');
 const { sanitizeInput, validateRequestSize } = require('./middleware/validation');

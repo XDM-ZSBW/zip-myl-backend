@@ -1,4 +1,4 @@
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const encryptionService = require('./encryptionService');
 const { simpleKeyManagementService: keyManagementService } = require('./simpleKeyManagementService');
 
@@ -40,20 +40,22 @@ class TrustService {
         screenResolution: deviceInfo.screenResolution,
         timezone: deviceInfo.timezone,
         publicKey: deviceInfo.publicKey, // For key exchange
-        isTrusted: false, // Requires explicit trust
+        isTrusted: true, // Auto-trust devices for the same user
+        trustedBy: deviceId, // Self-trust for initial registration
+        trustedAt: new Date(),
         createdAt: new Date(),
         lastSeen: new Date(),
         permissions: {
-          canRead: false,
-          canWrite: false,
-          canShare: false,
+          canRead: true, // Default read permission for own device
+          canWrite: true, // Default write permission for own device
+          canShare: false, // No sharing by default
         },
       };
 
       this.trustedDevices.set(deviceId, device);
 
-      logger.info(`Device registered: ${deviceId} for user: ${userId}`);
-      return { deviceId, requiresTrust: true };
+      logger.info(`Device registered and auto-trusted: ${deviceId} for user: ${userId}`);
+      return { deviceId, requiresTrust: false, isTrusted: true, permissions: device.permissions };
     } catch (error) {
       logger.error('Error registering device:', error);
       throw error;
@@ -158,6 +160,39 @@ class TrustService {
   async isDeviceTrusted(deviceId) {
     const device = this.trustedDevices.get(deviceId);
     return device ? device.isTrusted : false;
+  }
+
+  /**
+   * Check if a device is trusted for a specific user
+   */
+  async isDeviceTrustedForUser(deviceId, userId) {
+    const device = this.trustedDevices.get(deviceId);
+    if (!device) return false;
+    
+    // Device is trusted if it belongs to the same user (auto-trusted)
+    // or if it has been explicitly trusted by another trusted device
+    return device.userId === userId || device.isTrusted;
+  }
+
+  /**
+   * Get device permissions for a specific user
+   */
+  async getDevicePermissions(deviceId, userId) {
+    const device = this.trustedDevices.get(deviceId);
+    if (!device) return null;
+    
+    // If device belongs to the same user, return full permissions
+    if (device.userId === userId) {
+      return {
+        canRead: true,
+        canWrite: true,
+        canShare: false, // No sharing by default for security
+        isOwner: true
+      };
+    }
+    
+    // Return explicit permissions if device is trusted by another device
+    return device.isTrusted ? device.permissions : null;
   }
 
   /**

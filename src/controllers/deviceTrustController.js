@@ -1,4 +1,4 @@
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const trustService = require('../services/trustService');
 const encryptionService = require('../services/encryptionService');
 
@@ -180,7 +180,7 @@ class DeviceTrustController {
         });
       }
 
-      // Verify device is trusted
+      // Verify device is trusted (auto-trusted for same user)
       if (!(await trustService.isDeviceTrusted(deviceId))) {
         return res.status(403).json({
           error: 'Device not trusted',
@@ -433,10 +433,164 @@ class DeviceTrustController {
     }
   }
 
-  /**
+    /**
+   * Get pairing code status with enhanced information
+   */
+   async getPairingCodeStatus(req, res) {
+     try {
+       const { pairingCode } = req.params;
+       const { deviceId } = req.query;
+
+       if (!pairingCode) {
+         return res.status(400).json({
+           success: false,
+           error: {
+             code: 'MISSING_PAIRING_CODE',
+             message: 'Pairing code parameter is required',
+             userAction: 'Please provide a valid pairing code',
+           },
+         });
+       }
+
+       // Get status from trust service
+       const status = await trustService.getPairingCodeStatus(pairingCode, deviceId);
+
+       if (!status) {
+         return res.status(404).json({
+           success: false,
+           error: {
+             code: 'PAIRING_CODE_NOT_FOUND',
+             message: 'Pairing code not found or expired',
+             userAction: 'Please generate a new pairing code',
+           },
+         });
+       }
+
+       // Calculate enhanced status information
+       const progress = this.calculateProgress(status);
+       const estimatedTime = this.estimateCompletionTime(status);
+       const canRetry = this.canRetryGeneration(status);
+       const retryAfter = this.getRetryAfterTime(status);
+
+       res.json({
+         success: true,
+         pending: status.status !== 'completed' && status.status !== 'failed',
+         status: status.status,
+         progress,
+         currentStep: status.currentStep || 'initializing',
+         message: status.message || this.getStatusMessage(status.status),
+         estimatedTime,
+         canRetry,
+         retryAfter,
+         queuePosition: status.queuePosition || null,
+         errorDetails: status.errorDetails || null,
+         generationStartedAt: status.createdAt,
+         lastActivityAt: status.lastActivityAt || status.updatedAt,
+         pairingCode,
+         format: status.format || 'uuid',
+         expiresAt: status.expiresAt,
+         deviceId: status.deviceId,
+         nftStatus: status.nftStatus || null,
+       });
+     } catch (error) {
+       logger.error('Error getting pairing code status:', error);
+       res.status(500).json({
+         success: false,
+         error: {
+           code: 'STATUS_RETRIEVAL_FAILED',
+           message: 'Failed to retrieve pairing code status',
+           userAction: 'Please try again or contact support',
+         },
+       });
+     }
+   }
+
+   /**
+   * Calculate progress percentage based on status
+   */
+   calculateProgress(status) {
+     if (!status || !status.createdAt) return 0;
+     
+     const now = new Date();
+     const startTime = new Date(status.createdAt);
+     const elapsed = now - startTime;
+     
+     // Estimate total time based on status
+     const estimatedTotalTime = this.estimateTotalTime(status.status);
+     
+     if (estimatedTotalTime <= 0) return 100;
+     
+     const progress = Math.min(Math.round((elapsed / estimatedTotalTime) * 100), 100);
+     return Math.max(progress, 0);
+   }
+
+   /**
+   * Estimate completion time in seconds
+   */
+   estimateCompletionTime(status) {
+     if (!status || !status.createdAt) return null;
+     
+     const now = new Date();
+     const startTime = new Date(status.createdAt);
+     const elapsed = now - startTime;
+     
+     const estimatedTotalTime = this.estimateTotalTime(status.status);
+     if (estimatedTotalTime <= 0) return 0;
+     
+     const remaining = estimatedTotalTime - elapsed;
+     return Math.max(Math.round(remaining / 1000), 0);
+   }
+
+   /**
+   * Estimate total time for generation based on status
+   */
+   estimateTotalTime(status) {
+     const timeEstimates = {
+       'queued': 30000,      // 30 seconds
+       'generating': 45000,  // 45 seconds
+       'validating': 15000,  // 15 seconds
+       'completed': 0,       // Already done
+       'failed': 0,          // Failed
+     };
+     
+     return timeEstimates[status] || 60000; // Default 60 seconds
+   }
+
+   /**
+   * Check if generation can be retried
+   */
+   canRetryGeneration(status) {
+     if (!status) return false;
+     
+     // Can retry if failed and retry count is below limit
+     if (status.status === 'failed') {
+       const retryCount = status.retryCount || 0;
+       const maxRetries = status.maxRetries || 3;
+       return retryCount < maxRetries;
+     }
+     
+     return false;
+   }
+
+   /**
+   * Get retry after time in seconds
+   */
+   getRetryAfterTime(status) {
+     if (!status) return 0;
+     
+     if (status.status === 'failed') {
+       const retryCount = status.retryCount || 0;
+       // Exponential backoff: 30s, 60s, 120s
+       return Math.min(30 * Math.pow(2, retryCount), 300);
+     }
+     
+     return 0;
+   }
+
+   /**
    * Stream real-time pairing code status updates via Server-Sent Events
    */
-  async streamPairingCodeStatus(req, res) {
+   async streamPairingCodeStatus(req, res) {
     try {
       const { pairingCode } = req.params;
       const { deviceId } = req.query;

@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 /**
  * Generic validation middleware

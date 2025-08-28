@@ -1,5 +1,5 @@
 const rateLimit = require('express-rate-limit');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 /**
  * Enhanced Rate Limiting for Extension Endpoints

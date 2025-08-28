@@ -9,7 +9,7 @@ const {
 } = require('../middleware/auth');
 const {
   apiKeyRateLimit,
-  strictRateLimit,
+  generalRateLimit,
 } = require('../middleware/rateLimiter');
 
 // All admin routes require API key authentication
@@ -67,7 +67,7 @@ router.get('/stats/system',
 
 // Audit Logs
 router.get('/audit/logs',
-  strictRateLimit,
+  generalRateLimit,
   requirePermissions(['audit:read']),
   adminController.getAuditLogs,
 );

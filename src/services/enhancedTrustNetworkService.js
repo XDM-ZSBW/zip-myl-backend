@@ -1,4 +1,4 @@
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const { databaseService } = require('./databaseService');
 const { cacheService } = require('./cacheService');
 const { monitoringService } = require('./monitoringService');

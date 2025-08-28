@@ -1,25 +1,17 @@
 const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
-const { PrismaClient } = require('@prisma/client');
-const thoughtService = require('../../src/services/thoughtService.js');
+const { thoughtService } = require('../../src/services/thoughtService.js');
+const { Thought } = require('../../src/models/Thought');
 const { v4: uuidv4 } = require('uuid');
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/test_db',
-    },
-  },
-});
 
 describe('Thought Service', () => {
   beforeEach(async() => {
-    // Clean up test data
-    await prisma.thought.deleteMany();
+    // Reset all mocks
+    jest.clearAllMocks();
   });
 
   afterEach(async() => {
-    // Clean up test data
-    await prisma.thought.deleteMany();
+    // Reset all mocks
+    jest.clearAllMocks();
   });
 
   describe('createThought', () => {
@@ -30,6 +22,27 @@ describe('Thought Service', () => {
         url: 'https://example.com',
         userId: uuidv4(),
       };
+
+      const mockThought = {
+        id: uuidv4(),
+        ...thoughtData,
+        timestamp: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        toJSON: () => ({
+          id: mockThought.id,
+          content: mockThought.content,
+          metadata: mockThought.metadata,
+          userId: mockThought.userId,
+          url: mockThought.url,
+          timestamp: mockThought.timestamp,
+          createdAt: mockThought.createdAt,
+          updatedAt: mockThought.updatedAt,
+        }),
+      };
+
+      // Mock the Thought.create method
+      Thought.create.mockResolvedValue(mockThought);
 
       const thought = await thoughtService.createThought(thoughtData);
 
@@ -44,6 +57,30 @@ describe('Thought Service', () => {
       const thoughtData = {
         content: 'Minimal thought content',
       };
+
+      const mockThought = {
+        id: uuidv4(),
+        content: thoughtData.content,
+        metadata: {},
+        url: null,
+        userId: null,
+        timestamp: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        toJSON: () => ({
+          id: mockThought.id,
+          content: mockThought.content,
+          metadata: mockThought.metadata,
+          userId: mockThought.userId,
+          url: mockThought.url,
+          timestamp: mockThought.timestamp,
+          createdAt: mockThought.createdAt,
+          updatedAt: mockThought.updatedAt,
+        }),
+      };
+
+      // Mock the Thought.create method
+      Thought.create.mockResolvedValue(mockThought);
 
       const thought = await thoughtService.createThought(thoughtData);
 
@@ -62,6 +99,30 @@ describe('Thought Service', () => {
         userId: uuidv4(),
       };
 
+      const mockThought = {
+        id: uuidv4(),
+        ...thoughtData,
+        metadata: {},
+        url: null,
+        timestamp: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        toJSON: () => ({
+          id: mockThought.id,
+          content: mockThought.content,
+          metadata: mockThought.metadata,
+          userId: mockThought.userId,
+          url: mockThought.url,
+          timestamp: mockThought.timestamp,
+          createdAt: mockThought.createdAt,
+          updatedAt: mockThought.updatedAt,
+        }),
+      };
+
+      // Mock the Thought methods
+      Thought.create.mockResolvedValue(mockThought);
+      Thought.findById.mockResolvedValue(mockThought);
+
       const createdThought = await thoughtService.createThought(thoughtData);
       const retrievedThought = await thoughtService.getThoughtById(createdThought.id);
 
@@ -72,6 +133,10 @@ describe('Thought Service', () => {
 
     it('should return null for non-existent thought', async() => {
       const nonExistentId = uuidv4();
+      
+      // Mock the Thought.findById method to return null
+      Thought.findById.mockResolvedValue(null);
+
       const thought = await thoughtService.getThoughtById(nonExistentId);
 
       expect(thought).toBeNull();
@@ -84,6 +149,50 @@ describe('Thought Service', () => {
         content: 'Original content',
         userId: uuidv4(),
       };
+
+      const mockThought = {
+        id: uuidv4(),
+        ...thoughtData,
+        metadata: {},
+        url: null,
+        timestamp: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        toJSON: () => ({
+          id: mockThought.id,
+          content: mockThought.content,
+          metadata: mockThought.metadata,
+          userId: mockThought.userId,
+          url: mockThought.url,
+          timestamp: mockThought.timestamp,
+          createdAt: mockThought.createdAt,
+          updatedAt: mockThought.updatedAt,
+        }),
+        update: jest.fn().mockResolvedValue({
+          id: uuidv4(),
+          content: 'Updated content',
+          metadata: { updated: true },
+          userId: thoughtData.userId,
+          url: null,
+          timestamp: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          toJSON: () => ({
+            id: uuidv4(),
+            content: 'Updated content',
+            metadata: { updated: true },
+            userId: thoughtData.userId,
+            url: null,
+            timestamp: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
+        }),
+      };
+
+      // Mock the Thought methods
+      Thought.create.mockResolvedValue(mockThought);
+      Thought.findById.mockResolvedValue(mockThought);
 
       const createdThought = await thoughtService.createThought(thoughtData);
 
@@ -102,6 +211,9 @@ describe('Thought Service', () => {
       const nonExistentId = uuidv4();
       const updateData = { content: 'Updated content' };
 
+      // Mock the Thought.findById method to return null
+      Thought.findById.mockResolvedValue(null);
+
       await expect(thoughtService.updateThought(nonExistentId, updateData))
         .rejects.toThrow('Thought not found');
     });
@@ -114,6 +226,32 @@ describe('Thought Service', () => {
         userId: uuidv4(),
       };
 
+      const mockThought = {
+        id: uuidv4(),
+        ...thoughtData,
+        metadata: {},
+        url: null,
+        timestamp: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        toJSON: () => ({
+          id: mockThought.id,
+          content: mockThought.content,
+          metadata: mockThought.metadata,
+          userId: mockThought.userId,
+          url: mockThought.url,
+          timestamp: mockThought.timestamp,
+          createdAt: mockThought.createdAt,
+          updatedAt: mockThought.updatedAt,
+        }),
+        delete: jest.fn().mockResolvedValue(true),
+      };
+
+      // Mock the Thought methods
+      Thought.create.mockResolvedValue(mockThought);
+      Thought.findById.mockResolvedValue(mockThought);
+      Thought.findById.mockResolvedValueOnce(mockThought).mockResolvedValueOnce(null); // First call returns thought, second returns null
+
       const createdThought = await thoughtService.createThought(thoughtData);
       const result = await thoughtService.deleteThought(createdThought.id);
 
@@ -125,6 +263,9 @@ describe('Thought Service', () => {
 
     it('should throw error for non-existent thought', async() => {
       const nonExistentId = uuidv4();
+
+      // Mock the Thought.findById method to return null
+      Thought.findById.mockResolvedValue(null);
 
       await expect(thoughtService.deleteThought(nonExistentId))
         .rejects.toThrow('Thought not found');
