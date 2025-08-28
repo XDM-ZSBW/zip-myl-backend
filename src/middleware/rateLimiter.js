@@ -95,6 +95,63 @@ const rateLimitConfigs = {
     }
   },
 
+  // Enhanced Trust Network rate limit
+  enhancedTrustNetwork: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 requests per window
+    message: {
+      error: 'Too many enhanced trust network requests',
+      message: 'Too many enhanced trust network requests. Please try again later.',
+      retryAfter: 900
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    }),
+    keyGenerator: (req) => {
+      return `enhanced_trust:${req.deviceId || req.ip || 'anonymous'}`;
+    }
+  },
+
+  // Enhanced sites configuration rate limit
+  enhancedSites: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // 10 requests per window
+    message: {
+      error: 'Too many enhanced sites requests',
+      message: 'Too many enhanced sites requests. Please try again later.',
+      retryAfter: 900
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    }),
+    keyGenerator: (req) => {
+      return `enhanced_sites:${req.deviceId || req.ip || 'anonymous'}`;
+    }
+  },
+
+  // Permissions validation rate limit
+  permissions: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 requests per window
+    message: {
+      error: 'Too many permission validation requests',
+      message: 'Too many permission validation requests. Please try again later.',
+      retryAfter: 900
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    }),
+    keyGenerator: (req) => {
+      return `permissions:${req.deviceId || req.ip || 'anonymous'}`;
+    }
+  },
+
   // Strict rate limit for sensitive operations
   strict: {
     windowMs: 5 * 60 * 1000, // 5 minutes
@@ -143,6 +200,9 @@ const authRateLimit = createRateLimiter(rateLimitConfigs.auth);
 const deviceRegistrationRateLimit = createRateLimiter(rateLimitConfigs.deviceRegistration);
 const apiKeyRateLimit = createRateLimiter(rateLimitConfigs.apiKey);
 const strictRateLimit = createRateLimiter(rateLimitConfigs.strict);
+const enhancedTrustNetworkRateLimit = createRateLimiter(rateLimitConfigs.enhancedTrustNetwork);
+const enhancedSitesRateLimit = createRateLimiter(rateLimitConfigs.enhancedSites);
+const permissionsRateLimit = createRateLimiter(rateLimitConfigs.permissions);
 
 // Dynamic rate limiter based on device type
 const dynamicRateLimit = (req, res, next) => {
@@ -239,6 +299,9 @@ module.exports = {
   deviceRegistrationRateLimit,
   apiKeyRateLimit,
   strictRateLimit,
+  enhancedTrustNetworkRateLimit,
+  enhancedSitesRateLimit,
+  permissionsRateLimit,
   dynamicRateLimit,
   bypassRateLimit,
   endpointRateLimit,
