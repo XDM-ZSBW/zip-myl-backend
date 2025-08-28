@@ -105,6 +105,15 @@ const config = {
   ENABLE_AUDIT_LOGGING: process.env.ENABLE_AUDIT_LOGGING !== 'false',
   ENABLE_RATE_LIMITING: process.env.ENABLE_RATE_LIMITING !== 'false',
   ENABLE_COMPRESSION: process.env.ENABLE_COMPRESSION !== 'false',
+  features: {
+    enableDeviceTrust: process.env.ENABLE_DEVICE_TRUST !== 'false',
+    enableCrossDeviceSharing: process.env.ENABLE_CROSS_DEVICE_SHARING !== 'false',
+    enableEncryption: process.env.ENABLE_ENCRYPTION !== 'false',
+    enableAuditLogging: process.env.ENABLE_AUDIT_LOGGING !== 'false',
+    enableRateLimiting: process.env.ENABLE_RATE_LIMITING !== 'false',
+    enableCompression: process.env.ENABLE_COMPRESSION !== 'false',
+    enableCaching: process.env.ENABLE_CACHING !== 'false',
+  },
 
   // Google Cloud Configuration
   GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT || 'zip-myl-backend',
@@ -117,6 +126,15 @@ const config = {
   REDIS_PORT: parseInt(process.env.REDIS_PORT) || 6379,
   REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   REDIS_TTL: parseInt(process.env.REDIS_TTL) || 3600,
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD,
+    db: parseInt(process.env.REDIS_DB) || 0,
+    ttl: parseInt(process.env.REDIS_TTL) || 3600,
+    retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY) || 100,
+    maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES) || 3,
+  },
 
   // Email Configuration (for notifications)
   SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
