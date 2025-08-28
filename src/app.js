@@ -6,31 +6,28 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 
+// Load environment variables first
+dotenv.config();
+
+// Import configuration and utilities
+const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
 const { endpointRateLimit } = require('./middleware/rateLimiter');
 const { corsConfig } = require('./middleware/cors');
 const { sanitizeInput, validateRequestSize } = require('./middleware/validation');
-const apiRoutes = require('./routes/api');
-const apiV2Routes = require('./routes/api-v2');
-const healthRoutes = require('./routes/health');
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const docsRoutes = require('./routes/docs');
-const openApiRoutes = require('./routes/openapi');
-const rootRoutes = require('./routes/root');
-const botRoutes = require('./routes/bot');
-const testRoutes = require('./routes/test');
-const minimalRoutes = require('./routes/minimal');
-const encryptedRoutes = require('./routes/encrypted');
-const thoughtsRoutes = require('./routes/thoughts');
-const enhancedTrustNetworkRoutes = require('./routes/enhancedTrustNetwork');
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+
+// Validate configuration
+const configValidation = config.validate();
+if (configValidation.warnings.length > 0) {
+  console.log('⚠️  Configuration warnings:', configValidation.warnings);
+}
+if (configValidation.errors.length > 0) {
+  console.error('❌ Configuration errors:', configValidation.errors);
+  process.exit(1);
+}
 
 // Security middleware
 app.use(helmet({
@@ -58,74 +55,102 @@ app.use(morgan('combined', {
 }));
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: config.MAX_REQUEST_SIZE }));
+app.use(express.urlencoded({ extended: true, limit: config.MAX_REQUEST_SIZE }));
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Security middleware
 app.use(sanitizeInput);
-app.use(validateRequestSize('10mb'));
+app.use(validateRequestSize(config.MAX_REQUEST_SIZE));
 
 // Rate limiting
-app.use(endpointRateLimit);
+if (config.ENABLE_RATE_LIMITING) {
+  app.use(endpointRateLimit);
+  console.log('✅ Rate limiting enabled');
+} else {
+  console.log('⚠️  Rate limiting disabled');
+}
 
-// Minimal test route (first priority)
-console.log('Loading minimal routes...');
-app.use('/minimal', minimalRoutes);
-console.log('Minimal routes loaded successfully');
+// Load routes with error handling
+const loadRoutes = (routeName, routePath, routeModule) => {
+  try {
+    console.log(`Loading ${routeName}...`);
+    app.use(routePath, routeModule);
+    console.log(`✅ ${routeName} loaded successfully`);
+  } catch (error) {
+    console.error(`❌ Failed to load ${routeName}:`, error.message);
+    logger.error(`Failed to load ${routeName}`, { error: error.message });
+  }
+};
 
-// Test route
-app.use('/test', testRoutes);
+// Load essential routes first
+try {
+  // Minimal test route (first priority)
+  const minimalRoutes = require('./routes/minimal');
+  loadRoutes('minimal routes', '/minimal', minimalRoutes);
 
-// Bot-friendly routes (before API routes)
-app.use('/bot', botRoutes);
+  // Health check endpoint (before API routes)
+  const healthRoutes = require('./routes/health');
+  loadRoutes('health routes', '/health', healthRoutes);
 
-// Documentation routes (before API routes)
-app.use('/docs', docsRoutes);
-app.use('/api/docs', openApiRoutes);
+  // Test route
+  const testRoutes = require('./routes/test');
+  loadRoutes('test routes', '/test', testRoutes);
 
-// Health check endpoint (before API routes)
-app.use('/health', healthRoutes);
+  // Bot-friendly routes (before API routes)
+  const botRoutes = require('./routes/bot');
+  loadRoutes('bot routes', '/bot', botRoutes);
 
-// Authentication routes
-app.use('/api/v1/auth', authRoutes);
+  // Documentation routes (before API routes)
+  const docsRoutes = require('./routes/docs');
+  loadRoutes('docs routes', '/docs', docsRoutes);
+  
+  const openApiRoutes = require('./routes/openapi');
+  loadRoutes('OpenAPI routes', '/api/docs', openApiRoutes);
 
-// Admin routes
-app.use('/api/v1/admin', adminRoutes);
+  // Authentication routes
+  const authRoutes = require('./routes/auth');
+  loadRoutes('auth routes', '/api/v1/auth', authRoutes);
 
-// API routes
-app.use('/api', apiRoutes);
+  // Admin routes
+  const adminRoutes = require('./routes/admin');
+  loadRoutes('admin routes', '/api/v1/admin', adminRoutes);
 
-// API v2 routes (Multi-Client Ecosystem)
-app.use('/api', apiV2Routes);
+  // API routes
+  const apiRoutes = require('./routes/api');
+  loadRoutes('API routes', '/api', apiRoutes);
 
-// Enhanced Trust Network routes
-console.log('Loading Enhanced Trust Network routes...');
-app.use('/api', enhancedTrustNetworkRoutes);
-console.log('Enhanced Trust Network routes loaded successfully');
+  // API v2 routes (Multi-Client Ecosystem)
+  const apiV2Routes = require('./routes/api-v2');
+  loadRoutes('API v2 routes', '/api', apiV2Routes);
 
-// Encrypted routes (device registration, pairing, thoughts)
-console.log('Loading encrypted routes...');
-app.use('/api/v1/encrypted', encryptedRoutes);
-console.log('Encrypted routes loaded successfully');
+  // Encrypted routes (device registration, pairing, thoughts)
+  const encryptedRoutes = require('./routes/encrypted');
+  loadRoutes('encrypted routes', '/api/v1/encrypted', encryptedRoutes);
 
-// Thoughts routes
-console.log('Loading thoughts routes...');
-app.use('/api/v1/thoughts', thoughtsRoutes);
-console.log('Thoughts routes loaded successfully');
+  // Thoughts routes
+  const thoughtsRoutes = require('./routes/thoughts');
+  loadRoutes('thoughts routes', '/api/v1/thoughts', thoughtsRoutes);
 
-// Root routes (must be after API routes)
-app.use('/', rootRoutes);
+  // Root routes (must be after API routes)
+  const rootRoutes = require('./routes/root');
+  loadRoutes('root routes', '/', rootRoutes);
+
+} catch (error) {
+  console.error('❌ Critical error loading routes:', error.message);
+  logger.error('Critical error loading routes', { error: error.message });
+}
 
 // Metrics endpoint
-app.get('/metrics', (req, res) => {
-  res.set('Content-Type', 'text/plain');
-  res.send('# Metrics endpoint - Prometheus metrics will be available here');
-});
-
-// Root endpoint is now handled by rootRoutes
+if (config.ENABLE_METRICS) {
+  app.get('/metrics', (req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.send('# Metrics endpoint - Prometheus metrics will be available here');
+  });
+  console.log('✅ Metrics endpoint enabled');
+}
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -151,17 +176,22 @@ process.on('SIGINT', () => {
 });
 
 // Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+const server = app.listen(config.PORT, config.HOST, () => {
+  logger.info(`Server running on port ${config.PORT}`);
+  logger.info(`Environment: ${config.NODE_ENV}`);
+  console.log(`🚀 Server started successfully on port ${config.PORT}`);
+  console.log(`🌍 Environment: ${config.NODE_ENV}`);
+  console.log(`🔒 Security: ${config.SECURITY_HEADERS ? 'enabled' : 'disabled'}`);
+  console.log(`📊 Metrics: ${config.ENABLE_METRICS ? 'enabled' : 'disabled'}`);
 });
 
-// Initialize WebSocket service for real-time communication
-if (process.env.ENABLE_WEBSOCKET !== 'false') {
+// Initialize WebSocket service for real-time communication (optional)
+if (config.ENABLE_WEBSOCKET) {
   try {
     const WebSocketService = require('./services/websocketService');
     const wsService = new WebSocketService(server);
     logger.info('WebSocket service initialized successfully');
+    console.log('✅ WebSocket service initialized');
     
     // Add WebSocket stats endpoint
     app.get('/ws/stats', (req, res) => {
@@ -171,7 +201,8 @@ if (process.env.ENABLE_WEBSOCKET !== 'false') {
       });
     });
   } catch (error) {
-    logger.error('Failed to initialize WebSocket service:', error);
+    logger.warn('Failed to initialize WebSocket service:', error.message);
+    console.log('⚠️  WebSocket service not available (optional)');
   }
 }
 

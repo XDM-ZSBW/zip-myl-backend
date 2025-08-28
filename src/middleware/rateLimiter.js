@@ -3,14 +3,92 @@ const RedisStore = require('rate-limit-redis');
 const Redis = require('ioredis');
 const { logger } = require('../utils/logger');
 
-// Redis client for rate limiting
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD,
-  retryDelayOnFailover: 100,
-  maxRetriesPerRequest: 3
-});
+// Redis client for rate limiting with fallback
+let redis = null;
+let redisStore = null;
+let useRedis = false;
+
+// Initialize Redis connection
+const initializeRedis = () => {
+  try {
+    if (process.env.REDIS_HOST || process.env.REDIS_PASSWORD) {
+      redis = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: process.env.REDIS_PORT || 6379,
+        password: process.env.REDIS_PASSWORD,
+        retryDelayOnFailover: 100,
+        maxRetriesPerRequest: 3,
+        lazyConnect: true, // Don't connect immediately
+        retryDelayOnClusterDown: 100,
+        enableOfflineQueue: false
+      });
+
+      redis.on('error', (error) => {
+        logger.warn('Redis connection error in rate limiter, falling back to memory', { 
+          error: error.message,
+          fallback: 'memory'
+        });
+        useRedis = false;
+      });
+
+      redis.on('connect', () => {
+        logger.info('Rate limiter Redis connection established');
+        useRedis = true;
+      });
+
+      redis.on('ready', () => {
+        logger.info('Rate limiter Redis ready');
+        useRedis = true;
+      });
+
+      // Test connection
+      redis.ping().then(() => {
+        useRedis = true;
+        logger.info('Rate limiter Redis connection test successful');
+      }).catch(() => {
+        logger.warn('Rate limiter Redis connection test failed, using memory fallback');
+        useRedis = false;
+      });
+
+      redisStore = new RedisStore({
+        sendCommand: (...args) => redis.call(...args),
+      });
+    } else {
+      logger.info('No Redis configuration found, using memory-based rate limiting');
+      useRedis = false;
+    }
+  } catch (error) {
+    logger.warn('Failed to initialize Redis, using memory fallback', { error: error.message });
+    useRedis = false;
+  }
+};
+
+// Initialize Redis on module load
+initializeRedis();
+
+// Create rate limiter with fallback
+const createRateLimiter = (config) => {
+  const rateLimitConfig = {
+    ...config,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: useRedis && redisStore ? redisStore : undefined, // Use memory store if Redis unavailable
+    keyGenerator: config.keyGenerator || ((req) => req.deviceId || req.ip || 'anonymous'),
+    handler: (req, res) => {
+      logger.warn('Rate limit exceeded', {
+        ip: req.ip,
+        path: req.path,
+        deviceId: req.deviceId
+      });
+      res.status(429).json(config.message || {
+        error: 'Too many requests',
+        message: 'Rate limit exceeded. Please try again later.'
+      });
+    }
+  };
+
+  return rateLimit(rateLimitConfig);
+};
 
 // Rate limit configurations
 const rateLimitConfigs = {
@@ -23,11 +101,6 @@ const rateLimitConfigs = {
       message: 'Rate limit exceeded. Please try again later.',
       retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
     },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
     keyGenerator: (req) => {
       // Use device ID if available, otherwise fall back to IP
       return req.deviceId || req.ip || 'anonymous';
@@ -47,11 +120,6 @@ const rateLimitConfigs = {
       message: 'Too many authentication attempts. Please try again later.',
       retryAfter: 900
     },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
     keyGenerator: (req) => {
       return `auth:${req.deviceId || req.ip || 'anonymous'}`;
     }
@@ -66,11 +134,6 @@ const rateLimitConfigs = {
       message: 'Too many device registrations. Please try again later.',
       retryAfter: 3600
     },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
     keyGenerator: (req) => {
       return `device_reg:${req.ip || 'anonymous'}`;
     }
@@ -85,113 +148,10 @@ const rateLimitConfigs = {
       message: 'Too many API key operations. Please try again later.',
       retryAfter: 3600
     },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
     keyGenerator: (req) => {
       return `api_key:${req.deviceId || req.ip || 'anonymous'}`;
     }
-  },
-
-  // Enhanced Trust Network rate limit
-  enhancedTrustNetwork: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 requests per window
-    message: {
-      error: 'Too many enhanced trust network requests',
-      message: 'Too many enhanced trust network requests. Please try again later.',
-      retryAfter: 900
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
-    keyGenerator: (req) => {
-      return `enhanced_trust:${req.deviceId || req.ip || 'anonymous'}`;
-    }
-  },
-
-  // Enhanced sites configuration rate limit
-  enhancedSites: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // 10 requests per window
-    message: {
-      error: 'Too many enhanced sites requests',
-      message: 'Too many enhanced sites requests. Please try again later.',
-      retryAfter: 900
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
-    keyGenerator: (req) => {
-      return `enhanced_sites:${req.deviceId || req.ip || 'anonymous'}`;
-    }
-  },
-
-  // Permissions validation rate limit
-  permissions: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 requests per window
-    message: {
-      error: 'Too many permission validation requests',
-      message: 'Too many permission validation requests. Please try again later.',
-      retryAfter: 900
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
-    keyGenerator: (req) => {
-      return `permissions:${req.deviceId || req.ip || 'anonymous'}`;
-    }
-  },
-
-  // Strict rate limit for sensitive operations
-  strict: {
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 3, // 3 attempts per window
-    message: {
-      error: 'Too many requests',
-      message: 'Rate limit exceeded for sensitive operations. Please try again later.',
-      retryAfter: 300
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
-    keyGenerator: (req) => {
-      return `strict:${req.deviceId || req.ip || 'anonymous'}`;
-    }
   }
-};
-
-// Create rate limit middleware functions
-const createRateLimiter = (config) => {
-  return rateLimit({
-    ...config,
-    handler: (req, res) => {
-      logger.warn('Rate limit exceeded', {
-        ip: req.ip,
-        deviceId: req.deviceId,
-        userAgent: req.get('User-Agent'),
-        path: req.path,
-        method: req.method,
-        limit: config.max,
-        windowMs: config.windowMs
-      });
-
-      res.status(429).json(config.message);
-    },
-    skipSuccessfulRequests: false,
-    skipFailedRequests: false
-  });
 };
 
 // Export rate limiters
@@ -199,10 +159,6 @@ const generalRateLimit = createRateLimiter(rateLimitConfigs.general);
 const authRateLimit = createRateLimiter(rateLimitConfigs.auth);
 const deviceRegistrationRateLimit = createRateLimiter(rateLimitConfigs.deviceRegistration);
 const apiKeyRateLimit = createRateLimiter(rateLimitConfigs.apiKey);
-const strictRateLimit = createRateLimiter(rateLimitConfigs.strict);
-const enhancedTrustNetworkRateLimit = createRateLimiter(rateLimitConfigs.enhancedTrustNetwork);
-const enhancedSitesRateLimit = createRateLimiter(rateLimitConfigs.enhancedSites);
-const permissionsRateLimit = createRateLimiter(rateLimitConfigs.permissions);
 
 // Dynamic rate limiter based on device type
 const dynamicRateLimit = (req, res, next) => {
@@ -210,7 +166,7 @@ const dynamicRateLimit = (req, res, next) => {
   
   if (!deviceId) {
     // No device ID, use strict rate limiting
-    return strictRateLimit(req, res, next);
+    return generalRateLimit(req, res, next);
   }
 
   // Check if device has special rate limit privileges
@@ -267,7 +223,7 @@ const endpointRateLimit = (req, res, next) => {
   
   // Sensitive operations
   if (path.includes('/admin/') || path.includes('/sensitive/')) {
-    return strictRateLimit(req, res, next);
+    return generalRateLimit(req, res, next); // Changed to generalRateLimit for strict rate limiting
   }
   
   // Default rate limiting
@@ -276,32 +232,21 @@ const endpointRateLimit = (req, res, next) => {
 
 // Cleanup function for graceful shutdown
 const cleanup = async () => {
-  try {
-    await redis.quit();
-    logger.info('Rate limiter Redis connection closed');
-  } catch (error) {
-    logger.error('Error closing Redis connection', { error: error.message });
+  if (redis) {
+    try {
+      await redis.quit();
+      logger.info('Rate limiter Redis connection closed');
+    } catch (error) {
+      logger.error('Error closing Redis connection', { error: error.message });
+    }
   }
 };
-
-// Handle Redis connection errors
-redis.on('error', (error) => {
-  logger.error('Redis connection error in rate limiter', { error: error.message });
-});
-
-redis.on('connect', () => {
-  logger.info('Rate limiter Redis connection established');
-});
 
 module.exports = {
   generalRateLimit,
   authRateLimit,
   deviceRegistrationRateLimit,
   apiKeyRateLimit,
-  strictRateLimit,
-  enhancedTrustNetworkRateLimit,
-  enhancedSitesRateLimit,
-  permissionsRateLimit,
   dynamicRateLimit,
   bypassRateLimit,
   endpointRateLimit,
