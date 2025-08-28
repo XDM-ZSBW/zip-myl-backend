@@ -13,7 +13,7 @@ class TrustService {
     this.trustLevels = {
       PAIRED: 1,
       VERIFIED: 2,
-      TRUSTED: 3
+      TRUSTED: 3,
     };
     this.pairingCodeExpiry = 10 * 60 * 1000; // 10 minutes
     this.trustExpiry = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -28,12 +28,12 @@ class TrustService {
       const deviceId = encryptionService.generateDeviceFingerprint(
         deviceInfo.userAgent,
         deviceInfo.screenResolution,
-        deviceInfo.timezone
+        deviceInfo.timezone,
       );
 
       const device = {
         id: deviceId,
-        userId: userId,
+        userId,
         name: deviceInfo.name || 'Unknown Device',
         type: deviceInfo.type || 'unknown', // 'chrome-extension', 'obsidian', 'mobile', etc.
         userAgent: deviceInfo.userAgent,
@@ -46,12 +46,12 @@ class TrustService {
         permissions: {
           canRead: false,
           canWrite: false,
-          canShare: false
-        }
+          canShare: false,
+        },
       };
 
       this.trustedDevices.set(deviceId, device);
-      
+
       logger.info(`Device registered: ${deviceId} for user: ${userId}`);
       return { deviceId, requiresTrust: true };
     } catch (error) {
@@ -82,11 +82,11 @@ class TrustService {
       device.permissions = {
         canRead: permissions.canRead || false,
         canWrite: permissions.canWrite || false,
-        canShare: permissions.canShare || false
+        canShare: permissions.canShare || false,
       };
 
       this.trustedDevices.set(deviceId, device);
-      
+
       logger.info(`Device trusted: ${deviceId} by ${trustedByDeviceId}`);
       return { success: true, device };
     } catch (error) {
@@ -117,11 +117,11 @@ class TrustService {
       device.permissions = {
         canRead: false,
         canWrite: false,
-        canShare: false
+        canShare: false,
       };
 
       this.trustedDevices.set(deviceId, device);
-      
+
       logger.info(`Trust revoked for device: ${deviceId} by ${revokedByDeviceId}`);
       return { success: true };
     } catch (error) {
@@ -142,7 +142,7 @@ class TrustService {
           name: device.name,
           type: device.type,
           lastSeen: device.lastSeen,
-          permissions: device.permissions
+          permissions: device.permissions,
         }));
 
       return devices;
@@ -190,12 +190,28 @@ class TrustService {
       const pairingCode = encryptionService.generatePairingCode(format);
       const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
 
-      this.pendingPairings.set(pairingCode, {
+      // Enhanced pairing record with status tracking
+      const pairingRecord = {
         deviceId,
         format,
         expiresAt,
-        createdAt: new Date()
-      });
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'queued',
+        currentStep: 'initializing',
+        message: 'Pairing code queued for generation',
+        progress: 0,
+        queuePosition: this.getQueuePosition(),
+        nftStatus: null,
+        errorDetails: null,
+        retryCount: 0,
+        maxRetries: 3,
+      };
+
+      this.pendingPairings.set(pairingCode, pairingRecord);
+
+      // Simulate async generation process
+      this.simulateGenerationProcess(pairingCode, pairingRecord);
 
       // Auto-expire the pairing code
       setTimeout(() => {
@@ -205,6 +221,135 @@ class TrustService {
       return { pairingCode, format, expiresAt };
     } catch (error) {
       logger.error('Error generating pairing code:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed status of pairing code generation
+   */
+  async getPairingCodeStatus(pairingCode, deviceId = null) {
+    try {
+      const pairing = this.pendingPairings.get(pairingCode);
+      
+      if (!pairing) {
+        return null;
+      }
+
+      // Update last activity timestamp
+      pairing.lastActivityAt = new Date();
+      this.pendingPairings.set(pairingCode, pairing);
+
+      // Return enhanced status information
+      return {
+        ...pairing,
+        status: pairing.status,
+        currentStep: pairing.currentStep,
+        message: pairing.message,
+        progress: pairing.progress,
+        queuePosition: pairing.queuePosition,
+        nftStatus: pairing.nftStatus,
+        errorDetails: pairing.errorDetails,
+        canRetry: pairing.status === 'failed' && pairing.retryCount < pairing.maxRetries,
+        retryCount: pairing.retryCount,
+        maxRetries: pairing.maxRetries,
+      };
+    } catch (error) {
+      logger.error('Error getting pairing code status:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Simulate the generation process for demo purposes
+   * In production, this would be replaced with actual async processing
+   */
+  simulateGenerationProcess(pairingCode, pairingRecord) {
+    const steps = [
+      { step: 'generating_uuid', message: 'Generating unique identifier...', progress: 30, delay: 1000 },
+      { step: 'creating_nft', message: 'Creating NFT artwork...', progress: 60, delay: 2000 },
+      { step: 'validating_signature', message: 'Validating cryptographic signature...', progress: 80, delay: 1500 },
+      { step: 'finalizing', message: 'Finalizing pairing code...', progress: 90, delay: 1000 },
+      { step: 'completed', message: 'Pairing code generated successfully!', progress: 100, delay: 500 },
+    ];
+
+    let currentStepIndex = 0;
+
+    const processStep = () => {
+      if (currentStepIndex >= steps.length) {
+        return;
+      }
+
+      const step = steps[currentStepIndex];
+      
+      // Update pairing record
+      pairingRecord.status = step.step === 'completed' ? 'completed' : 'generating';
+      pairingRecord.currentStep = step.step;
+      pairingRecord.message = step.message;
+      pairingRecord.progress = step.progress;
+      pairingRecord.updatedAt = new Date();
+
+      // Update in pending pairings
+      this.pendingPairings.set(pairingCode, pairingRecord);
+
+      currentStepIndex++;
+
+      // Process next step after delay
+      if (currentStepIndex < steps.length) {
+        setTimeout(processStep, step.delay);
+      }
+    };
+
+    // Start processing after a short delay
+    setTimeout(processStep, 500);
+  }
+
+  /**
+   * Get queue position for new pairing codes
+   */
+  getQueuePosition() {
+    // Simple queue position calculation
+    // In production, this would integrate with a proper job queue system
+    const activeGenerations = Array.from(this.pendingPairings.values())
+      .filter(p => p.status === 'queued' || p.status === 'generating').length;
+    
+    return activeGenerations > 0 ? activeGenerations : null;
+  }
+
+  /**
+   * Retry failed pairing code generation
+   */
+  async retryPairingCodeGeneration(pairingCode, deviceId) {
+    try {
+      const pairing = this.pendingPairings.get(pairingCode);
+      
+      if (!pairing) {
+        throw new Error('Pairing code not found');
+      }
+
+      if (pairing.status !== 'failed') {
+        throw new Error('Can only retry failed generations');
+      }
+
+      if (pairing.retryCount >= pairing.maxRetries) {
+        throw new Error('Maximum retry attempts exceeded');
+      }
+
+      // Reset status for retry
+      pairing.status = 'queued';
+      pairing.currentStep = 'initializing';
+      pairing.message = 'Retrying pairing code generation...';
+      pairing.progress = 0;
+      pairing.errorDetails = null;
+      pairing.retryCount++;
+      pairing.updatedAt = new Date();
+
+      // Restart generation process
+      this.simulateGenerationProcess(pairingCode, pairing);
+
+      return { success: true, message: 'Retry initiated' };
+    } catch (error) {
+      logger.error('Error retrying pairing code generation:', error);
       throw error;
     }
   }
@@ -230,7 +375,7 @@ class TrustService {
       return {
         success: true,
         pairedDeviceId: pairing.deviceId,
-        requestingDeviceId
+        requestingDeviceId,
       };
     } catch (error) {
       logger.error('Error verifying pairing code:', error);
@@ -263,15 +408,15 @@ class TrustService {
         permissions: {
           canRead: permissions.canRead || false,
           canWrite: permissions.canWrite || false,
-          canShare: permissions.canShare || false
+          canShare: permissions.canShare || false,
         },
         sharedAt: new Date(),
-        expiresAt: permissions.expiresAt || null
+        expiresAt: permissions.expiresAt || null,
       };
 
       // In production, this would be stored in a database
       logger.info(`Thought shared: ${thoughtId} from ${fromDeviceId} to ${targetDeviceIds.join(', ')}`);
-      
+
       return sharingRecord;
     } catch (error) {
       logger.error('Error sharing thought:', error);
@@ -306,12 +451,12 @@ class TrustService {
         encryptedTrustData,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // In production, store in database
       logger.info(`Trust established: ${sourceDeviceId} -> ${targetDeviceId} (level: ${trustLevel})`);
-      
+
       return trustRelationship;
     } catch (error) {
       logger.error('Error establishing trust:', error);
@@ -340,7 +485,7 @@ class TrustService {
     try {
       // In production, update database to mark trust as inactive
       logger.info(`Trust revoked: ${sourceDeviceId} -> ${targetDeviceId}`);
-      
+
       return true;
     } catch (error) {
       logger.error('Error revoking trust:', error);
@@ -358,7 +503,7 @@ class TrustService {
       return {
         isTrusted: true,
         trustLevel: 1,
-        verifiedAt: new Date()
+        verifiedAt: new Date(),
       };
     } catch (error) {
       logger.error('Error verifying trust:', error);
@@ -379,12 +524,12 @@ class TrustService {
         exchangeType: 'initial',
         isCompleted: false,
         expiresAt: new Date(Date.now() + this.keyExchangeExpiry),
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       // In production, store in database
       logger.info(`Key exchange initiated: ${sourceDeviceId} <-> ${targetDeviceId}`);
-      
+
       return keyExchange;
     } catch (error) {
       logger.error('Error exchanging keys:', error);
@@ -399,11 +544,11 @@ class TrustService {
     try {
       // In production, update database to mark exchange as completed
       logger.info(`Key exchange completed: ${exchangeId}`);
-      
+
       return {
         success: true,
         exchangeId,
-        completedAt: new Date()
+        completedAt: new Date(),
       };
     } catch (error) {
       logger.error('Error completing key exchange:', error);
@@ -418,15 +563,15 @@ class TrustService {
     try {
       // Generate new key pair
       const newKeyPair = keyManagementService.generateKeyPair(deviceId);
-      
+
       // In production, update device record with new public key
       logger.info(`Trust keys rotated for device: ${deviceId}`);
-      
+
       return {
         success: true,
         newPublicKey: newKeyPair.publicKey,
         keyId: newKeyPair.keyId,
-        rotatedAt: new Date()
+        rotatedAt: new Date(),
       };
     } catch (error) {
       logger.error('Error rotating trust keys:', error);
@@ -444,7 +589,7 @@ class TrustService {
         activeTrusts: 0, // In production, query database
         pendingPairings: this.pendingPairings.size,
         trustLevels: this.trustLevels,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       };
     } catch (error) {
       logger.error('Error getting trust statistics:', error);

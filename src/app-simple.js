@@ -15,7 +15,7 @@ const log = (level, message) => {
 app.use((req, res, next) => {
   // Allow requests from Chrome extensions
   const origin = req.headers.origin;
-  
+
   // Allow Chrome extension origins
   if (origin && (
     origin.startsWith('chrome-extension://') ||
@@ -32,18 +32,18 @@ app.use((req, res, next) => {
     // Allow requests with no origin (like curl, Postman, etc.)
     res.header('Access-Control-Allow-Origin', '*');
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
-  
+
   next();
 });
 
@@ -56,7 +56,7 @@ app.use((error, req, res, next) => {
   if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
     return res.status(400).json({
       error: 'Invalid JSON format',
-      message: 'The request body contains malformed JSON'
+      message: 'The request body contains malformed JSON',
     });
   }
   next();
@@ -67,11 +67,11 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Simple health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
@@ -87,14 +87,14 @@ app.get('/', (req, res) => {
       deviceTrust: true,
       crossDeviceSharing: true,
       deviceRegistration: true,
-      keyManagement: true
+      keyManagement: true,
     },
     endpoints: {
       health: '/health',
       api: '/api/v1',
       encrypted: '/api/v1/encrypted',
-      devices: '/api/v1/encrypted/devices'
-    }
+      devices: '/api/v1/encrypted/devices',
+    },
   });
 });
 
@@ -103,7 +103,7 @@ app.get('/api/v1', (req, res) => {
   res.json({
     message: 'Myl.Zip API v1',
     version: '2.0.0',
-    status: 'operational'
+    status: 'operational',
   });
 });
 
@@ -122,14 +122,14 @@ app.get('/api/v1/encrypted', (req, res) => {
         'threshold-cryptography',
         'key-escrow-user-control',
         'cross-device-exchange',
-        'biometric-device-binding'
-      ]
+        'biometric-device-binding',
+      ],
     },
     endpoints: {
       devices: '/api/v1/encrypted/devices/*',
       thoughts: '/api/v1/encrypted/thoughts/*',
-      keys: '/api/v1/keys/*'
-    }
+      keys: '/api/v1/keys/*',
+    },
   });
 });
 
@@ -149,8 +149,8 @@ app.get('/api/v1/encrypted/devices', (req, res) => {
       'POST /api/v1/encrypted/devices/keys/exchange',
       'POST /api/v1/encrypted/devices/{deviceId}/rotate-keys',
       'GET /api/v1/encrypted/devices/health',
-      'GET /api/v1/encrypted/devices/stats'
-    ]
+      'GET /api/v1/encrypted/devices/stats',
+    ],
   });
 });
 
@@ -158,49 +158,49 @@ app.get('/api/v1/encrypted/devices', (req, res) => {
 app.post('/api/v1/encrypted/devices/register', (req, res) => {
   try {
     const { deviceId, deviceInfo, publicKey, encryptedMetadata } = req.body;
-    
+
     if (!deviceId || !deviceInfo) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['deviceId', 'deviceInfo']
+        required: ['deviceId', 'deviceInfo'],
       });
     }
-    
+
     // Generate device-specific key using built-in crypto
     const keyMaterial = `${deviceId}:${deviceInfo.userPassword || 'default-password'}:${deviceInfo.fingerprint || 'default-fingerprint'}`;
     const salt = crypto.createHash('sha256')
       .update(deviceId + (deviceInfo.fingerprint || 'default-fingerprint'))
       .digest('hex');
-    
+
     const keyId = crypto.randomUUID();
     const sessionToken = crypto.randomBytes(32).toString('hex');
-    
+
     res.status(201).json({
       success: true,
-      deviceId: deviceId,
-      sessionToken: sessionToken,
+      deviceId,
+      sessionToken,
       fingerprint: salt,
-      keyId: keyId,
+      keyId,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      message: 'Device registered successfully with masterless encryption'
+      message: 'Device registered successfully with masterless encryption',
     });
   } catch (error) {
     log('error', `Device registration failed: ${error.message}`);
     res.status(500).json({
       error: 'Device registration failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
 
 // Pairing code generation
-app.post('/api/v1/encrypted/devices/pairing-code', async (req, res) => {
+app.post('/api/v1/encrypted/devices/pairing-code', async(req, res) => {
   try {
     const { deviceId, format = 'uuid', expiresIn = 600 } = req.body;
-    
+
     if (!deviceId) {
       return res.status(400).json({
-        error: 'Missing deviceId'
+        error: 'Missing deviceId',
       });
     }
 
@@ -208,10 +208,10 @@ app.post('/api/v1/encrypted/devices/pairing-code', async (req, res) => {
     if (format && !['uuid', 'short', 'legacy'].includes(format.toLowerCase())) {
       return res.status(400).json({
         error: 'Invalid format parameter',
-        message: 'Format must be "uuid", "short", or "legacy"'
+        message: 'Format must be "uuid", "short", or "legacy"',
       });
     }
-    
+
     // Generate pairing code using built-in crypto
     let pairingCode;
     if (format.toLowerCase() === 'uuid') {
@@ -223,41 +223,41 @@ app.post('/api/v1/encrypted/devices/pairing-code', async (req, res) => {
       // Generate 6-digit numeric code
       pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     }
-    
+
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
-    
+
     // Generate NFT for UUID pairing codes
     let nftData = null;
     if (format.toLowerCase() === 'uuid') {
       nftData = await generateNFTForPairingCode(pairingCode, deviceId);
     }
-    
+
     res.json({
       success: true,
-      pairingCode: pairingCode,
+      pairingCode,
       format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
-      expiresIn: expiresIn,
+      expiresIn,
       nft: nftData, // Include NFT data for UUID format
-      message: 'Pairing code generated successfully'
+      message: 'Pairing code generated successfully',
     });
   } catch (error) {
     log('error', `Pairing code generation failed: ${error.message}`);
     res.status(500).json({
       error: 'Pairing code generation failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
 
 // Extension compatibility endpoint - device-registration/pairing-codes (UUID only)
-app.post('/api/v1/device-registration/pairing-codes', async (req, res) => {
+app.post('/api/v1/device-registration/pairing-codes', async(req, res) => {
   try {
     const { deviceId, format = 'uuid', expiresIn = 300 } = req.body;
 
     if (!deviceId) {
       return res.status(400).json({
-        error: 'Missing deviceId'
+        error: 'Missing deviceId',
       });
     }
 
@@ -287,29 +287,29 @@ app.post('/api/v1/device-registration/pairing-codes', async (req, res) => {
     }
 
     global.pairingCodes.set(pairingCode, {
-      deviceId: deviceId,
+      deviceId,
       format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
       createdAt: new Date().toISOString(),
       used: false,
-      nftId: nftData ? nftData.id : null // Link NFT ID to pairing code
+      nftId: nftData ? nftData.id : null, // Link NFT ID to pairing code
     });
 
     res.json({
       success: true,
-      pairingCode: pairingCode,
+      pairingCode,
       format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
-      expiresIn: expiresIn,
-      deviceId: deviceId,
+      expiresIn,
+      deviceId,
       nft: nftData, // Include NFT data for UUID format
-      message: `${format} pairing code generated successfully`
+      message: `${format} pairing code generated successfully`,
     });
   } catch (error) {
     log('error', `Pairing code generation failed: ${error.message}`);
     res.status(500).json({
       error: 'Pairing code generation failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -318,11 +318,11 @@ app.post('/api/v1/device-registration/pairing-codes', async (req, res) => {
 app.post('/api/v1/encrypted/devices/pair', (req, res) => {
   try {
     const { deviceId, pairingCode, encryptedTrustData } = req.body;
-    
+
     if (!deviceId || !pairingCode) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['deviceId', 'pairingCode']
+        required: ['deviceId', 'pairingCode'],
       });
     }
 
@@ -339,33 +339,33 @@ app.post('/api/v1/encrypted/devices/pair', (req, res) => {
     if (detectedFormat === 'unknown') {
       return res.status(400).json({
         error: 'Invalid pairing code format',
-        message: 'Pairing code must be in UUID, short, or legacy format'
+        message: 'Pairing code must be in UUID, short, or legacy format',
       });
     }
 
     // For testing purposes, we'll accept any valid format without requiring a stored code
     // In production, this would verify the pairing code against the database
-    
+
     res.json({
       success: true,
       trustRelationship: {
-        id: 'trust-' + Date.now(),
+        id: `trust-${Date.now()}`,
         trustLevel: 1,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       },
       pairedDevice: {
-        deviceId: 'paired-device-' + Date.now(),
+        deviceId: `paired-device-${Date.now()}`,
         deviceType: 'chrome-extension',
-        deviceVersion: '2.0.0'
+        deviceVersion: '2.0.0',
       },
       pairingCodeFormat: detectedFormat,
-      message: 'Devices paired successfully'
+      message: 'Devices paired successfully',
     });
   } catch (error) {
     log('error', `Device pairing failed: ${error.message}`);
     res.status(500).json({
       error: 'Device pairing failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -374,11 +374,11 @@ app.post('/api/v1/encrypted/devices/pair', (req, res) => {
 app.post('/api/v1/device-registration/pair', (req, res) => {
   try {
     const { deviceId, pairingCode, encryptedTrustData } = req.body;
-    
+
     if (!deviceId || !pairingCode) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['deviceId', 'pairingCode']
+        required: ['deviceId', 'pairingCode'],
       });
     }
 
@@ -395,7 +395,7 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
     if (detectedFormat === 'unknown') {
       return res.status(400).json({
         error: 'Invalid pairing code format',
-        message: 'Pairing code must be in UUID, short, or legacy format'
+        message: 'Pairing code must be in UUID, short, or legacy format',
       });
     }
 
@@ -410,7 +410,7 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
     if (!pairingData) {
       return res.status(400).json({
         error: 'Invalid or expired pairing code',
-        message: 'The pairing code does not exist or has expired'
+        message: 'The pairing code does not exist or has expired',
       });
     }
 
@@ -419,7 +419,7 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
       global.pairingCodes.delete(pairingCode);
       return res.status(400).json({
         error: 'Invalid or expired pairing code',
-        message: 'The pairing code has expired'
+        message: 'The pairing code has expired',
       });
     }
 
@@ -427,7 +427,7 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
     if (pairingData.used) {
       return res.status(400).json({
         error: 'Invalid or expired pairing code',
-        message: 'The pairing code has already been used'
+        message: 'The pairing code has already been used',
       });
     }
 
@@ -440,23 +440,23 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
     res.json({
       success: true,
       trustRelationship: {
-        id: 'trust-' + Date.now(),
+        id: `trust-${Date.now()}`,
         trustLevel: 1,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       },
       pairedDevice: {
         deviceId: pairingData.deviceId,
         deviceType: 'chrome-extension',
-        deviceVersion: '2.0.0'
+        deviceVersion: '2.0.0',
       },
       pairingCodeFormat: detectedFormat,
-      message: 'Devices paired successfully'
+      message: 'Devices paired successfully',
     });
   } catch (error) {
     log('error', `Device pairing failed: ${error.message}`);
     res.status(500).json({
       error: 'Device pairing failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -468,13 +468,13 @@ app.get('/api/v1/encrypted/devices/trusted', (req, res) => {
       success: true,
       devices: [],
       count: 0,
-      message: 'Trusted devices retrieved successfully'
+      message: 'Trusted devices retrieved successfully',
     });
   } catch (error) {
     log('error', `Failed to get trusted devices: ${error.message}`);
     res.status(500).json({
       error: 'Failed to get trusted devices',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -483,23 +483,23 @@ app.get('/api/v1/encrypted/devices/trusted', (req, res) => {
 app.post('/api/v1/encrypted/devices/trust', (req, res) => {
   try {
     const { deviceId, trustedByDeviceId, permissions } = req.body;
-    
+
     res.json({
       success: true,
       device: {
-        deviceId: deviceId,
+        deviceId,
         isTrusted: true,
         trustedBy: trustedByDeviceId,
         trustedAt: new Date().toISOString(),
-        permissions: permissions || { canRead: true, canWrite: true, canShare: true }
+        permissions: permissions || { canRead: true, canWrite: true, canShare: true },
       },
-      message: 'Device trust established successfully'
+      message: 'Device trust established successfully',
     });
   } catch (error) {
     log('error', `Trust establishment failed: ${error.message}`);
     res.status(500).json({
       error: 'Trust establishment failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -508,16 +508,16 @@ app.post('/api/v1/encrypted/devices/trust', (req, res) => {
 app.delete('/api/v1/encrypted/devices/trust/:deviceId', (req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     res.json({
       success: true,
-      message: 'Trust relationship revoked successfully'
+      message: 'Trust relationship revoked successfully',
     });
   } catch (error) {
     log('error', `Trust revocation failed: ${error.message}`);
     res.status(500).json({
       error: 'Trust revocation failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -526,17 +526,17 @@ app.delete('/api/v1/encrypted/devices/trust/:deviceId', (req, res) => {
 app.post('/api/v1/encrypted/devices/keys/exchange', (req, res) => {
   try {
     const { targetDeviceId, encryptedKeyData } = req.body;
-    
+
     res.json({
       success: true,
       message: 'Key exchange initiated',
-      exchangeId: 'exchange-' + Date.now()
+      exchangeId: `exchange-${Date.now()}`,
     });
   } catch (error) {
     log('error', `Key exchange failed: ${error.message}`);
     res.status(500).json({
       error: 'Key exchange failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -545,17 +545,17 @@ app.post('/api/v1/encrypted/devices/keys/exchange', (req, res) => {
 app.post('/api/v1/encrypted/devices/:deviceId/rotate-keys', (req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     res.json({
       success: true,
       message: 'Device keys rotated successfully',
-      rotatedAt: new Date().toISOString()
+      rotatedAt: new Date().toISOString(),
     });
   } catch (error) {
     log('error', `Key rotation failed: ${error.message}`);
     res.status(500).json({
       error: 'Key rotation failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -572,14 +572,14 @@ app.get('/api/v1/encrypted/devices/health', (req, res) => {
         devicePairing: true,
         trustManagement: true,
         keyExchange: true,
-        masterlessEncryption: true
-      }
+        masterlessEncryption: true,
+      },
     });
   } catch (error) {
     log('error', `Health check failed: ${error.message}`);
     res.status(500).json({
       error: 'Health check failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -592,13 +592,13 @@ app.get('/api/v1/encrypted/devices/stats', (req, res) => {
       activeDevices: 0,
       trustRelationships: 0,
       lastUpdated: new Date().toISOString(),
-      masterlessEncryption: true
+      masterlessEncryption: true,
     });
   } catch (error) {
     log('error', `Failed to get device statistics: ${error.message}`);
     res.status(500).json({
       error: 'Failed to get device statistics',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -614,15 +614,15 @@ app.get('/api/v1/keys/status', (req, res) => {
         version: '2.0.0',
         algorithms: ['AES-256-GCM', 'PBKDF2-SHA256'],
         keyDerivation: 'device-specific',
-        masterKey: false
+        masterKey: false,
       },
-      message: 'Masterless key management available'
+      message: 'Masterless key management available',
     });
   } catch (error) {
     log('error', `Key service unavailable: ${error.message}`);
     res.status(500).json({
       error: 'Key service unavailable',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -630,38 +630,38 @@ app.get('/api/v1/keys/status', (req, res) => {
 app.post('/api/v1/keys/device-specific', (req, res) => {
   try {
     const { deviceId, userPassword, deviceFingerprint } = req.body;
-    
+
     if (!deviceId || !userPassword || !deviceFingerprint) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['deviceId', 'userPassword', 'deviceFingerprint']
+        required: ['deviceId', 'userPassword', 'deviceFingerprint'],
       });
     }
-    
+
     // Generate device-specific key using built-in crypto
     const keyMaterial = `${deviceId}:${userPassword}:${deviceFingerprint}`;
     const salt = crypto.createHash('sha256')
       .update(deviceId + deviceFingerprint)
       .digest('hex');
-    
+
     const keyId = crypto.randomUUID();
-    
+
     res.json({
       success: true,
       keyData: {
-        keyId: keyId,
+        keyId,
         algorithm: 'PBKDF2-SHA256',
         iterations: 100000,
-        salt: salt
+        salt,
         // Note: The actual key is not returned for security
       },
-      message: 'Device-specific key generated successfully'
+      message: 'Device-specific key generated successfully',
     });
   } catch (error) {
     log('error', `Key generation failed: ${error.message}`);
     res.status(500).json({
       error: 'Key generation failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -673,19 +673,19 @@ async function generateNFTForPairingCode(pairingCode, deviceId) {
     const nftId = crypto.randomUUID();
     const shapeKeys = [4, 5, 6, 8, 10, 12]; // Geometric shapes
     const randomShape = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
-    
+
     // Generate color palette
     const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
+
     // Create NFT metadata
     const nftData = {
       id: nftId,
-      pairingCode: pairingCode, // Link to pairing code
-      deviceId: deviceId,
+      pairingCode, // Link to pairing code
+      deviceId,
       shape: {
         sides: randomShape,
-        name: `${randomShape}-gon`
+        name: `${randomShape}-gon`,
       },
       color: randomColor,
       segments: generateSegments(randomShape),
@@ -696,23 +696,23 @@ async function generateNFTForPairingCode(pairingCode, deviceId) {
       metadata: {
         type: 'pairing-code-nft',
         version: '1.0.0',
-        algorithm: 'geometric-pattern'
-      }
+        algorithm: 'geometric-pattern',
+      },
     };
-    
+
     // Store NFT in global cache (in production, this would be in a database)
     if (!global.nftCollection) {
       global.nftCollection = new Map();
     }
-    
+
     global.nftCollection.set(nftId, nftData);
-    
+
     // Also store by pairing code for quick lookup
     if (!global.pairingCodeNFTs) {
       global.pairingCodeNFTs = new Map();
     }
     global.pairingCodeNFTs.set(pairingCode, nftData);
-    
+
     return nftData;
   } catch (error) {
     log('error', `NFT generation failed: ${error.message}`);
@@ -727,9 +727,9 @@ function generateSegments(sides) {
     const angle = (i * 2 * Math.PI) / sides;
     segments.push({
       index: i,
-      angle: angle,
+      angle,
       x: Math.cos(angle) * 50,
-      y: Math.sin(angle) * 50
+      y: Math.sin(angle) * 50,
     });
   }
   return segments;
@@ -742,10 +742,10 @@ function generateConnectionPoints(sides) {
     const angle = (i * 2 * Math.PI) / sides;
     points.push({
       index: i,
-      angle: angle,
+      angle,
       x: Math.cos(angle) * 40,
       y: Math.sin(angle) * 40,
-      type: 'connection'
+      type: 'connection',
     });
   }
   return points;
@@ -755,48 +755,48 @@ function generateConnectionPoints(sides) {
 app.get('/api/v1/nft/pairing-code/:pairingCode', (req, res) => {
   try {
     const { pairingCode } = req.params;
-    
+
     if (!pairingCode) {
       return res.status(400).json({
-        error: 'Missing pairing code'
+        error: 'Missing pairing code',
       });
     }
-    
+
     // Look up NFT by pairing code
     if (!global.pairingCodeNFTs) {
       return res.status(404).json({
         error: 'NFT not found',
-        message: 'No NFT associated with this pairing code'
+        message: 'No NFT associated with this pairing code',
       });
     }
-    
+
     const nftData = global.pairingCodeNFTs.get(pairingCode);
     if (!nftData) {
       return res.status(404).json({
         error: 'NFT not found',
-        message: 'No NFT associated with this pairing code'
+        message: 'No NFT associated with this pairing code',
       });
     }
-    
+
     // Check if NFT has expired
     if (new Date() > new Date(nftData.expiresAt)) {
       return res.status(410).json({
         error: 'NFT expired',
         message: 'This NFT has expired',
-        expiredAt: nftData.expiresAt
+        expiredAt: nftData.expiresAt,
       });
     }
-    
+
     res.json({
       success: true,
       nft: nftData,
-      message: 'NFT retrieved successfully'
+      message: 'NFT retrieved successfully',
     });
   } catch (error) {
     log('error', `NFT retrieval failed: ${error.message}`);
     res.status(500).json({
       error: 'NFT retrieval failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -805,48 +805,48 @@ app.get('/api/v1/nft/pairing-code/:pairingCode', (req, res) => {
 app.get('/api/v1/nft/:nftId', (req, res) => {
   try {
     const { nftId } = req.params;
-    
+
     if (!nftId) {
       return res.status(400).json({
-        error: 'Missing NFT ID'
+        error: 'Missing NFT ID',
       });
     }
-    
+
     // Look up NFT by ID
     if (!global.nftCollection) {
       return res.status(404).json({
         error: 'NFT not found',
-        message: 'NFT collection not available'
+        message: 'NFT collection not available',
       });
     }
-    
+
     const nftData = global.nftCollection.get(nftId);
     if (!nftData) {
       return res.status(404).json({
         error: 'NFT not found',
-        message: 'NFT with this ID does not exist'
+        message: 'NFT with this ID does not exist',
       });
     }
-    
+
     // Check if NFT has expired
     if (new Date() > new Date(nftData.expiresAt)) {
       return res.status(410).json({
         error: 'NFT expired',
         message: 'This NFT has expired',
-        expiredAt: nftData.expiresAt
+        expiredAt: nftData.expiresAt,
       });
     }
-    
+
     res.json({
       success: true,
       nft: nftData,
-      message: 'NFT retrieved successfully'
+      message: 'NFT retrieved successfully',
     });
   } catch (error) {
     log('error', `NFT retrieval failed: ${error.message}`);
     res.status(500).json({
       error: 'NFT retrieval failed',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -856,7 +856,7 @@ app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `Route ${req.originalUrl} not found`,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -866,7 +866,7 @@ app.use((error, req, res, next) => {
   res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 

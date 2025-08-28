@@ -54,7 +54,7 @@ class SecurityUtils {
    */
   static sanitizeString(str) {
     if (typeof str !== 'string') return str;
-    
+
     return str
       .replace(/[<>]/g, '') // Remove potential HTML tags
       .replace(/javascript:/gi, '') // Remove javascript: protocol
@@ -77,7 +77,7 @@ class SecurityUtils {
    */
   static isIPAllowed(ip, allowedIPs) {
     if (!allowedIPs || allowedIPs.length === 0) return true;
-    
+
     return allowedIPs.some(allowedIP => {
       if (allowedIP.includes('/')) {
         // CIDR notation
@@ -98,7 +98,7 @@ class SecurityUtils {
       const ipNum = this.ipToNumber(ip);
       const networkNum = this.ipToNumber(network);
       const mask = (0xffffffff << (32 - parseInt(prefixLength))) >>> 0;
-      
+
       return (ipNum & mask) === (networkNum & mask);
     } catch (error) {
       logger.error('Error checking CIDR range', { error: error.message, ip, cidr });
@@ -137,15 +137,15 @@ class SecurityUtils {
       lowercase: /[a-z]/.test(password),
       uppercase: /[A-Z]/.test(password),
       numbers: /\d/.test(password),
-      symbols: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+      symbols: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     };
 
     const score = Object.values(checks).filter(Boolean).length;
-    
+
     return {
       score,
       strength: score < 3 ? 'weak' : score < 5 ? 'medium' : 'strong',
-      checks
+      checks,
     };
   }
 
@@ -157,21 +157,21 @@ class SecurityUtils {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '0123456789';
     const symbols = '!@#$%^&*(),.?":{}|<>';
-    
+
     const allChars = lowercase + uppercase + numbers + symbols;
     let password = '';
-    
+
     // Ensure at least one character from each category
     password += lowercase[Math.floor(Math.random() * lowercase.length)];
     password += uppercase[Math.floor(Math.random() * uppercase.length)];
     password += numbers[Math.floor(Math.random() * numbers.length)];
     password += symbols[Math.floor(Math.random() * symbols.length)];
-    
+
     // Fill the rest randomly
     for (let i = 4; i < length; i++) {
       password += allChars[Math.floor(Math.random() * allChars.length)];
     }
-    
+
     // Shuffle the password
     return password.split('').sort(() => Math.random() - 0.5).join('');
   }
@@ -188,19 +188,19 @@ class SecurityUtils {
    */
   static validateRateLimitConfig(config) {
     const { windowMs, max, message } = config;
-    
+
     if (!windowMs || typeof windowMs !== 'number' || windowMs <= 0) {
       throw new Error('Invalid windowMs: must be a positive number');
     }
-    
+
     if (!max || typeof max !== 'number' || max <= 0) {
       throw new Error('Invalid max: must be a positive number');
     }
-    
+
     if (!message || typeof message !== 'object') {
       throw new Error('Invalid message: must be an object');
     }
-    
+
     return true;
   }
 
@@ -223,7 +223,7 @@ class SecurityUtils {
       body: req.body,
       query: req.query,
       params: req.params,
-      headers: req.headers
+      headers: req.headers,
     });
 
     return suspiciousPatterns.some(pattern => pattern.test(checkString));
@@ -241,7 +241,7 @@ class SecurityUtils {
       method: req.method,
       deviceId: req.deviceId,
       apiKeyId: req.apiKey?.id,
-      ...details
+      ...details,
     });
   }
 
@@ -260,8 +260,8 @@ class SecurityUtils {
       metadata: {
         path: req.path,
         method: req.method,
-        ...metadata
-      }
+        ...metadata,
+      },
     };
   }
 }

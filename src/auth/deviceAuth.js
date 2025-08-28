@@ -23,7 +23,7 @@ class DeviceAuthService {
     const acceptEncoding = req.get('Accept-Encoding') || '';
     const connection = req.get('Connection') || '';
     const ip = req.ip || req.connection.remoteAddress || '';
-    
+
     const fingerprintData = `${userAgent}-${acceptLanguage}-${acceptEncoding}-${connection}-${ip}`;
     return crypto.createHash('sha256').update(fingerprintData).digest('hex');
   }
@@ -42,9 +42,9 @@ class DeviceAuthService {
         where: {
           OR: [
             { fingerprint: deviceFingerprint },
-            { ipAddress: ip }
-          ]
-        }
+            { ipAddress: ip },
+          ],
+        },
       });
 
       if (existingDevice) {
@@ -60,8 +60,8 @@ class DeviceAuthService {
           ipAddress: ip,
           userAgent: req.get('User-Agent') || '',
           isActive: true,
-          lastSeen: new Date()
-        }
+          lastSeen: new Date(),
+        },
       });
 
       logger.info('New device registered', { deviceId: device.id });
@@ -80,17 +80,17 @@ class DeviceAuthService {
       const payload = {
         deviceId,
         type: 'device',
-        iat: Math.floor(Date.now() / 1000)
+        iat: Math.floor(Date.now() / 1000),
       };
 
       const accessToken = jwt.sign(payload, this.jwtSecret, {
-        expiresIn: this.jwtExpiresIn
+        expiresIn: this.jwtExpiresIn,
       });
 
       const refreshToken = jwt.sign(
         { deviceId, type: 'refresh' },
         this.jwtRefreshSecret,
-        { expiresIn: this.jwtRefreshExpiresIn }
+        { expiresIn: this.jwtRefreshExpiresIn },
       );
 
       // Store session in database
@@ -103,14 +103,14 @@ class DeviceAuthService {
           refreshExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
           isActive: true,
           ipAddress: req.ip || req.connection.remoteAddress || '',
-          userAgent: req.get('User-Agent') || ''
-        }
+          userAgent: req.get('User-Agent') || '',
+        },
       });
 
       // Update device last seen
       await prisma.device.update({
         where: { id: deviceId },
-        data: { lastSeen: new Date() }
+        data: { lastSeen: new Date() },
       });
 
       return {
@@ -118,7 +118,7 @@ class DeviceAuthService {
         refreshToken,
         expiresIn: 15 * 60, // 15 minutes in seconds
         refreshExpiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
-        deviceId
+        deviceId,
       };
     } catch (error) {
       logger.error('Error generating tokens', { error: error.message });
@@ -132,20 +132,20 @@ class DeviceAuthService {
   async refreshToken(refreshToken, req) {
     try {
       const decoded = jwt.verify(refreshToken, this.jwtRefreshSecret);
-      
+
       if (decoded.type !== 'refresh') {
         throw new Error('Invalid token type');
       }
 
       const hashedRefreshToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-      
+
       const session = await prisma.session.findFirst({
         where: {
           refreshToken: hashedRefreshToken,
           isActive: true,
-          refreshExpiresAt: { gt: new Date() }
+          refreshExpiresAt: { gt: new Date() },
         },
-        include: { device: true }
+        include: { device: true },
       });
 
       if (!session || !session.device.isActive) {
@@ -155,7 +155,7 @@ class DeviceAuthService {
       // Revoke old session
       await prisma.session.update({
         where: { id: session.id },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       // Generate new tokens
@@ -172,20 +172,20 @@ class DeviceAuthService {
   async validateToken(token) {
     try {
       const decoded = jwt.verify(token, this.jwtSecret);
-      
+
       if (decoded.type !== 'device') {
         throw new Error('Invalid token type');
       }
 
       const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-      
+
       const session = await prisma.session.findFirst({
         where: {
           accessToken: hashedToken,
           isActive: true,
-          expiresAt: { gt: new Date() }
+          expiresAt: { gt: new Date() },
         },
-        include: { device: true }
+        include: { device: true },
       });
 
       if (!session || !session.device.isActive) {
@@ -195,7 +195,7 @@ class DeviceAuthService {
       return {
         deviceId: decoded.deviceId,
         sessionId: session.id,
-        isValid: true
+        isValid: true,
       };
     } catch (error) {
       logger.error('Error validating token', { error: error.message });
@@ -210,7 +210,7 @@ class DeviceAuthService {
     try {
       await prisma.session.updateMany({
         where: { deviceId, isActive: true },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       logger.info('Device logged out', { deviceId });
@@ -236,10 +236,10 @@ class DeviceAuthService {
               createdAt: true,
               expiresAt: true,
               ipAddress: true,
-              userAgent: true
-            }
-          }
-        }
+              userAgent: true,
+            },
+          },
+        },
       });
 
       if (!device) {
@@ -254,7 +254,7 @@ class DeviceAuthService {
         isActive: device.isActive,
         createdAt: device.createdAt,
         lastSeen: device.lastSeen,
-        activeSessions: device.sessions.length
+        activeSessions: device.sessions.length,
       };
     } catch (error) {
       logger.error('Error getting device info', { error: error.message });
@@ -271,8 +271,8 @@ class DeviceAuthService {
         where: { id: deviceId },
         data: {
           ...updateData,
-          lastSeen: new Date()
-        }
+          lastSeen: new Date(),
+        },
       });
 
       logger.info('Device updated', { deviceId: device.id });
@@ -291,13 +291,13 @@ class DeviceAuthService {
       // Deactivate device
       await prisma.device.update({
         where: { id: deviceId },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       // Revoke all sessions
       await prisma.session.updateMany({
         where: { deviceId },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       logger.info('Device access revoked', { deviceId });

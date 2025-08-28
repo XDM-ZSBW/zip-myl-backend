@@ -12,13 +12,13 @@ class KeyManagementService {
     this.ivLength = 16; // 128 bits
     this.tagLength = 16; // 128 bits
     this.keyDerivationIterations = parseInt(process.env.KEY_DERIVATION_ITERATIONS) || 100000;
-    
+
     // In production, these would be stored in a secure key management system
     this.masterKey = process.env.ENCRYPTION_MASTER_KEY;
     this.keyVersion = 1;
     this.keyRotationInterval = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
     this.lastKeyRotation = Date.now();
-    
+
     if (!this.masterKey) {
       throw new Error('ENCRYPTION_MASTER_KEY environment variable is required');
     }
@@ -62,12 +62,12 @@ class KeyManagementService {
     const tag = cipher.getAuthTag();
 
     return {
-      encrypted: encrypted,
+      encrypted,
       iv: iv.toString('hex'),
       tag: tag.toString('hex'),
       algorithm: this.algorithm,
       keyVersion: this.keyVersion,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -91,9 +91,9 @@ class KeyManagementService {
   encryptKey(key, keyId) {
     const keyData = {
       key: key.toString('hex'),
-      keyId: keyId,
+      keyId,
       createdAt: Date.now(),
-      version: this.keyVersion
+      version: this.keyVersion,
     };
 
     return this.encryptData(JSON.stringify(keyData), Buffer.from(this.masterKey, 'hex'));
@@ -115,16 +115,16 @@ class KeyManagementService {
       modulusLength: 2048,
       publicKeyEncoding: {
         type: 'spki',
-        format: 'pem'
+        format: 'pem',
       },
       privateKeyEncoding: {
         type: 'pkcs8',
-        format: 'pem'
-      }
+        format: 'pem',
+      },
     });
 
     const keyId = deviceId ? this.generateKeyId(deviceId) : crypto.randomUUID();
-    
+
     return {
       publicKey,
       privateKey,
@@ -132,7 +132,7 @@ class KeyManagementService {
       algorithm: 'RSA-OAEP',
       keySize: 2048,
       createdAt: Date.now(),
-      expiresAt: Date.now() + this.keyRotationInterval
+      expiresAt: Date.now() + this.keyRotationInterval,
     };
   }
 
@@ -152,9 +152,9 @@ class KeyManagementService {
       const encrypted = crypto.publicEncrypt({
         key: publicKey,
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256'
+        oaepHash: 'sha256',
       }, Buffer.from(data, 'utf8'));
-      
+
       return encrypted.toString('base64');
     } catch (error) {
       throw new Error(`RSA encryption failed: ${error.message}`);
@@ -169,9 +169,9 @@ class KeyManagementService {
       const decrypted = crypto.privateDecrypt({
         key: privateKey,
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256'
+        oaepHash: 'sha256',
       }, Buffer.from(encryptedData, 'base64'));
-      
+
       return decrypted.toString('utf8');
     } catch (error) {
       throw new Error(`RSA decryption failed: ${error.message}`);
@@ -253,22 +253,22 @@ class KeyManagementService {
     }
 
     logger.info('Starting key rotation...');
-    
+
     // Generate new master key
     const newMasterKey = this.generateKey();
-    
+
     // Update key version
     this.keyVersion += 1;
     this.lastKeyRotation = Date.now();
-    
+
     // In production, this would:
     // 1. Store the new master key securely
     // 2. Re-encrypt all existing keys with the new master key
     // 3. Update the key version in the database
     // 4. Notify all services of the key rotation
-    
+
     logger.info(`Key rotation completed. New key version: ${this.keyVersion}`);
-    
+
     return true;
   }
 
@@ -281,7 +281,7 @@ class KeyManagementService {
       userId,
       keyId: crypto.randomUUID(),
       createdAt: Date.now(),
-      version: this.keyVersion
+      version: this.keyVersion,
     };
 
     const deviceKey = this.generateKey();
@@ -290,7 +290,7 @@ class KeyManagementService {
     return {
       keyId: deviceKeyData.keyId,
       encryptedKey: encryptedDeviceKey,
-      keyData: deviceKeyData
+      keyData: deviceKeyData,
     };
   }
 
@@ -311,7 +311,7 @@ class KeyManagementService {
       targetDeviceId,
       expiresAt: Date.now() + (expiresInMinutes * 60 * 1000),
       tokenId: crypto.randomUUID(),
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
 
     const token = this.generateSecureToken(32);
@@ -320,7 +320,7 @@ class KeyManagementService {
     return {
       token,
       encryptedData: encryptedToken,
-      expiresAt: tokenData.expiresAt
+      expiresAt: tokenData.expiresAt,
     };
   }
 
@@ -352,7 +352,7 @@ class KeyManagementService {
       keyId: crypto.randomUUID(),
       createdAt: Date.now(),
       version: this.keyVersion,
-      purpose: 'backup'
+      purpose: 'backup',
     };
 
     const encryptedBackupKey = this.encryptKey(backupKey, backupKeyData.keyId);
@@ -360,7 +360,7 @@ class KeyManagementService {
     return {
       keyId: backupKeyData.keyId,
       encryptedKey: encryptedBackupKey,
-      keyData: backupKeyData
+      keyData: backupKeyData,
     };
   }
 
@@ -383,7 +383,7 @@ class KeyManagementService {
       shouldRotate: this.shouldRotateKeys(),
       algorithm: this.algorithm,
       keyLength: this.keyLength,
-      iterations: this.keyDerivationIterations
+      iterations: this.keyDerivationIterations,
     };
   }
 }

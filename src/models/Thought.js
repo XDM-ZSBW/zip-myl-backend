@@ -26,7 +26,7 @@ class Thought {
           timestamp: data.timestamp || new Date(),
         },
       });
-      
+
       logger.info(`Thought created with ID: ${thought.id}`);
       return new Thought(thought);
     } catch (error) {
@@ -40,7 +40,7 @@ class Thought {
       const thought = await prisma.thought.findUnique({
         where: { id },
       });
-      
+
       return thought ? new Thought(thought) : null;
     } catch (error) {
       logger.error('Error finding thought by ID:', error);

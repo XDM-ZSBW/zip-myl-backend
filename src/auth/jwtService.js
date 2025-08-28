@@ -19,12 +19,12 @@ class JWTService {
         ...payload,
         type: 'access',
         iat: Math.floor(Date.now() / 1000),
-        jti: crypto.randomUUID() // JWT ID for token tracking
+        jti: crypto.randomUUID(), // JWT ID for token tracking
       };
 
       return jwt.sign(tokenPayload, this.accessTokenSecret, {
         expiresIn: this.accessTokenExpiry,
-        algorithm: 'HS256'
+        algorithm: 'HS256',
       });
     } catch (error) {
       logger.error('Error generating access token', { error: error.message });
@@ -41,12 +41,12 @@ class JWTService {
         ...payload,
         type: 'refresh',
         iat: Math.floor(Date.now() / 1000),
-        jti: crypto.randomUUID()
+        jti: crypto.randomUUID(),
       };
 
       return jwt.sign(tokenPayload, this.refreshTokenSecret, {
         expiresIn: this.refreshTokenExpiry,
-        algorithm: 'HS256'
+        algorithm: 'HS256',
       });
     } catch (error) {
       logger.error('Error generating refresh token', { error: error.message });
@@ -60,7 +60,7 @@ class JWTService {
   verifyAccessToken(token) {
     try {
       const decoded = jwt.verify(token, this.accessTokenSecret, {
-        algorithms: ['HS256']
+        algorithms: ['HS256'],
       });
 
       if (decoded.type !== 'access') {
@@ -69,13 +69,13 @@ class JWTService {
 
       return {
         valid: true,
-        payload: decoded
+        payload: decoded,
       };
     } catch (error) {
       logger.error('Error verifying access token', { error: error.message });
       return {
         valid: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -86,7 +86,7 @@ class JWTService {
   verifyRefreshToken(token) {
     try {
       const decoded = jwt.verify(token, this.refreshTokenSecret, {
-        algorithms: ['HS256']
+        algorithms: ['HS256'],
       });
 
       if (decoded.type !== 'refresh') {
@@ -95,13 +95,13 @@ class JWTService {
 
       return {
         valid: true,
-        payload: decoded
+        payload: decoded,
       };
     } catch (error) {
       logger.error('Error verifying refresh token', { error: error.message });
       return {
         valid: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -160,7 +160,7 @@ class JWTService {
         accessToken,
         refreshToken,
         expiresIn: this.getExpiryInSeconds(this.accessTokenExpiry),
-        refreshExpiresIn: this.getExpiryInSeconds(this.refreshTokenExpiry)
+        refreshExpiresIn: this.getExpiryInSeconds(this.refreshTokenExpiry),
       };
     } catch (error) {
       logger.error('Error generating token pair', { error: error.message });
@@ -176,7 +176,7 @@ class JWTService {
       s: 1,
       m: 60,
       h: 3600,
-      d: 86400
+      d: 86400,
     };
 
     const match = expiry.match(/^(\d+)([smhd])$/);
@@ -194,12 +194,12 @@ class JWTService {
       const tokenPayload = {
         ...payload,
         iat: Math.floor(Date.now() / 1000),
-        jti: crypto.randomUUID()
+        jti: crypto.randomUUID(),
       };
 
       return jwt.sign(tokenPayload, this.accessTokenSecret, {
         expiresIn,
-        algorithm: 'HS256'
+        algorithm: 'HS256',
       });
     } catch (error) {
       logger.error('Error creating token with custom expiry', { error: error.message });
@@ -218,7 +218,7 @@ class JWTService {
       }
 
       const [header, payload, signature] = parts;
-      
+
       // Check if all parts are base64 encoded
       try {
         JSON.parse(Buffer.from(header, 'base64url').toString());

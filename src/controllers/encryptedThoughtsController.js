@@ -23,7 +23,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.isDeviceTrusted(deviceId))) {
         return res.status(403).json({
           error: 'Device not trusted',
-          message: 'This device is not trusted to store thoughts'
+          message: 'This device is not trusted to store thoughts',
         });
       }
 
@@ -31,7 +31,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.hasPermission(deviceId, 'canWrite'))) {
         return res.status(403).json({
           error: 'Insufficient permissions',
-          message: 'This device does not have write permissions'
+          message: 'This device does not have write permissions',
         });
       }
 
@@ -39,7 +39,7 @@ class EncryptedThoughtsController {
       if (!encryptedData || !encryptedData.encrypted || !encryptedData.iv || !encryptedData.tag) {
         return res.status(400).json({
           error: 'Invalid encrypted data',
-          message: 'Encrypted data must include encrypted, iv, and tag fields'
+          message: 'Encrypted data must include encrypted, iv, and tag fields',
         });
       }
 
@@ -54,17 +54,17 @@ class EncryptedThoughtsController {
           encrypted: encryptedData.encrypted,
           iv: encryptedData.iv,
           tag: encryptedData.tag,
-          algorithm: encryptedData.algorithm || 'aes-256-gcm'
+          algorithm: encryptedData.algorithm || 'aes-256-gcm',
         },
         metadata: {
           timestamp: new Date(),
           contentType: metadata?.contentType || 'unknown',
           domain: metadata?.domain || 'unknown',
           wordCount: metadata?.wordCount || 0,
-          characterCount: metadata?.characterCount || 0
+          characterCount: metadata?.characterCount || 0,
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       this.thoughts.set(thoughtId, thought);
@@ -77,14 +77,13 @@ class EncryptedThoughtsController {
       res.status(201).json({
         success: true,
         thoughtId,
-        message: 'Encrypted thought stored successfully'
+        message: 'Encrypted thought stored successfully',
       });
-
     } catch (error) {
       logger.error('Error storing encrypted thought:', error);
       res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to store encrypted thought'
+        message: 'Failed to store encrypted thought',
       });
     }
   }
@@ -102,7 +101,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.isDeviceTrusted(deviceId))) {
         return res.status(403).json({
           error: 'Device not trusted',
-          message: 'This device is not trusted to retrieve thoughts'
+          message: 'This device is not trusted to retrieve thoughts',
         });
       }
 
@@ -110,7 +109,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.hasPermission(deviceId, 'canRead'))) {
         return res.status(403).json({
           error: 'Insufficient permissions',
-          message: 'This device does not have read permissions'
+          message: 'This device does not have read permissions',
         });
       }
 
@@ -118,7 +117,7 @@ class EncryptedThoughtsController {
       if (!thought) {
         return res.status(404).json({
           error: 'Thought not found',
-          message: 'The requested thought does not exist'
+          message: 'The requested thought does not exist',
         });
       }
 
@@ -133,15 +132,14 @@ class EncryptedThoughtsController {
           encryptedData: thought.encryptedData,
           metadata: thought.metadata,
           createdAt: thought.createdAt,
-          updatedAt: thought.updatedAt
-        }
+          updatedAt: thought.updatedAt,
+        },
       });
-
     } catch (error) {
       logger.error('Error retrieving encrypted thought:', error);
       res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to retrieve encrypted thought'
+        message: 'Failed to retrieve encrypted thought',
       });
     }
   }
@@ -159,7 +157,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.isDeviceTrusted(deviceId))) {
         return res.status(403).json({
           error: 'Device not trusted',
-          message: 'This device is not trusted to list thoughts'
+          message: 'This device is not trusted to list thoughts',
         });
       }
 
@@ -167,7 +165,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.hasPermission(deviceId, 'canRead'))) {
         return res.status(403).json({
           error: 'Insufficient permissions',
-          message: 'This device does not have read permissions'
+          message: 'This device does not have read permissions',
         });
       }
 
@@ -186,20 +184,19 @@ class EncryptedThoughtsController {
           id: thought.id,
           metadata: thought.metadata,
           createdAt: thought.createdAt,
-          updatedAt: thought.updatedAt
+          updatedAt: thought.updatedAt,
         })),
         pagination: {
           limit: parseInt(limit),
           offset: parseInt(offset),
-          total: deviceThoughts.length
-        }
+          total: deviceThoughts.length,
+        },
       });
-
     } catch (error) {
       logger.error('Error listing encrypted thoughts:', error);
       res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to list encrypted thoughts'
+        message: 'Failed to list encrypted thoughts',
       });
     }
   }
@@ -217,7 +214,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.isDeviceTrusted(deviceId))) {
         return res.status(403).json({
           error: 'Device not trusted',
-          message: 'This device is not trusted to update thoughts'
+          message: 'This device is not trusted to update thoughts',
         });
       }
 
@@ -225,7 +222,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.hasPermission(deviceId, 'canWrite'))) {
         return res.status(403).json({
           error: 'Insufficient permissions',
-          message: 'This device does not have write permissions'
+          message: 'This device does not have write permissions',
         });
       }
 
@@ -233,7 +230,7 @@ class EncryptedThoughtsController {
       if (!thought) {
         return res.status(404).json({
           error: 'Thought not found',
-          message: 'The requested thought does not exist'
+          message: 'The requested thought does not exist',
         });
       }
 
@@ -241,7 +238,7 @@ class EncryptedThoughtsController {
       if (thought.deviceId !== deviceId) {
         return res.status(403).json({
           error: 'Access denied',
-          message: 'You can only update your own thoughts'
+          message: 'You can only update your own thoughts',
         });
       }
 
@@ -250,7 +247,7 @@ class EncryptedThoughtsController {
         encrypted: encryptedData.encrypted,
         iv: encryptedData.iv,
         tag: encryptedData.tag,
-        algorithm: encryptedData.algorithm || 'aes-256-gcm'
+        algorithm: encryptedData.algorithm || 'aes-256-gcm',
       };
       thought.updatedAt = new Date();
 
@@ -263,14 +260,13 @@ class EncryptedThoughtsController {
 
       res.json({
         success: true,
-        message: 'Encrypted thought updated successfully'
+        message: 'Encrypted thought updated successfully',
       });
-
     } catch (error) {
       logger.error('Error updating encrypted thought:', error);
       res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to update encrypted thought'
+        message: 'Failed to update encrypted thought',
       });
     }
   }
@@ -287,7 +283,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.isDeviceTrusted(deviceId))) {
         return res.status(403).json({
           error: 'Device not trusted',
-          message: 'This device is not trusted to delete thoughts'
+          message: 'This device is not trusted to delete thoughts',
         });
       }
 
@@ -295,7 +291,7 @@ class EncryptedThoughtsController {
       if (!(await trustService.hasPermission(deviceId, 'canWrite'))) {
         return res.status(403).json({
           error: 'Insufficient permissions',
-          message: 'This device does not have write permissions'
+          message: 'This device does not have write permissions',
         });
       }
 
@@ -303,7 +299,7 @@ class EncryptedThoughtsController {
       if (!thought) {
         return res.status(404).json({
           error: 'Thought not found',
-          message: 'The requested thought does not exist'
+          message: 'The requested thought does not exist',
         });
       }
 
@@ -311,7 +307,7 @@ class EncryptedThoughtsController {
       if (thought.deviceId !== deviceId) {
         return res.status(403).json({
           error: 'Access denied',
-          message: 'You can only delete your own thoughts'
+          message: 'You can only delete your own thoughts',
         });
       }
 
@@ -324,14 +320,13 @@ class EncryptedThoughtsController {
 
       res.json({
         success: true,
-        message: 'Encrypted thought deleted successfully'
+        message: 'Encrypted thought deleted successfully',
       });
-
     } catch (error) {
       logger.error('Error deleting encrypted thought:', error);
       res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to delete encrypted thought'
+        message: 'Failed to delete encrypted thought',
       });
     }
   }

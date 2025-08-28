@@ -9,28 +9,28 @@ const validate = (schema, property = 'body') => {
     const { error, value } = schema.validate(req[property], {
       abortEarly: false,
       stripUnknown: true,
-      allowUnknown: false
+      allowUnknown: false,
     });
 
     if (error) {
       const errorDetails = error.details.map(detail => ({
         field: detail.path.join('.'),
         message: detail.message,
-        value: detail.context?.value
+        value: detail.context?.value,
       }));
 
       logger.warn('Validation error', {
         path: req.path,
         method: req.method,
         errors: errorDetails,
-        ip: req.ip
+        ip: req.ip,
       });
 
       return res.status(400).json({
         success: false,
         error: 'Validation error',
         message: 'Invalid input data',
-        details: errorDetails
+        details: errorDetails,
       });
     }
 
@@ -52,11 +52,11 @@ const sanitizeInput = (req, res, next) => {
         .replace(/on\w+=/gi, '') // Remove event handlers
         .trim();
     }
-    
+
     if (Array.isArray(obj)) {
       return obj.map(sanitize);
     }
-    
+
     if (obj && typeof obj === 'object') {
       const sanitized = {};
       for (const [key, value] of Object.entries(obj)) {
@@ -64,18 +64,18 @@ const sanitizeInput = (req, res, next) => {
       }
       return sanitized;
     }
-    
+
     return obj;
   };
 
   if (req.body) {
     req.body = sanitize(req.body);
   }
-  
+
   if (req.query) {
     req.query = sanitize(req.query);
   }
-  
+
   if (req.params) {
     req.params = sanitize(req.params);
   }
@@ -96,13 +96,13 @@ const validateRequestSize = (maxSize = '1mb') => {
         contentLength,
         maxSize: maxSizeBytes,
         path: req.path,
-        ip: req.ip
+        ip: req.ip,
       });
 
       return res.status(413).json({
         success: false,
         error: 'Request too large',
-        message: `Request size exceeds maximum allowed size of ${maxSize}`
+        message: `Request size exceeds maximum allowed size of ${maxSize}`,
       });
     }
 
@@ -118,7 +118,7 @@ const parseSize = (size) => {
     b: 1,
     kb: 1024,
     mb: 1024 * 1024,
-    gb: 1024 * 1024 * 1024
+    gb: 1024 * 1024 * 1024,
   };
 
   const match = size.toLowerCase().match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/);
@@ -140,7 +140,7 @@ const validateUUID = (field = 'id') => {
       return res.status(400).json({
         success: false,
         error: 'Invalid UUID',
-        message: `Invalid UUID format for ${field}`
+        message: `Invalid UUID format for ${field}`,
       });
     }
 
@@ -159,7 +159,7 @@ const validatePagination = (req, res, next) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid pagination',
-      message: 'Page must be greater than 0'
+      message: 'Page must be greater than 0',
     });
   }
 
@@ -167,13 +167,120 @@ const validatePagination = (req, res, next) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid pagination',
-      message: 'Limit must be between 1 and 100'
+      message: 'Limit must be between 1 and 100',
     });
   }
 
   req.pagination = { page, limit };
   next();
 };
+
+/**
+ * Validate batch operations
+ */
+const validateBatchOperations = (req, res, next) => {
+  try {
+    const { operations, options = {} } = req.body;
+
+    // Check if operations array exists
+    if (!operations || !Array.isArray(operations)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid batch operations',
+        message: 'Operations must be an array',
+      });
+    }
+
+    // Check batch size limits
+    if (operations.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Empty batch operations',
+        message: 'At least one operation is required',
+      });
+    }
+
+    if (operations.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Batch too large',
+        message: 'Maximum 50 operations per batch',
+      });
+    }
+
+    // Validate each operation
+    const validationErrors = [];
+    operations.forEach((operation, index) => {
+      if (!operation || typeof operation !== 'object') {
+        validationErrors.push(`Operation ${index}: Invalid operation object`);
+        return;
+      }
+
+      if (!operation.operation || typeof operation.operation !== 'string') {
+        validationErrors.push(`Operation ${index}: Missing or invalid operation type`);
+      }
+
+      // Check for required fields based on operation type
+      const requiredFields = getRequiredFieldsForOperation(operation.operation);
+      if (requiredFields) {
+        requiredFields.forEach(field => {
+          if (!operation[field]) {
+            validationErrors.push(`Operation ${index}: Missing required field '${field}' for operation '${operation.operation}'`);
+          }
+        });
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Batch validation failed',
+        validationErrors,
+        message: 'Please fix validation errors before proceeding',
+      });
+    }
+
+    // Validate options
+    if (options.maxConcurrency && (typeof options.maxConcurrency !== 'number' || options.maxConcurrency < 1 || options.maxConcurrency > 20)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid options',
+        message: 'maxConcurrency must be a number between 1 and 20',
+      });
+    }
+
+    if (options.timeout && (typeof options.timeout !== 'number' || options.timeout < 1000 || options.timeout > 300000)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid options',
+        message: 'timeout must be a number between 1000 and 300000 milliseconds',
+      });
+    }
+
+    next();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Batch validation error',
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * Get required fields for a specific operation type
+ */
+function getRequiredFieldsForOperation(operationType) {
+  const requiredFieldsMap = {
+    'pairing-code.generate': ['deviceId'],
+    'device.register': ['deviceId', 'deviceInfo'],
+    'nft.generate': ['style', 'deviceId'],
+    'thoughts.sync': ['thoughts'],
+    'trust.establish': ['trustData'],
+  };
+
+  return requiredFieldsMap[operationType] || null;
+}
 
 // Validation schemas
 const schemas = {
@@ -186,8 +293,8 @@ const schemas = {
   tokenRequest: Joi.object({
     refreshToken: Joi.string().required().messages({
       'string.empty': 'Refresh token is required',
-      'any.required': 'Refresh token is required'
-    })
+      'any.required': 'Refresh token is required',
+    }),
   }),
 
   // Device update
@@ -200,14 +307,14 @@ const schemas = {
   apiKeyCreation: Joi.object({
     clientId: Joi.string().uuid().required().messages({
       'string.guid': 'Client ID must be a valid UUID',
-      'any.required': 'Client ID is required'
+      'any.required': 'Client ID is required',
     }),
     permissions: Joi.array().items(Joi.string()).min(1).required().messages({
       'array.min': 'At least one permission is required',
-      'any.required': 'Permissions array is required'
+      'any.required': 'Permissions array is required',
     }),
     rateLimit: Joi.number().integer().min(1).max(10000).optional(),
-    expiresAt: Joi.date().greater('now').optional()
+    expiresAt: Joi.date().greater('now').optional(),
   }),
 
   // API key update
@@ -215,7 +322,7 @@ const schemas = {
     permissions: Joi.array().items(Joi.string()).min(1).optional(),
     rateLimit: Joi.number().integer().min(1).max(10000).optional(),
     isActive: Joi.boolean().optional(),
-    expiresAt: Joi.date().greater('now').optional().allow(null)
+    expiresAt: Joi.date().greater('now').optional().allow(null),
   }),
 
   // Client creation
@@ -224,12 +331,12 @@ const schemas = {
       'string.empty': 'Client name is required',
       'string.min': 'Client name must be at least 1 character',
       'string.max': 'Client name must not exceed 100 characters',
-      'any.required': 'Client name is required'
+      'any.required': 'Client name is required',
     }),
     clientType: Joi.string().valid('web', 'mobile', 'desktop', 'service').required().messages({
       'any.only': 'Client type must be one of: web, mobile, desktop, service',
-      'any.required': 'Client type is required'
-    })
+      'any.required': 'Client type is required',
+    }),
   }),
 
   // Query parameters for listing
@@ -244,55 +351,55 @@ const schemas = {
     deviceId: Joi.string().uuid().optional(),
     apiKeyId: Joi.string().uuid().optional(),
     startDate: Joi.date().optional(),
-    endDate: Joi.date().optional()
+    endDate: Joi.date().optional(),
   }),
 
   // Thought schemas
   id: Joi.object({
-    id: Joi.string().uuid().required()
+    id: Joi.string().uuid().required(),
   }),
 
   createThought: Joi.object({
     content: Joi.string().min(1).max(10000).required(),
     tags: Joi.array().items(Joi.string().max(50)).optional(),
     isPublic: Joi.boolean().optional().default(false),
-    metadata: Joi.object().optional()
+    metadata: Joi.object().optional(),
   }),
 
   updateThought: Joi.object({
     content: Joi.string().min(1).max(10000).optional(),
     tags: Joi.array().items(Joi.string().max(50)).optional(),
     isPublic: Joi.boolean().optional(),
-    metadata: Joi.object().optional()
+    metadata: Joi.object().optional(),
   }),
 
   // NFT schemas
   nftGeneratePairing: Joi.object({
     platform: Joi.string().max(50).required(),
-    collectionName: Joi.string().max(255).optional()
+    collectionName: Joi.string().max(255).optional(),
   }),
 
   nftValidatePairing: Joi.object({
     token: Joi.string().max(255).required(),
-    nftData: Joi.object().required()
+    nftData: Joi.object().required(),
   }),
 
   nftProfileCollection: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
-    platform: Joi.string().max(50).optional()
+    platform: Joi.string().max(50).optional(),
   }),
 
   nftStoreInvalid: Joi.object({
     nftData: Joi.object().required(),
     reason: Joi.string().max(255).required(),
-    platform: Joi.string().max(50).optional()
+    platform: Joi.string().max(50).optional(),
   }),
 
   nftProfilePicture: Joi.object({
     imageData: Joi.string().max(10485760).required(), // 10MB base64
-    imageFormat: Joi.string().valid('jpeg', 'png', 'gif').default('jpeg')
-  })
+    imageFormat: Joi.string().valid('jpeg', 'png', 'gif').default('jpeg'),
+  }),
 };
 
 module.exports = {
@@ -301,5 +408,6 @@ module.exports = {
   validateRequestSize,
   validateUUID,
   validatePagination,
-  schemas
+  validateBatchOperations,
+  schemas,
 };

@@ -22,11 +22,11 @@ class NFTDatabaseService {
     try {
       const res = await this.pool.query(text, params);
       const duration = Date.now() - start;
-      
+
       if (process.env.NODE_ENV === 'development') {
         logger.debug('Executed query', { text, duration, rows: res.rowCount });
       }
-      
+
       return res;
     } catch (error) {
       const duration = Date.now() - start;
@@ -42,18 +42,18 @@ class NFTDatabaseService {
   async healthCheck() {
     try {
       const result = await this.query('SELECT NOW()');
-      return { 
-        status: 'healthy', 
+      return {
+        status: 'healthy',
         timestamp: result.rows[0].now,
-        database: 'postgresql'
+        database: 'postgresql',
       };
     } catch (error) {
       logger.error('Database health check failed:', error);
-      return { 
-        status: 'unhealthy', 
-        error: error.message, 
+      return {
+        status: 'unhealthy',
+        error: error.message,
         timestamp: new Date().toISOString(),
-        database: 'postgresql'
+        database: 'postgresql',
       };
     }
   }

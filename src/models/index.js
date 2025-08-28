@@ -1,2 +1,7 @@
-export { Thought } from './Thought.js';
-export { default as ThoughtModel } from './Thought.js';
+const { Thought } = require('./Thought');
+const ThoughtModel = require('./Thought');
+
+module.exports = {
+  Thought,
+  ThoughtModel,
+};

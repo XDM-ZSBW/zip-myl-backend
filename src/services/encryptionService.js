@@ -53,10 +53,10 @@ class EncryptionService {
     const tag = cipher.getAuthTag();
 
     return {
-      encrypted: encrypted,
+      encrypted,
       iv: iv.toString('hex'),
       tag: tag.toString('hex'),
-      algorithm: this.algorithm
+      algorithm: this.algorithm,
     };
   }
 
@@ -109,14 +109,14 @@ class EncryptionService {
    */
   generatePairingCode(format = 'uuid') {
     switch (format.toLowerCase()) {
-      case 'uuid':
-        return this.generateUUIDPairingCode();
-      case 'short':
-        return this.generateShortPairingCode();
-      case 'legacy':
-        return this.generateLegacyPairingCode();
-      default:
-        return this.generateUUIDPairingCode(); // Default to UUID
+    case 'uuid':
+      return this.generateUUIDPairingCode();
+    case 'short':
+      return this.generateShortPairingCode();
+    case 'legacy':
+      return this.generateLegacyPairingCode();
+    default:
+      return this.generateUUIDPairingCode(); // Default to UUID
     }
   }
 

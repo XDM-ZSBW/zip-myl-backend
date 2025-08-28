@@ -1,6 +1,6 @@
-import Redis from 'ioredis';
-import { logger } from '../utils/logger.js';
-import { config } from '../utils/config.js';
+const Redis = require('ioredis');
+const { logger } = require('../utils/logger');
+const { config } = require('../utils/config');
 
 class CacheService {
   constructor() {
@@ -183,4 +183,4 @@ class CacheService {
 // Create singleton instance
 const cacheService = new CacheService();
 
-export default cacheService;
+module.exports = cacheService;

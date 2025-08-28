@@ -9,7 +9,7 @@ class RateLimiter {
   constructor() {
     this.requests = new Map();
     this.cleanupInterval = 60 * 1000; // 1 minute
-    
+
     // Start cleanup interval
     setInterval(() => this.cleanup(), this.cleanupInterval);
   }
@@ -20,36 +20,36 @@ class RateLimiter {
   checkLimit(key, windowMs, maxRequests) {
     const now = Date.now();
     const windowStart = now - windowMs;
-    
+
     if (!this.requests.has(key)) {
       this.requests.set(key, []);
     }
-    
+
     const requests = this.requests.get(key);
-    
+
     // Remove old requests outside the window
     const validRequests = requests.filter(timestamp => timestamp > windowStart);
     this.requests.set(key, validRequests);
-    
+
     // Check if limit exceeded
     if (validRequests.length >= maxRequests) {
       return {
         allowed: false,
         remaining: 0,
         resetTime: validRequests[0] + windowMs,
-        retryAfter: Math.ceil((validRequests[0] + windowMs - now) / 1000)
+        retryAfter: Math.ceil((validRequests[0] + windowMs - now) / 1000),
       };
     }
-    
+
     // Add current request
     validRequests.push(now);
     this.requests.set(key, validRequests);
-    
+
     return {
       allowed: true,
       remaining: maxRequests - validRequests.length,
       resetTime: now + windowMs,
-      retryAfter: 0
+      retryAfter: 0,
     };
   }
 
@@ -59,10 +59,10 @@ class RateLimiter {
   cleanup() {
     const now = Date.now();
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-    
+
     for (const [key, requests] of this.requests.entries()) {
       const validRequests = requests.filter(timestamp => now - timestamp < maxAge);
-      
+
       if (validRequests.length === 0) {
         this.requests.delete(key);
       } else {
@@ -78,7 +78,7 @@ class RateLimiter {
     return {
       totalKeys: this.requests.size,
       totalRequests: Array.from(this.requests.values()).reduce((sum, requests) => sum + requests.length, 0),
-      memoryUsage: process.memoryUsage().heapUsed
+      memoryUsage: process.memoryUsage().heapUsed,
     };
   }
 }
@@ -96,7 +96,7 @@ const rateLimit = (action, options = {}) => {
     keyGenerator = (req) => req.ip,
     skipSuccessfulRequests = false,
     skipFailedRequests = false,
-    message = 'Too many requests, please try again later'
+    message = 'Too many requests, please try again later',
   } = options;
 
   return (req, res, next) => {
@@ -108,24 +108,24 @@ const rateLimit = (action, options = {}) => {
       res.set({
         'X-RateLimit-Limit': max,
         'X-RateLimit-Remaining': result.remaining,
-        'X-RateLimit-Reset': new Date(result.resetTime).toISOString()
+        'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
       });
 
       if (!result.allowed) {
         res.set('Retry-After', result.retryAfter);
-        
+
         logger.warn(`Rate limit exceeded for ${action}`, {
           key,
           ip: req.ip,
           userAgent: req.get('User-Agent'),
-          retryAfter: result.retryAfter
+          retryAfter: result.retryAfter,
         });
 
         return res.status(429).json({
           error: message,
           code: 'RATE_LIMIT_EXCEEDED',
           retryAfter: result.retryAfter,
-          resetTime: new Date(result.resetTime).toISOString()
+          resetTime: new Date(result.resetTime).toISOString(),
         });
       }
 
@@ -146,7 +146,7 @@ const deviceRateLimit = (action, options = {}) => {
     keyGenerator: (req) => {
       // Use device ID if available, otherwise fall back to IP
       return req.deviceId || req.ip;
-    }
+    },
   });
 };
 
@@ -156,7 +156,7 @@ const deviceRateLimit = (action, options = {}) => {
 const ipRateLimit = (action, options = {}) => {
   return rateLimit(action, {
     ...options,
-    keyGenerator: (req) => req.ip
+    keyGenerator: (req) => req.ip,
   });
 };
 
@@ -169,7 +169,7 @@ const userRateLimit = (action, options = {}) => {
     keyGenerator: (req) => {
       // Use user ID if available, otherwise fall back to device ID or IP
       return req.userId || req.deviceId || req.ip;
-    }
+    },
   });
 };
 
@@ -180,7 +180,7 @@ const strictRateLimit = (action, options = {}) => {
   return rateLimit(action, {
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5, // 5 requests per hour
-    ...options
+    ...options,
   });
 };
 
@@ -191,7 +191,7 @@ const burstRateLimit = (action, options = {}) => {
   return rateLimit(action, {
     windowMs: 60 * 1000, // 1 minute
     max: 1000, // 1000 requests per minute
-    ...options
+    ...options,
   });
 };
 
@@ -202,50 +202,50 @@ const rateLimitPresets = {
   // Device registration - very strict
   deviceRegistration: strictRateLimit('device_registration', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5
+    max: 5,
   }),
 
   // Pairing code generation - moderate
   pairingCode: rateLimit('pairing_code', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10
+    max: 10,
   }),
 
   // Device pairing - strict
   devicePairing: strictRateLimit('device_pairing', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3
+    max: 3,
   }),
 
   // Key exchange - moderate
   keyExchange: rateLimit('key_exchange', {
     windowMs: 60 * 1000, // 1 minute
-    max: 5
+    max: 5,
   }),
 
   // Trust operations - moderate
   trustOperations: rateLimit('trust_operations', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 20
+    max: 20,
   }),
 
   // API calls - generous
   apiCalls: burstRateLimit('api_calls', {
     windowMs: 60 * 1000, // 1 minute
-    max: 1000
+    max: 1000,
   }),
 
   // Authentication - strict
   authentication: strictRateLimit('authentication', {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5
+    max: 5,
   }),
 
   // Health checks - very generous
   healthChecks: burstRateLimit('health_checks', {
     windowMs: 60 * 1000, // 1 minute
-    max: 10000
-  })
+    max: 10000,
+  }),
 };
 
 /**
@@ -257,15 +257,15 @@ const getRateLimitStatus = (action, key) => {
   const now = Date.now();
   const windowMs = 60 * 1000; // 1 minute default
   const max = 100; // default max
-  
+
   const validRequests = requests.filter(timestamp => timestamp > now - windowMs);
-  
+
   return {
     key: fullKey,
     requests: validRequests.length,
     max,
     remaining: Math.max(0, max - validRequests.length),
-    resetTime: validRequests.length > 0 ? validRequests[0] + windowMs : now + windowMs
+    resetTime: validRequests.length > 0 ? validRequests[0] + windowMs : now + windowMs,
   };
 };
 
@@ -295,5 +295,5 @@ module.exports = {
   rateLimitPresets,
   getRateLimitStatus,
   clearRateLimit,
-  getRateLimitStats
+  getRateLimitStats,
 };

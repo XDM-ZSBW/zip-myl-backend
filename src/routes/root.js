@@ -5,7 +5,7 @@ const router = express.Router();
 router.get('/', (req, res) => {
   const userAgent = req.get('User-Agent') || '';
   const isBot = /bot|crawler|spider|scraper|curl|wget|postman|insomnia/i.test(userAgent);
-  
+
   if (isBot) {
     // Bot-friendly JSON response
     res.json({
@@ -15,7 +15,7 @@ router.get('/', (req, res) => {
       documentation: {
         human: 'https://api.myl.zip/docs',
         api: 'https://api.myl.zip/api/docs/openapi.json',
-        swagger: 'https://api.myl.zip/api/docs/swagger'
+        swagger: 'https://api.myl.zip/api/docs/swagger',
       },
       endpoints: {
         health: 'https://api.myl.zip/health',
@@ -23,21 +23,21 @@ router.get('/', (req, res) => {
           register: 'POST /api/v1/auth/device/register',
           login: 'POST /api/v1/auth/login',
           refresh: 'POST /api/v1/auth/refresh',
-          logout: 'POST /api/v1/auth/logout'
+          logout: 'POST /api/v1/auth/logout',
         },
         device: {
           info: 'GET /api/v1/device/info',
           update: 'PUT /api/v1/device/update',
-          revoke: 'DELETE /api/v1/device/revoke'
+          revoke: 'DELETE /api/v1/device/revoke',
         },
         admin: {
           keys: {
             create: 'POST /api/v1/admin/keys/create',
             list: 'GET /api/v1/admin/keys/list',
             update: 'PUT /api/v1/admin/keys/update',
-            revoke: 'DELETE /api/v1/admin/keys/revoke'
-          }
-        }
+            revoke: 'DELETE /api/v1/admin/keys/revoke',
+          },
+        },
       },
       features: [
         'Anonymous device-based authentication',
@@ -46,11 +46,11 @@ router.get('/', (req, res) => {
         'Rate limiting',
         'API key management',
         'Audit logging',
-        'Health monitoring'
+        'Health monitoring',
       ],
       status: 'operational',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     });
   } else {
     // Human-friendly HTML response
@@ -272,7 +272,7 @@ router.get('/', (req, res) => {
 </body>
 </html>
     `;
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   }
@@ -291,8 +291,8 @@ router.get('/api/info', (req, res) => {
       docs: '/docs',
       openapi: '/api/docs/openapi.json',
       swagger: '/api/docs/swagger',
-      health: '/health'
-    }
+      health: '/health',
+    },
   });
 });
 

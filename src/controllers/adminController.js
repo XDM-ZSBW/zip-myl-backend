@@ -17,20 +17,20 @@ class AdminController {
         return res.status(400).json({
           success: false,
           error: 'Invalid input',
-          message: 'Client ID and permissions array are required'
+          message: 'Client ID and permissions array are required',
         });
       }
 
       // Verify client exists
       const client = await prisma.client.findUnique({
-        where: { id: clientId }
+        where: { id: clientId },
       });
 
       if (!client) {
         return res.status(404).json({
           success: false,
           error: 'Client not found',
-          message: 'The specified client does not exist'
+          message: 'The specified client does not exist',
         });
       }
 
@@ -45,18 +45,18 @@ class AdminController {
           keyHash,
           permissions,
           rateLimit: rateLimit || null,
-          expiresAt: expiresAt ? new Date(expiresAt) : null
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
         },
         include: {
-          client: true
-        }
+          client: true,
+        },
       });
 
       logger.info('API key created', {
         apiKeyId: apiKeyRecord.id,
-        clientId: clientId,
+        clientId,
         permissions,
-        createdBy: req.apiKey?.id || req.deviceId
+        createdBy: req.apiKey?.id || req.deviceId,
       });
 
       res.status(201).json({
@@ -71,15 +71,15 @@ class AdminController {
           permissions: apiKeyRecord.permissions,
           rateLimit: apiKeyRecord.rateLimit,
           expiresAt: apiKeyRecord.expiresAt,
-          createdAt: apiKeyRecord.createdAt
-        }
+          createdAt: apiKeyRecord.createdAt,
+        },
       });
     } catch (error) {
       logger.error('Error creating API key', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to create API key',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -105,15 +105,15 @@ class AdminController {
                 id: true,
                 name: true,
                 clientType: true,
-                isActive: true
-              }
-            }
+                isActive: true,
+              },
+            },
           },
           skip,
           take: parseInt(limit),
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         }),
-        prisma.apiKey.count({ where })
+        prisma.apiKey.count({ where }),
       ]);
 
       // Remove sensitive data
@@ -127,7 +127,7 @@ class AdminController {
         lastUsedAt: key.lastUsedAt,
         expiresAt: key.expiresAt,
         createdAt: key.createdAt,
-        updatedAt: key.updatedAt
+        updatedAt: key.updatedAt,
       }));
 
       res.json({
@@ -139,16 +139,16 @@ class AdminController {
             page: parseInt(page),
             limit: parseInt(limit),
             total,
-            pages: Math.ceil(total / parseInt(limit))
-          }
-        }
+            pages: Math.ceil(total / parseInt(limit)),
+          },
+        },
       });
     } catch (error) {
       logger.error('Error listing API keys', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to list API keys',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -163,14 +163,14 @@ class AdminController {
 
       const apiKey = await prisma.apiKey.findUnique({
         where: { id },
-        include: { client: true }
+        include: { client: true },
       });
 
       if (!apiKey) {
         return res.status(404).json({
           success: false,
           error: 'API key not found',
-          message: 'The specified API key does not exist'
+          message: 'The specified API key does not exist',
         });
       }
 
@@ -183,13 +183,13 @@ class AdminController {
       const updatedApiKey = await prisma.apiKey.update({
         where: { id },
         data: updateData,
-        include: { client: true }
+        include: { client: true },
       });
 
       logger.info('API key updated', {
         apiKeyId: id,
         updatedBy: req.apiKey?.id || req.deviceId,
-        changes: updateData
+        changes: updateData,
       });
 
       res.json({
@@ -203,15 +203,15 @@ class AdminController {
           rateLimit: updatedApiKey.rateLimit,
           isActive: updatedApiKey.isActive,
           expiresAt: updatedApiKey.expiresAt,
-          updatedAt: updatedApiKey.updatedAt
-        }
+          updatedAt: updatedApiKey.updatedAt,
+        },
       });
     } catch (error) {
       logger.error('Error updating API key', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to update API key',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -224,37 +224,37 @@ class AdminController {
       const { id } = req.params;
 
       const apiKey = await prisma.apiKey.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!apiKey) {
         return res.status(404).json({
           success: false,
           error: 'API key not found',
-          message: 'The specified API key does not exist'
+          message: 'The specified API key does not exist',
         });
       }
 
       await prisma.apiKey.update({
         where: { id },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       logger.info('API key revoked', {
         apiKeyId: id,
-        revokedBy: req.apiKey?.id || req.deviceId
+        revokedBy: req.apiKey?.id || req.deviceId,
       });
 
       res.json({
         success: true,
-        message: 'API key revoked successfully'
+        message: 'API key revoked successfully',
       });
     } catch (error) {
       logger.error('Error revoking API key', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to revoke API key',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -270,7 +270,7 @@ class AdminController {
         return res.status(400).json({
           success: false,
           error: 'Invalid input',
-          message: 'Name and client type are required'
+          message: 'Name and client type are required',
         });
       }
 
@@ -279,35 +279,35 @@ class AdminController {
         return res.status(400).json({
           success: false,
           error: 'Invalid client type',
-          message: `Client type must be one of: ${validClientTypes.join(', ')}`
+          message: `Client type must be one of: ${validClientTypes.join(', ')}`,
         });
       }
 
       const client = await prisma.client.create({
         data: {
           name,
-          clientType
-        }
+          clientType,
+        },
       });
 
       logger.info('Client created', {
         clientId: client.id,
         name: client.name,
         clientType: client.clientType,
-        createdBy: req.apiKey?.id || req.deviceId
+        createdBy: req.apiKey?.id || req.deviceId,
       });
 
       res.status(201).json({
         success: true,
         message: 'Client created successfully',
-        data: client
+        data: client,
       });
     } catch (error) {
       logger.error('Error creating client', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to create client',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -330,20 +330,20 @@ class AdminController {
           include: {
             _count: {
               select: {
-                apiKeys: true
-              }
-            }
+                apiKeys: true,
+              },
+            },
           },
           skip,
           take: parseInt(limit),
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         }),
-        prisma.client.count({ where })
+        prisma.client.count({ where }),
       ]);
 
       const clientsWithApiKeyCount = clients.map(client => ({
         ...client,
-        apiKeyCount: client._count.apiKeys
+        apiKeyCount: client._count.apiKeys,
       }));
 
       res.json({
@@ -355,16 +355,16 @@ class AdminController {
             page: parseInt(page),
             limit: parseInt(limit),
             total,
-            pages: Math.ceil(total / parseInt(limit))
-          }
-        }
+            pages: Math.ceil(total / parseInt(limit)),
+          },
+        },
       });
     } catch (error) {
       logger.error('Error listing clients', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to list clients',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -382,7 +382,7 @@ class AdminController {
         clientCount,
         activeClientCount,
         apiKeyCount,
-        activeApiKeyCount
+        activeApiKeyCount,
       ] = await Promise.all([
         prisma.device.count(),
         prisma.device.count({ where: { isActive: true } }),
@@ -391,7 +391,7 @@ class AdminController {
         prisma.client.count(),
         prisma.client.count({ where: { isActive: true } }),
         prisma.apiKey.count(),
-        prisma.apiKey.count({ where: { isActive: true } })
+        prisma.apiKey.count({ where: { isActive: true } }),
       ]);
 
       res.json({
@@ -401,31 +401,31 @@ class AdminController {
           devices: {
             total: deviceCount,
             active: activeDeviceCount,
-            inactive: deviceCount - activeDeviceCount
+            inactive: deviceCount - activeDeviceCount,
           },
           sessions: {
             total: sessionCount,
             active: activeSessionCount,
-            inactive: sessionCount - activeSessionCount
+            inactive: sessionCount - activeSessionCount,
           },
           clients: {
             total: clientCount,
             active: activeClientCount,
-            inactive: clientCount - activeClientCount
+            inactive: clientCount - activeClientCount,
           },
           apiKeys: {
             total: apiKeyCount,
             active: activeApiKeyCount,
-            inactive: apiKeyCount - activeApiKeyCount
-          }
-        }
+            inactive: apiKeyCount - activeApiKeyCount,
+          },
+        },
       });
     } catch (error) {
       logger.error('Error getting system stats', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to get system statistics',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -435,17 +435,17 @@ class AdminController {
    */
   async getAuditLogs(req, res) {
     try {
-      const { 
-        page = 1, 
-        limit = 50, 
-        action, 
-        success, 
-        deviceId, 
+      const {
+        page = 1,
+        limit = 50,
+        action,
+        success,
+        deviceId,
         apiKeyId,
         startDate,
-        endDate
+        endDate,
       } = req.query;
-      
+
       const skip = (parseInt(page) - 1) * parseInt(limit);
 
       const where = {};
@@ -453,7 +453,7 @@ class AdminController {
       if (success !== undefined) where.success = success === 'true';
       if (deviceId) where.deviceId = deviceId;
       if (apiKeyId) where.apiKeyId = apiKeyId;
-      
+
       if (startDate || endDate) {
         where.createdAt = {};
         if (startDate) where.createdAt.gte = new Date(startDate);
@@ -468,8 +468,8 @@ class AdminController {
               select: {
                 id: true,
                 fingerprint: true,
-                ipAddress: true
-              }
+                ipAddress: true,
+              },
             },
             apiKey: {
               select: {
@@ -478,17 +478,17 @@ class AdminController {
                   select: {
                     id: true,
                     name: true,
-                    clientType: true
-                  }
-                }
-              }
-            }
+                    clientType: true,
+                  },
+                },
+              },
+            },
           },
           skip,
           take: parseInt(limit),
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         }),
-        prisma.auditLog.count({ where })
+        prisma.auditLog.count({ where }),
       ]);
 
       res.json({
@@ -500,16 +500,16 @@ class AdminController {
             page: parseInt(page),
             limit: parseInt(limit),
             total,
-            pages: Math.ceil(total / parseInt(limit))
-          }
-        }
+            pages: Math.ceil(total / parseInt(limit)),
+          },
+        },
       });
     } catch (error) {
       logger.error('Error getting audit logs', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to get audit logs',
-        message: error.message
+        message: error.message,
       });
     }
   }

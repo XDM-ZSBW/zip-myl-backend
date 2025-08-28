@@ -24,7 +24,7 @@ router.get('/:id', validate(schemas.id, 'params'), thoughtsController.getThought
 router.post(
   '/',
   validate(schemas.createThought),
-  thoughtsController.createThought
+  thoughtsController.createThought,
 );
 
 // PUT /api/thoughts/:id - Update thought
@@ -32,14 +32,14 @@ router.put(
   '/:id',
   validate(schemas.id, 'params'),
   validate(schemas.updateThought),
-  thoughtsController.updateThought
+  thoughtsController.updateThought,
 );
 
 // DELETE /api/thoughts/:id - Delete thought
 router.delete(
   '/:id',
   validate(schemas.id, 'params'),
-  thoughtsController.deleteThought
+  thoughtsController.deleteThought,
 );
 
 module.exports = router;

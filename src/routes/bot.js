@@ -14,8 +14,8 @@ router.get('/status', (req, res) => {
       health: '/health',
       metrics: '/metrics',
       api: '/api',
-      docs: '/docs'
-    }
+      docs: '/docs',
+    },
   });
 });
 
@@ -26,7 +26,7 @@ router.get('/health', (req, res) => {
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     version: process.version,
-    platform: process.platform
+    platform: process.platform,
   });
 });
 
@@ -40,21 +40,21 @@ router.get('/api/status', (req, res) => {
           register: 'POST /api/v1/auth/device/register',
           login: 'POST /api/v1/auth/login',
           refresh: 'POST /api/v1/auth/refresh',
-          logout: 'POST /api/v1/auth/logout'
+          logout: 'POST /api/v1/auth/logout',
         },
         device: {
           info: 'GET /api/v1/device/info',
           update: 'PUT /api/v1/device/update',
-          revoke: 'DELETE /api/v1/device/revoke'
+          revoke: 'DELETE /api/v1/device/revoke',
         },
         admin: {
           keys: {
             create: 'POST /api/v1/admin/keys/create',
             list: 'GET /api/v1/admin/keys/list',
             update: 'PUT /api/v1/admin/keys/update',
-            revoke: 'DELETE /api/v1/admin/keys/revoke'
-          }
-        }
+            revoke: 'DELETE /api/v1/admin/keys/revoke',
+          },
+        },
       },
       features: [
         'anonymous-device-auth',
@@ -62,10 +62,10 @@ router.get('/api/status', (req, res) => {
         'rate-limiting',
         'api-key-management',
         'audit-logging',
-        'health-monitoring'
-      ]
+        'health-monitoring',
+      ],
     },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -98,7 +98,7 @@ router.get('/sitemap.xml', (req, res) => {
     <priority>0.5</priority>
   </url>
 </urlset>`;
-  
+
   res.setHeader('Content-Type', 'application/xml');
   res.send(sitemap);
 });
@@ -124,7 +124,7 @@ Sitemap: https://api.myl.zip/sitemap.xml
 # Interactive API explorer: https://api.myl.zip/api/docs/swagger
 # Health check: https://api.myl.zip/health
 # Bot status: https://api.myl.zip/bot/status`;
-  
+
   res.setHeader('Content-Type', 'text/plain');
   res.send(robots);
 });

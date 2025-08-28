@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { logger } from '../utils/logger.js';
-import { config } from '../utils/config.js';
+const { PrismaClient } = require('@prisma/client');
+const { logger } = require('../utils/logger');
+const { config } = require('../utils/config');
 
 class DatabaseService {
   constructor() {
@@ -105,4 +105,4 @@ class DatabaseService {
 // Create singleton instance
 const databaseService = new DatabaseService();
 
-export default databaseService;
+module.exports = databaseService;

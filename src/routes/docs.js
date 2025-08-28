@@ -400,7 +400,7 @@ curl https://api.myl.zip/health
 </body>
 </html>
   `;
-  
+
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
 });

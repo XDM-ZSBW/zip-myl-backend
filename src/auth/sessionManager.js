@@ -23,7 +23,7 @@ class SessionManager {
         expiresAt,
         refreshExpiresAt,
         ipAddress,
-        userAgent
+        userAgent,
       } = sessionData;
 
       // Hash tokens for storage
@@ -42,13 +42,13 @@ class SessionManager {
           refreshExpiresAt,
           isActive: true,
           ipAddress,
-          userAgent
-        }
+          userAgent,
+        },
       });
 
-      logger.info('Session created', { 
-        sessionId: session.id, 
-        deviceId: session.deviceId 
+      logger.info('Session created', {
+        sessionId: session.id,
+        deviceId: session.deviceId,
       });
 
       return session;
@@ -64,14 +64,14 @@ class SessionManager {
   async getSessionByAccessToken(accessToken) {
     try {
       const hashedToken = crypto.createHash('sha256').update(accessToken).digest('hex');
-      
+
       const session = await prisma.session.findFirst({
         where: {
           accessToken: hashedToken,
           isActive: true,
-          expiresAt: { gt: new Date() }
+          expiresAt: { gt: new Date() },
         },
-        include: { device: true }
+        include: { device: true },
       });
 
       return session;
@@ -87,14 +87,14 @@ class SessionManager {
   async getSessionByRefreshToken(refreshToken) {
     try {
       const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-      
+
       const session = await prisma.session.findFirst({
         where: {
           refreshToken: hashedToken,
           isActive: true,
-          refreshExpiresAt: { gt: new Date() }
+          refreshExpiresAt: { gt: new Date() },
         },
-        include: { device: true }
+        include: { device: true },
       });
 
       return session;
@@ -111,7 +111,7 @@ class SessionManager {
     try {
       const session = await prisma.session.update({
         where: { id: sessionId },
-        data: updateData
+        data: updateData,
       });
 
       logger.info('Session updated', { sessionId: session.id });
@@ -129,7 +129,7 @@ class SessionManager {
     try {
       const session = await prisma.session.update({
         where: { id: sessionId },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       logger.info('Session revoked', { sessionId: session.id });
@@ -147,12 +147,12 @@ class SessionManager {
     try {
       const result = await prisma.session.updateMany({
         where: { deviceId, isActive: true },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
-      logger.info('All device sessions revoked', { 
-        deviceId, 
-        sessionsRevoked: result.count 
+      logger.info('All device sessions revoked', {
+        deviceId,
+        sessionsRevoked: result.count,
       });
 
       return result;
@@ -168,10 +168,10 @@ class SessionManager {
   async getDeviceSessions(deviceId) {
     try {
       const sessions = await prisma.session.findMany({
-        where: { 
-          deviceId, 
+        where: {
+          deviceId,
           isActive: true,
-          expiresAt: { gt: new Date() }
+          expiresAt: { gt: new Date() },
         },
         select: {
           id: true,
@@ -179,9 +179,9 @@ class SessionManager {
           expiresAt: true,
           refreshExpiresAt: true,
           ipAddress: true,
-          userAgent: true
+          userAgent: true,
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       });
 
       return sessions;
@@ -197,21 +197,21 @@ class SessionManager {
   async cleanupExpiredSessions() {
     try {
       const now = new Date();
-      
+
       const result = await prisma.session.updateMany({
         where: {
           OR: [
             { expiresAt: { lt: now } },
-            { refreshExpiresAt: { lt: now } }
+            { refreshExpiresAt: { lt: now } },
           ],
-          isActive: true
+          isActive: true,
         },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       if (result.count > 0) {
-        logger.info('Expired sessions cleaned up', { 
-          sessionsCleaned: result.count 
+        logger.info('Expired sessions cleaned up', {
+          sessionsCleaned: result.count,
         });
       }
 
@@ -228,32 +228,32 @@ class SessionManager {
   async enforceSessionLimit(deviceId) {
     try {
       const activeSessions = await prisma.session.count({
-        where: { 
-          deviceId, 
+        where: {
+          deviceId,
           isActive: true,
-          expiresAt: { gt: new Date() }
-        }
+          expiresAt: { gt: new Date() },
+        },
       });
 
       if (activeSessions >= this.maxSessionsPerDevice) {
         // Revoke oldest sessions
         const oldestSessions = await prisma.session.findMany({
-          where: { 
-            deviceId, 
+          where: {
+            deviceId,
             isActive: true,
-            expiresAt: { gt: new Date() }
+            expiresAt: { gt: new Date() },
           },
           orderBy: { createdAt: 'asc' },
-          take: activeSessions - this.maxSessionsPerDevice + 1
+          take: activeSessions - this.maxSessionsPerDevice + 1,
         });
 
         for (const session of oldestSessions) {
           await this.revokeSession(session.id);
         }
 
-        logger.info('Session limit enforced', { 
-          deviceId, 
-          sessionsRevoked: oldestSessions.length 
+        logger.info('Session limit enforced', {
+          deviceId,
+          sessionsRevoked: oldestSessions.length,
         });
       }
     } catch (error) {
@@ -268,18 +268,18 @@ class SessionManager {
   async getSessionStats() {
     try {
       const now = new Date();
-      
+
       const stats = await prisma.session.groupBy({
         by: ['isActive'],
         _count: {
-          id: true
+          id: true,
         },
         where: {
           OR: [
             { expiresAt: { gt: now } },
-            { refreshExpiresAt: { gt: now } }
-          ]
-        }
+            { refreshExpiresAt: { gt: now } },
+          ],
+        },
       });
 
       const totalActive = stats.find(s => s.isActive)?._count?.id || 0;
@@ -288,7 +288,7 @@ class SessionManager {
       return {
         active: totalActive,
         inactive: totalInactive,
-        total: totalActive + totalInactive
+        total: totalActive + totalInactive,
       };
     } catch (error) {
       logger.error('Error getting session stats', { error: error.message });
@@ -300,12 +300,12 @@ class SessionManager {
    * Start cleanup timer
    */
   startCleanupTimer() {
-    setInterval(async () => {
+    setInterval(async() => {
       await this.cleanupExpiredSessions();
     }, this.sessionCleanupInterval);
 
-    logger.info('Session cleanup timer started', { 
-      interval: this.sessionCleanupInterval 
+    logger.info('Session cleanup timer started', {
+      interval: this.sessionCleanupInterval,
     });
   }
 
@@ -316,7 +316,7 @@ class SessionManager {
     try {
       const session = await prisma.session.findUnique({
         where: { id: sessionId },
-        include: { device: true }
+        include: { device: true },
       });
 
       if (!session) {
@@ -356,8 +356,8 @@ class SessionManager {
           accessToken: hashedAccessToken,
           refreshToken: hashedRefreshToken,
           expiresAt: newExpiresAt,
-          refreshExpiresAt: newRefreshExpiresAt
-        }
+          refreshExpiresAt: newRefreshExpiresAt,
+        },
       });
 
       logger.info('Session tokens refreshed', { sessionId: session.id });

@@ -12,12 +12,12 @@ class SimpleKeyManagementService {
     this.ivLength = 16; // 128 bits
     this.tagLength = 16; // 128 bits
     this.keyDerivationIterations = parseInt(process.env.KEY_DERIVATION_ITERATIONS) || 100000;
-    
+
     // For masterless setup, we use device-specific keys
     this.keyVersion = 1;
     this.keyRotationInterval = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
     this.lastKeyRotation = Date.now();
-    
+
     logger.info('Simple Key Management Service initialized for masterless setup');
   }
 
@@ -57,19 +57,19 @@ class SimpleKeyManagementService {
       modulusLength: 2048,
       publicKeyEncoding: {
         type: 'spki',
-        format: 'pem'
+        format: 'pem',
       },
       privateKeyEncoding: {
         type: 'pkcs8',
-        format: 'pem'
-      }
+        format: 'pem',
+      },
     });
 
     return {
       publicKey: keyPair.publicKey,
       privateKey: keyPair.privateKey,
-      deviceId: deviceId,
-      createdAt: Date.now()
+      deviceId,
+      createdAt: Date.now(),
     };
   }
 
@@ -89,12 +89,12 @@ class SimpleKeyManagementService {
       const tag = cipher.getAuthTag();
 
       return {
-        encrypted: encrypted,
+        encrypted,
         iv: iv.toString('hex'),
         tag: tag.toString('hex'),
         algorithm: this.algorithm,
         keyVersion: this.keyVersion,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error) {
       logger.error('Error encrypting data:', error);
@@ -141,7 +141,7 @@ class SimpleKeyManagementService {
     const actualHMAC = this.generateHMAC(data, key);
     return crypto.timingSafeEqual(
       Buffer.from(actualHMAC, 'hex'),
-      Buffer.from(expectedHMAC, 'hex')
+      Buffer.from(expectedHMAC, 'hex'),
     );
   }
 
@@ -162,7 +162,7 @@ class SimpleKeyManagementService {
       algorithm: this.algorithm,
       masterless: true,
       lastKeyRotation: this.lastKeyRotation,
-      status: 'operational'
+      status: 'operational',
     };
   }
 }

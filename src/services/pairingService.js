@@ -22,7 +22,7 @@ class PairingService {
     try {
       // First check cache for quick validation
       const cachedToken = await this.cache.get(`pairing_token:${token}`);
-      
+
       if (!cachedToken) {
         // Check database for token
         const tokenResult = await this.validateTokenFromDatabase(token);
@@ -33,7 +33,7 @@ class PairingService {
 
       // Validate token details
       const tokenDetails = cachedToken || await this.getTokenDetails(token);
-      
+
       if (!tokenDetails) {
         throw new Error('Token not found');
       }
@@ -71,7 +71,7 @@ class PairingService {
         nftId: pairingResult.nftId,
         platform: tokenDetails.platform,
         pairedAt: new Date().toISOString(),
-        message: 'NFT pairing completed successfully'
+        message: 'NFT pairing completed successfully',
       };
     } catch (error) {
       logger.error(`Error validating pairing: ${error.message}`);
@@ -91,15 +91,15 @@ class PairingService {
         FROM pairing_tokens
         WHERE token = $1 AND is_active = true
       `;
-      
+
       const result = await this.db.query(query, [token]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
 
       const tokenData = result.rows[0];
-      
+
       // Check if expired
       if (new Date(tokenData.expires_at) < new Date()) {
         return null;
@@ -116,7 +116,7 @@ class PairingService {
         userId: tokenData.user_id,
         platform: tokenData.platform,
         expiresAt: tokenData.expires_at,
-        usedAt: tokenData.used_at
+        usedAt: tokenData.used_at,
       };
     } catch (error) {
       logger.error(`Error validating token from database: ${error.message}`);
@@ -136,9 +136,9 @@ class PairingService {
         FROM pairing_tokens
         WHERE token = $1
       `;
-      
+
       const result = await this.db.query(query, [token]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
@@ -149,7 +149,7 @@ class PairingService {
         userId: result.rows[0].user_id,
         platform: result.rows[0].platform,
         expiresAt: result.rows[0].expires_at,
-        usedAt: result.rows[0].used_at
+        usedAt: result.rows[0].used_at,
       };
     } catch (error) {
       logger.error(`Error getting token details: ${error.message}`);
@@ -230,7 +230,7 @@ class PairingService {
         userId,
         nftData,
         tokenDetails.platform,
-        nftData.collectionName
+        nftData.collectionName,
       );
 
       // Create or update user profile
@@ -242,7 +242,7 @@ class PairingService {
       return {
         profileId,
         nftId: storedNFT.id,
-        platform: tokenDetails.platform
+        platform: tokenDetails.platform,
       };
     } catch (error) {
       logger.error(`Error processing pairing: ${error.message}`);
@@ -264,9 +264,9 @@ class PairingService {
         DO UPDATE SET updated_at = CURRENT_TIMESTAMP
         RETURNING id
       `;
-      
+
       const result = await this.db.query(query, [userId]);
-      
+
       if (!result.rows[0]) {
         throw new Error('Failed to ensure user profile');
       }
@@ -290,9 +290,9 @@ class PairingService {
         SET used_at = CURRENT_TIMESTAMP, is_active = false
         WHERE token = $1
       `;
-      
+
       await this.db.query(query, [token]);
-      
+
       logger.info(`Marked token ${token} as used by user ${userId}`);
     } catch (error) {
       logger.error(`Error marking token as used: ${error.message}`);
@@ -312,22 +312,22 @@ class PairingService {
         INSERT INTO audit_logs (device_id, action, resource_type, resource_id, encrypted_details)
         VALUES ($1, $2, $3, $4, $5)
       `;
-      
+
       const encryptedDetails = await this.encryption.encrypt(JSON.stringify({
         token,
         nftData,
         platform,
-        pairedAt: new Date().toISOString()
+        pairedAt: new Date().toISOString(),
       }));
-      
+
       await this.db.query(query, [
         userId,
         'nft_pairing_completed',
         'nft',
         nftData.tokenId,
-        encryptedDetails
+        encryptedDetails,
       ]);
-      
+
       logger.info(`Logged pairing event for user ${userId} with NFT ${nftData.tokenId}`);
     } catch (error) {
       logger.error(`Error logging pairing event: ${error.message}`);
@@ -347,9 +347,9 @@ class PairingService {
         FROM audit_logs
         WHERE device_id = $1 AND action = 'nft_pairing_completed'
       `;
-      
+
       const successResult = await this.db.query(successQuery, [userId]);
-      
+
       // Get platform distribution
       const platformQuery = `
         SELECT platform, COUNT(*) as count
@@ -358,9 +358,9 @@ class PairingService {
         GROUP BY platform
         ORDER BY count DESC
       `;
-      
+
       const platformResult = await this.db.query(platformQuery, [userId]);
-      
+
       // Get recent pairings
       const recentQuery = `
         SELECT al.created_at, al.resource_id, nc.platform
@@ -370,20 +370,20 @@ class PairingService {
         ORDER BY al.created_at DESC
         LIMIT 10
       `;
-      
+
       const recentResult = await this.db.query(recentQuery, [userId]);
-      
+
       return {
         successfulPairings: parseInt(successResult.rows[0]?.successful_pairings || 0),
         platformDistribution: platformResult.rows.map(row => ({
           platform: row.platform,
-          count: parseInt(row.count)
+          count: parseInt(row.count),
         })),
         recentPairings: recentResult.rows.map(row => ({
           pairedAt: row.created_at,
           nftId: row.resource_id,
-          platform: row.platform
-        }))
+          platform: row.platform,
+        })),
       };
     } catch (error) {
       logger.error(`Error getting pairing stats: ${error.message}`);
@@ -400,9 +400,9 @@ class PairingService {
         DELETE FROM pairing_tokens 
         WHERE expires_at < CURRENT_TIMESTAMP OR used_at IS NOT NULL
       `;
-      
+
       const result = await this.db.query(query);
-      
+
       if (result.rowCount > 0) {
         logger.info(`Cleaned up ${result.rowCount} expired/used pairing tokens`);
       }

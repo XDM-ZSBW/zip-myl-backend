@@ -12,7 +12,7 @@ class WebSocketService {
     this.clients = new Map(); // deviceId -> WebSocket
     this.rooms = new Map(); // roomId -> Set of deviceIds
     this.heartbeats = new Map(); // deviceId -> last heartbeat
-    
+
     this.setupWebSocketServer();
   }
 
@@ -56,7 +56,7 @@ class WebSocketService {
         platform: req.headers['x-client-platform'] || 'unknown',
         version: req.headers['x-client-version'] || '1.0.0',
         connectedAt: new Date(),
-        lastHeartbeat: new Date()
+        lastHeartbeat: new Date(),
       });
 
       // Send welcome message
@@ -65,8 +65,8 @@ class WebSocketService {
         data: {
           deviceId,
           timestamp: new Date().toISOString(),
-          message: 'WebSocket connection established'
-        }
+          message: 'WebSocket connection established',
+        },
       });
 
       // Setup message handlers
@@ -104,12 +104,12 @@ class WebSocketService {
     // Try query parameter first
     const url = new URL(req.url, `http://${req.headers.host}`);
     let deviceId = url.searchParams.get('deviceId');
-    
+
     // Fallback to headers
     if (!deviceId) {
       deviceId = req.headers['x-device-id'];
     }
-    
+
     return deviceId;
   }
 
@@ -143,32 +143,32 @@ class WebSocketService {
       const { type, payload, roomId, targetDeviceId } = message;
 
       switch (type) {
-        case 'ping':
-          this.handlePing(deviceId);
-          break;
-        case 'join_room':
-          this.handleJoinRoom(deviceId, roomId);
-          break;
-        case 'leave_room':
-          this.handleLeaveRoom(deviceId, roomId);
-          break;
-        case 'room_message':
-          this.handleRoomMessage(deviceId, roomId, payload);
-          break;
-        case 'private_message':
-          this.handlePrivateMessage(deviceId, targetDeviceId, payload);
-          break;
-        case 'sync_request':
-          this.handleSyncRequest(deviceId, payload);
-          break;
-        case 'sync_response':
-          this.handleSyncResponse(deviceId, payload);
-          break;
-        case 'plugin_event':
-          this.handlePluginEvent(deviceId, payload);
-          break;
-        default:
-          logger.warn(`Unknown WebSocket message type: ${type} from device ${deviceId}`);
+      case 'ping':
+        this.handlePing(deviceId);
+        break;
+      case 'join_room':
+        this.handleJoinRoom(deviceId, roomId);
+        break;
+      case 'leave_room':
+        this.handleLeaveRoom(deviceId, roomId);
+        break;
+      case 'room_message':
+        this.handleRoomMessage(deviceId, roomId, payload);
+        break;
+      case 'private_message':
+        this.handlePrivateMessage(deviceId, targetDeviceId, payload);
+        break;
+      case 'sync_request':
+        this.handleSyncRequest(deviceId, payload);
+        break;
+      case 'sync_response':
+        this.handleSyncResponse(deviceId, payload);
+        break;
+      case 'plugin_event':
+        this.handlePluginEvent(deviceId, payload);
+        break;
+      default:
+        logger.warn(`Unknown WebSocket message type: ${type} from device ${deviceId}`);
       }
     } catch (error) {
       logger.error(`Error handling WebSocket message from device ${deviceId}:`, error);
@@ -176,8 +176,8 @@ class WebSocketService {
         type: 'error',
         data: {
           message: 'Invalid message format',
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     }
   }
@@ -190,8 +190,8 @@ class WebSocketService {
     this.sendToClient(deviceId, {
       type: 'pong',
       data: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -202,19 +202,19 @@ class WebSocketService {
     if (!this.rooms.has(roomId)) {
       this.rooms.set(roomId, new Set());
     }
-    
+
     this.rooms.get(roomId).add(deviceId);
-    
+
     // Notify other room members
     this.broadcastToRoom(roomId, {
       type: 'user_joined',
       data: {
         deviceId,
         roomId,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     }, [deviceId]); // Exclude the joining user
-    
+
     logger.info(`Device ${deviceId} joined room ${roomId}`);
   }
 
@@ -224,22 +224,22 @@ class WebSocketService {
   handleLeaveRoom(deviceId, roomId) {
     if (this.rooms.has(roomId)) {
       this.rooms.get(roomId).delete(deviceId);
-      
+
       // Clean up empty rooms
       if (this.rooms.get(roomId).size === 0) {
         this.rooms.delete(roomId);
       }
-      
+
       // Notify other room members
       this.broadcastToRoom(roomId, {
         type: 'user_left',
         data: {
           deviceId,
           roomId,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
-      
+
       logger.info(`Device ${deviceId} left room ${roomId}`);
     }
   }
@@ -255,8 +255,8 @@ class WebSocketService {
           deviceId,
           roomId,
           message: payload.message,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     }
   }
@@ -271,8 +271,8 @@ class WebSocketService {
         data: {
           fromDeviceId,
           message: payload.message,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     }
   }
@@ -283,15 +283,15 @@ class WebSocketService {
   handleSyncRequest(deviceId, payload) {
     // TODO: Implement sync request handling
     logger.info(`Sync request from device ${deviceId}:`, payload);
-    
+
     // Send sync response
     this.sendToClient(deviceId, {
       type: 'sync_response',
       data: {
         requestId: payload.requestId,
         status: 'processing',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -309,7 +309,7 @@ class WebSocketService {
   handlePluginEvent(deviceId, payload) {
     // TODO: Implement plugin event handling
     logger.info(`Plugin event from device ${deviceId}:`, payload);
-    
+
     // Broadcast plugin event to interested clients
     this.broadcastToClients({
       type: 'plugin_event',
@@ -318,8 +318,8 @@ class WebSocketService {
         pluginId: payload.pluginId,
         event: payload.event,
         data: payload.data,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -417,8 +417,8 @@ class WebSocketService {
             data: {
               deviceId,
               roomId,
-              timestamp: new Date().toISOString()
-            }
+              timestamp: new Date().toISOString(),
+            },
           });
         }
       }
@@ -443,13 +443,13 @@ class WebSocketService {
         platform: client.platform,
         version: client.version,
         connectedAt: client.connectedAt,
-        lastHeartbeat: client.lastHeartbeat
+        lastHeartbeat: client.lastHeartbeat,
       })),
       rooms: Array.from(this.rooms.entries()).map(([roomId, members]) => ({
         roomId,
         memberCount: members.size,
-        members: Array.from(members)
-      }))
+        members: Array.from(members),
+      })),
     };
   }
 }

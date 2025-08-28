@@ -20,13 +20,13 @@ const initializeRedis = () => {
         maxRetriesPerRequest: 3,
         lazyConnect: true, // Don't connect immediately
         retryDelayOnClusterDown: 100,
-        enableOfflineQueue: false
+        enableOfflineQueue: false,
       });
 
       redis.on('error', (error) => {
-        logger.warn('Redis connection error in rate limiter, falling back to memory', { 
+        logger.warn('Redis connection error in rate limiter, falling back to memory', {
           error: error.message,
-          fallback: 'memory'
+          fallback: 'memory',
         });
         useRedis = false;
       });
@@ -78,13 +78,13 @@ const createRateLimiter = (config) => {
       logger.warn('Rate limit exceeded', {
         ip: req.ip,
         path: req.path,
-        deviceId: req.deviceId
+        deviceId: req.deviceId,
       });
       res.status(429).json(config.message || {
         error: 'Too many requests',
-        message: 'Rate limit exceeded. Please try again later.'
+        message: 'Rate limit exceeded. Please try again later.',
       });
-    }
+    },
   };
 
   return rateLimit(rateLimitConfig);
@@ -99,7 +99,7 @@ const rateLimitConfigs = {
     message: {
       error: 'Too many requests',
       message: 'Rate limit exceeded. Please try again later.',
-      retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
+      retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000),
     },
     keyGenerator: (req) => {
       // Use device ID if available, otherwise fall back to IP
@@ -108,7 +108,7 @@ const rateLimitConfigs = {
     skip: (req) => {
       // Skip rate limiting for health checks
       return req.path === '/health' || req.path === '/api/v1/health';
-    }
+    },
   },
 
   // Authentication endpoints rate limit
@@ -118,11 +118,11 @@ const rateLimitConfigs = {
     message: {
       error: 'Too many authentication attempts',
       message: 'Too many authentication attempts. Please try again later.',
-      retryAfter: 900
+      retryAfter: 900,
     },
     keyGenerator: (req) => {
       return `auth:${req.deviceId || req.ip || 'anonymous'}`;
-    }
+    },
   },
 
   // Device registration rate limit
@@ -132,11 +132,11 @@ const rateLimitConfigs = {
     message: {
       error: 'Too many device registrations',
       message: 'Too many device registrations. Please try again later.',
-      retryAfter: 3600
+      retryAfter: 3600,
     },
     keyGenerator: (req) => {
       return `device_reg:${req.ip || 'anonymous'}`;
-    }
+    },
   },
 
   // API key operations rate limit
@@ -146,12 +146,12 @@ const rateLimitConfigs = {
     message: {
       error: 'Too many API key operations',
       message: 'Too many API key operations. Please try again later.',
-      retryAfter: 3600
+      retryAfter: 3600,
     },
     keyGenerator: (req) => {
       return `api_key:${req.deviceId || req.ip || 'anonymous'}`;
-    }
-  }
+    },
+  },
 };
 
 // Export rate limiters
@@ -163,7 +163,7 @@ const apiKeyRateLimit = createRateLimiter(rateLimitConfigs.apiKey);
 // Dynamic rate limiter based on device type
 const dynamicRateLimit = (req, res, next) => {
   const deviceId = req.deviceId;
-  
+
   if (!deviceId) {
     // No device ID, use strict rate limiting
     return generalRateLimit(req, res, next);
@@ -172,12 +172,12 @@ const dynamicRateLimit = (req, res, next) => {
   // Check if device has special rate limit privileges
   // This could be based on device reputation, subscription, etc.
   const isPrivilegedDevice = req.deviceType === 'premium' || req.deviceRole === 'admin';
-  
+
   if (isPrivilegedDevice) {
     // Higher rate limits for privileged devices
     const privilegedConfig = {
       ...rateLimitConfigs.general,
-      max: rateLimitConfigs.general.max * 2 // Double the limit
+      max: rateLimitConfigs.general.max * 2, // Double the limit
     };
     return createRateLimiter(privilegedConfig)(req, res, next);
   }
@@ -190,48 +190,48 @@ const dynamicRateLimit = (req, res, next) => {
 const bypassRateLimit = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
   const internalApiKey = process.env.INTERNAL_API_KEY;
-  
+
   if (apiKey && apiKey === internalApiKey) {
     logger.info('Rate limit bypassed for internal service', {
       ip: req.ip,
-      path: req.path
+      path: req.path,
     });
     return next();
   }
-  
+
   return dynamicRateLimit(req, res, next);
 };
 
 // Rate limit based on endpoint type
 const endpointRateLimit = (req, res, next) => {
   const path = req.path;
-  
+
   // Authentication endpoints
   if (path.includes('/auth/')) {
     return authRateLimit(req, res, next);
   }
-  
+
   // Device registration
   if (path.includes('/device/register')) {
     return deviceRegistrationRateLimit(req, res, next);
   }
-  
+
   // API key management
   if (path.includes('/admin/keys/')) {
     return apiKeyRateLimit(req, res, next);
   }
-  
+
   // Sensitive operations
   if (path.includes('/admin/') || path.includes('/sensitive/')) {
     return generalRateLimit(req, res, next); // Changed to generalRateLimit for strict rate limiting
   }
-  
+
   // Default rate limiting
   return dynamicRateLimit(req, res, next);
 };
 
 // Cleanup function for graceful shutdown
-const cleanup = async () => {
+const cleanup = async() => {
   if (redis) {
     try {
       await redis.quit();
@@ -251,5 +251,5 @@ module.exports = {
   bypassRateLimit,
   endpointRateLimit,
   cleanup,
-  redis
+  redis,
 };

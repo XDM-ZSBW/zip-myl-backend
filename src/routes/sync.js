@@ -79,7 +79,7 @@ router.post('/pull',
       }
     });
   }
-);
+),
 
 // Resolve sync conflicts
 router.post('/resolve', 
@@ -98,7 +98,7 @@ router.post('/resolve',
       }
     });
   }
-});
+),
 
 // Get sync history
 router.get('/history', 
@@ -119,7 +119,7 @@ router.get('/history',
       }
     });
   }
-});
+),
 
 // Force full sync
 router.post('/full-sync', 
@@ -139,7 +139,7 @@ router.post('/full-sync',
       }
     });
   }
-});
+),
 
 // Get sync statistics
 router.get('/stats', 
@@ -159,6 +159,6 @@ router.get('/stats',
       }
     });
   }
-});
+);
 
 module.exports = router;

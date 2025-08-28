@@ -16,11 +16,11 @@ class APIKeyValidator {
   async validateApiKey(req, res, next) {
     try {
       const apiKey = req.headers[this.apiKeyHeader];
-      
+
       if (!apiKey) {
         return res.status(401).json({
           error: 'API key required',
-          message: 'API key is required for this endpoint'
+          message: 'API key is required for this endpoint',
         });
       }
 
@@ -33,16 +33,16 @@ class APIKeyValidator {
 
       // Validate API key in database
       const hashedApiKey = crypto.createHash('sha256').update(apiKey).digest('hex');
-      
+
       const apiKeyRecord = await prisma.apiKey.findFirst({
         where: {
           keyHash: hashedApiKey,
           isActive: true,
-          expiresAt: { gt: new Date() }
+          expiresAt: { gt: new Date() },
         },
         include: {
-          client: true
-        }
+          client: true,
+        },
       });
 
       if (!apiKeyRecord) {
@@ -50,12 +50,12 @@ class APIKeyValidator {
           ip: req.ip,
           userAgent: req.get('User-Agent'),
           path: req.path,
-          method: req.method
+          method: req.method,
         });
 
         return res.status(401).json({
           error: 'Invalid API key',
-          message: 'The provided API key is invalid or expired'
+          message: 'The provided API key is invalid or expired',
         });
       }
 
@@ -64,19 +64,19 @@ class APIKeyValidator {
         logger.warn('API key used for inactive client', {
           clientId: apiKeyRecord.client.id,
           apiKeyId: apiKeyRecord.id,
-          ip: req.ip
+          ip: req.ip,
         });
 
         return res.status(401).json({
           error: 'Client inactive',
-          message: 'The client associated with this API key is inactive'
+          message: 'The client associated with this API key is inactive',
         });
       }
 
       // Update last used timestamp
       await prisma.apiKey.update({
         where: { id: apiKeyRecord.id },
-        data: { lastUsedAt: new Date() }
+        data: { lastUsedAt: new Date() },
       });
 
       // Attach API key info to request
@@ -87,7 +87,7 @@ class APIKeyValidator {
         clientType: apiKeyRecord.client.clientType,
         permissions: apiKeyRecord.permissions,
         rateLimit: apiKeyRecord.rateLimit,
-        expiresAt: apiKeyRecord.expiresAt
+        expiresAt: apiKeyRecord.expiresAt,
       };
 
       req.apiKeyType = 'client';
@@ -98,7 +98,7 @@ class APIKeyValidator {
         clientId: apiKeyRecord.clientId,
         clientType: apiKeyRecord.client.clientType,
         ip: req.ip,
-        path: req.path
+        path: req.path,
       });
 
       next();
@@ -106,7 +106,7 @@ class APIKeyValidator {
       logger.error('Error validating API key', { error: error.message });
       return res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to validate API key'
+        message: 'Failed to validate API key',
       });
     }
   }
@@ -119,12 +119,12 @@ class APIKeyValidator {
       if (!req.apiKey) {
         return res.status(401).json({
           error: 'API key required',
-          message: 'API key is required for this endpoint'
+          message: 'API key is required for this endpoint',
         });
       }
 
-      const hasPermissions = requiredPermissions.every(permission => 
-        req.apiKey.permissions.includes(permission)
+      const hasPermissions = requiredPermissions.every(permission =>
+        req.apiKey.permissions.includes(permission),
       );
 
       if (!hasPermissions) {
@@ -134,13 +134,13 @@ class APIKeyValidator {
           requiredPermissions,
           actualPermissions: req.apiKey.permissions,
           ip: req.ip,
-          path: req.path
+          path: req.path,
         });
 
         return res.status(403).json({
           error: 'Insufficient permissions',
           message: 'API key does not have required permissions',
-          required: requiredPermissions
+          required: requiredPermissions,
         });
       }
 
@@ -156,7 +156,7 @@ class APIKeyValidator {
       if (!req.apiKey) {
         return res.status(401).json({
           error: 'API key required',
-          message: 'API key is required for this endpoint'
+          message: 'API key is required for this endpoint',
         });
       }
 
@@ -167,12 +167,12 @@ class APIKeyValidator {
           requiredClientType,
           actualClientType: req.apiKey.clientType,
           ip: req.ip,
-          path: req.path
+          path: req.path,
         });
 
         return res.status(403).json({
           error: 'Invalid client type',
-          message: `This endpoint requires client type: ${requiredClientType}`
+          message: `This endpoint requires client type: ${requiredClientType}`,
         });
       }
 
@@ -188,7 +188,7 @@ class APIKeyValidator {
       if (!req.apiKey) {
         return res.status(401).json({
           error: 'API key required',
-          message: 'API key is required for this endpoint'
+          message: 'API key is required for this endpoint',
         });
       }
 
@@ -199,12 +199,12 @@ class APIKeyValidator {
           requiredRole,
           actualRole: req.apiKeyRole,
           ip: req.ip,
-          path: req.path
+          path: req.path,
         });
 
         return res.status(403).json({
           error: 'Invalid role',
-          message: `This endpoint requires role: ${requiredRole}`
+          message: `This endpoint requires role: ${requiredRole}`,
         });
       }
 
@@ -218,7 +218,7 @@ class APIKeyValidator {
   async validateOptionalApiKey(req, res, next) {
     try {
       const apiKey = req.headers[this.apiKeyHeader];
-      
+
       if (!apiKey) {
         req.apiKey = null;
         req.apiKeyType = null;
@@ -232,7 +232,7 @@ class APIKeyValidator {
       logger.error('Error validating optional API key', { error: error.message });
       return res.status(500).json({
         error: 'Internal server error',
-        message: 'Failed to validate API key'
+        message: 'Failed to validate API key',
       });
     }
   }
@@ -248,10 +248,10 @@ class APIKeyValidator {
           client: true,
           _count: {
             select: {
-              auditLogs: true
-            }
-          }
-        }
+              auditLogs: true,
+            },
+          },
+        },
       });
 
       if (!apiKey) {
@@ -268,7 +268,7 @@ class APIKeyValidator {
         createdAt: apiKey.createdAt,
         lastUsedAt: apiKey.lastUsedAt,
         expiresAt: apiKey.expiresAt,
-        usageCount: apiKey._count.auditLogs
+        usageCount: apiKey._count.auditLogs,
       };
     } catch (error) {
       logger.error('Error getting API key stats', { error: error.message });
@@ -283,7 +283,7 @@ class APIKeyValidator {
     try {
       const apiKey = await prisma.apiKey.update({
         where: { id: apiKeyId },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       logger.info('API key revoked', { apiKeyId: apiKey.id });
@@ -312,8 +312,8 @@ class APIKeyValidator {
       // For now, we'll just log the rate limit info
       logger.info('API key rate limit check', {
         apiKeyId: req.apiKey.id,
-        rateLimit: rateLimit,
-        ip: req.ip
+        rateLimit,
+        ip: req.ip,
       });
 
       next();

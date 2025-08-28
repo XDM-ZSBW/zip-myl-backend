@@ -16,6 +16,13 @@ const { errorHandler } = require('./middleware/errorHandler');
 const { endpointRateLimit } = require('./middleware/rateLimiter');
 const { corsConfig } = require('./middleware/cors');
 const { sanitizeInput, validateRequestSize } = require('./middleware/validation');
+const {
+  validateExtension,
+  smartExtensionRateLimit,
+  requestLogger,
+  performanceLogger,
+  extensionAnalytics,
+} = require('./middleware');
 
 const app = express();
 
@@ -33,10 +40,10 @@ if (configValidation.errors.length > 0) {
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      defaultSrc: ['\'self\''],
+      styleSrc: ['\'self\'', '\'unsafe-inline\''],
+      scriptSrc: ['\'self\''],
+      imgSrc: ['\'self\'', 'data:', 'https:'],
     },
   },
 }));
@@ -50,8 +57,8 @@ app.use(compression());
 // Request logging
 app.use(morgan('combined', {
   stream: {
-    write: (message) => logger.info(message.trim())
-  }
+    write: (message) => logger.info(message.trim()),
+  },
 }));
 
 // Body parsing middleware
@@ -65,6 +72,10 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(sanitizeInput);
 app.use(validateRequestSize(config.MAX_REQUEST_SIZE));
 
+// Enhanced extension support middleware
+app.use(validateExtension);
+app.use(smartExtensionRateLimit);
+
 // Rate limiting
 if (config.ENABLE_RATE_LIMITING) {
   app.use(endpointRateLimit);
@@ -72,6 +83,11 @@ if (config.ENABLE_RATE_LIMITING) {
 } else {
   console.log('⚠️  Rate limiting disabled');
 }
+
+// Enhanced request logging and monitoring
+app.use(requestLogger);
+app.use(performanceLogger);
+app.use(extensionAnalytics);
 
 // Load routes with error handling
 const loadRoutes = (routeName, routePath, routeModule) => {
@@ -106,7 +122,7 @@ try {
   // Documentation routes (before API routes)
   const docsRoutes = require('./routes/docs');
   loadRoutes('docs routes', '/docs', docsRoutes);
-  
+
   const openApiRoutes = require('./routes/openapi');
   loadRoutes('OpenAPI routes', '/api/docs', openApiRoutes);
 
@@ -134,10 +150,17 @@ try {
   const thoughtsRoutes = require('./routes/thoughts');
   loadRoutes('thoughts routes', '/api/v1/thoughts', thoughtsRoutes);
 
+  // NFT routes
+  const nftRoutes = require('./routes/nft');
+  loadRoutes('NFT routes', '/api/v1/nft', nftRoutes);
+
+  // Batch operations routes
+  const batchRoutes = require('./routes/batch');
+  loadRoutes('batch routes', '/api/v1/batch', batchRoutes);
+
   // Root routes (must be after API routes)
   const rootRoutes = require('./routes/root');
   loadRoutes('root routes', '/', rootRoutes);
-
 } catch (error) {
   console.error('❌ Critical error loading routes:', error.message);
   logger.error('Critical error loading routes', { error: error.message });
@@ -157,7 +180,7 @@ app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `Route ${req.originalUrl} not found`,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -192,12 +215,12 @@ if (config.ENABLE_WEBSOCKET) {
     const wsService = new WebSocketService(server);
     logger.info('WebSocket service initialized successfully');
     console.log('✅ WebSocket service initialized');
-    
+
     // Add WebSocket stats endpoint
     app.get('/ws/stats', (req, res) => {
       res.json({
         success: true,
-        data: wsService.getStats()
+        data: wsService.getStats(),
       });
     });
   } catch (error) {

@@ -4,7 +4,7 @@ const { authenticateDevice } = require('../middleware/auth');
 const { workspaceRateLimit } = require('../middleware/rateLimiter');
 
 // Get all workspaces for device
-router.get('/', 
+router.get('/',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
@@ -14,43 +14,43 @@ router.get('/',
       data: {
         workspaces: [],
         total: 0,
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Create new workspace
-router.post('/', 
+router.post('/',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { name, description, type, settings, clientPlatform } = req.body;
-    
+
     // TODO: Implement workspace creation
     res.json({
       success: true,
       data: {
-        id: 'workspace-' + Date.now(),
+        id: `workspace-${Date.now()}`,
         name,
         description,
         type: type || 'personal',
         settings: settings || {},
         clientPlatform: clientPlatform || req.clientPlatform,
         createdAt: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Get specific workspace
-router.get('/:workspaceId', 
+router.get('/:workspaceId',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
-    
+
     // TODO: Implement workspace retrieval
     res.json({
       success: true,
@@ -63,20 +63,20 @@ router.get('/:workspaceId',
         clientPlatform: req.clientPlatform,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Update workspace
-router.put('/:workspaceId', 
+router.put('/:workspaceId',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { name, description, settings } = req.body;
-    
+
     // TODO: Implement workspace update
     res.json({
       success: true,
@@ -86,19 +86,19 @@ router.put('/:workspaceId',
         description: description || 'Updated description',
         settings: settings || {},
         updatedAt: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Delete workspace
-router.delete('/:workspaceId', 
+router.delete('/:workspaceId',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
-    
+
     // TODO: Implement workspace deletion
     res.json({
       success: true,
@@ -106,19 +106,19 @@ router.delete('/:workspaceId',
         deleted: true,
         workspaceId,
         timestamp: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Get workspace members
-router.get('/:workspaceId/members', 
+router.get('/:workspaceId/members',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
-    
+
     // TODO: Implement member listing
     res.json({
       success: true,
@@ -126,20 +126,20 @@ router.get('/:workspaceId/members',
         workspaceId,
         members: [],
         total: 0,
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Add member to workspace
-router.post('/:workspaceId/members', 
+router.post('/:workspaceId/members',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { email, role, permissions } = req.body;
-    
+
     // TODO: Implement member addition
     res.json({
       success: true,
@@ -149,21 +149,21 @@ router.post('/:workspaceId/members',
           email,
           role: role || 'member',
           permissions: permissions || ['read', 'write'],
-          addedAt: new Date().toISOString()
+          addedAt: new Date().toISOString(),
         },
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Remove member from workspace
-router.delete('/:workspaceId/members/:memberId', 
+router.delete('/:workspaceId/members/:memberId',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId, memberId } = req.params;
-    
+
     // TODO: Implement member removal
     res.json({
       success: true,
@@ -172,19 +172,19 @@ router.delete('/:workspaceId/members/:memberId',
         memberId,
         removed: true,
         timestamp: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Get workspace settings
-router.get('/:workspaceId/settings', 
+router.get('/:workspaceId/settings',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
-    
+
     // TODO: Implement settings retrieval
     res.json({
       success: true,
@@ -194,22 +194,22 @@ router.get('/:workspaceId/settings',
           sync: { enabled: true, interval: 300 },
           encryption: { enabled: true, algorithm: 'AES-256' },
           backup: { enabled: true, frequency: 'daily' },
-          sharing: { enabled: true, public: false }
+          sharing: { enabled: true, public: false },
         },
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Update workspace settings
-router.put('/:workspaceId/settings', 
+router.put('/:workspaceId/settings',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { settings } = req.body;
-    
+
     // TODO: Implement settings update
     res.json({
       success: true,
@@ -217,20 +217,20 @@ router.put('/:workspaceId/settings',
         workspaceId,
         settings: settings || {},
         updatedAt: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Get workspace activity
-router.get('/:workspaceId/activity', 
+router.get('/:workspaceId/activity',
   authenticateDevice,
   workspaceRateLimit,
   (req, res) => {
     const { workspaceId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
-    
+
     // TODO: Implement activity retrieval
     res.json({
       success: true,
@@ -240,10 +240,10 @@ router.get('/:workspaceId/activity',
         total: 0,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 module.exports = router;

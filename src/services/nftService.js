@@ -30,9 +30,9 @@ class NFTService {
         VALUES ($1, $2, $3, $4)
         RETURNING id, token, expires_at
       `;
-      
+
       const result = await this.db.query(query, [token, userId, platform, expiresAt]);
-      
+
       if (!result.rows[0]) {
         throw new Error('Failed to generate pairing token');
       }
@@ -42,7 +42,7 @@ class NFTService {
         token,
         platform,
         userId,
-        expiresAt: expiresAt.toISOString()
+        expiresAt: expiresAt.toISOString(),
       };
 
       // Cache token for quick validation
@@ -54,7 +54,7 @@ class NFTService {
         token,
         expiresAt: expiresAt.toISOString(),
         qrCode: qrCodeData,
-        tokenId: result.rows[0].id
+        tokenId: result.rows[0].id,
       };
     } catch (error) {
       logger.error(`Error generating pairing token: ${error.message}`);
@@ -74,16 +74,16 @@ class NFTService {
     try {
       // Encrypt sensitive NFT data
       const encryptedData = await this.encryption.encrypt(JSON.stringify(nftData));
-      
+
       // Store in database
       const query = `
         INSERT INTO nft_collections (user_id, nft_data, platform, collection_name)
         VALUES ($1, $2, $3, $4)
         RETURNING id, created_at
       `;
-      
+
       const result = await this.db.query(query, [userId, encryptedData, platform, collectionName]);
-      
+
       if (!result.rows[0]) {
         throw new Error('Failed to store NFT');
       }
@@ -102,7 +102,7 @@ class NFTService {
         nftData,
         platform,
         collectionName,
-        createdAt: result.rows[0].created_at
+        createdAt: result.rows[0].created_at,
       };
     } catch (error) {
       logger.error(`Error storing NFT: ${error.message}`);
@@ -126,7 +126,7 @@ class NFTService {
         FROM nft_collections
         WHERE user_id = $1 AND is_active = true
       `;
-      
+
       const queryParams = [userId];
       let paramIndex = 2;
 
@@ -143,7 +143,7 @@ class NFTService {
 
       // Decrypt NFT data
       const decryptedNFTs = await Promise.all(
-        result.rows.map(async (row) => {
+        result.rows.map(async(row) => {
           try {
             const decryptedData = await this.encryption.decrypt(row.nft_data);
             return {
@@ -151,7 +151,7 @@ class NFTService {
               nftData: JSON.parse(decryptedData),
               platform: row.platform,
               collectionName: row.collection_name,
-              createdAt: row.created_at
+              createdAt: row.created_at,
             };
           } catch (error) {
             logger.warn(`Failed to decrypt NFT ${row.id}: ${error.message}`);
@@ -161,10 +161,10 @@ class NFTService {
               platform: row.platform,
               collectionName: row.collection_name,
               createdAt: row.created_at,
-              error: 'Decryption failed'
+              error: 'Decryption failed',
             };
           }
-        })
+        }),
       );
 
       // Get total count for pagination
@@ -173,10 +173,10 @@ class NFTService {
         FROM nft_collections
         WHERE user_id = $1 AND is_active = true
       `;
-      
+
       const countParams = [userId];
       if (platform) {
-        countQuery += ` AND platform = $2`;
+        countQuery += ' AND platform = $2';
         countParams.push(platform);
       }
 
@@ -191,8 +191,8 @@ class NFTService {
           total,
           pages: Math.ceil(total / limit),
           hasNext: page * limit < total,
-          hasPrev: page > 1
-        }
+          hasPrev: page > 1,
+        },
       };
     } catch (error) {
       logger.error(`Error retrieving profile collection: ${error.message}`);
@@ -212,15 +212,15 @@ class NFTService {
     try {
       // Encrypt NFT data before storing
       const encryptedData = await this.encryption.encrypt(JSON.stringify(nftData));
-      
+
       const query = `
         INSERT INTO invalid_nfts (nft_data, reason, platform, user_id)
         VALUES ($1, $2, $3, $4)
         RETURNING id, created_at
       `;
-      
+
       const result = await this.db.query(query, [encryptedData, reason, platform, userId]);
-      
+
       if (!result.rows[0]) {
         throw new Error('Failed to store invalid NFT');
       }
@@ -232,7 +232,7 @@ class NFTService {
         reason,
         platform,
         userId,
-        createdAt: result.rows[0].created_at
+        createdAt: result.rows[0].created_at,
       };
     } catch (error) {
       logger.error(`Error storing invalid NFT: ${error.message}`);
@@ -256,13 +256,13 @@ class NFTService {
 
       // Generate image hash for integrity
       const imageHash = crypto.createHash('sha256').update(imageData).digest('hex');
-      
+
       // In production, upload to CDN and get URL
       // For now, we'll store the hash and assume CDN integration
       const imageUrl = `https://cdn.example.com/profiles/${userId}/${imageHash}.${imageFormat}`;
 
       // Check if user profile exists, create if not
-      let query = `
+      const query = `
         INSERT INTO user_nft_profiles (user_id, profile_picture_url, profile_picture_hash)
         VALUES ($1, $2, $3)
         ON CONFLICT (user_id) 
@@ -272,9 +272,9 @@ class NFTService {
           updated_at = CURRENT_TIMESTAMP
         RETURNING id, profile_picture_url, updated_at
       `;
-      
+
       const result = await this.db.query(query, [userId, imageUrl, imageHash]);
-      
+
       if (!result.rows[0]) {
         throw new Error('Failed to update profile picture');
       }
@@ -288,7 +288,7 @@ class NFTService {
         id: result.rows[0].id,
         imageUrl: result.rows[0].profile_picture_url,
         imageHash,
-        updatedAt: result.rows[0].updated_at
+        updatedAt: result.rows[0].updated_at,
       };
     } catch (error) {
       logger.error(`Error updating profile picture: ${error.message}`);
@@ -311,18 +311,18 @@ class NFTService {
         FROM nft_collections
         WHERE user_id = $1 AND is_active = true
       `;
-      
+
       const collectionResult = await this.db.query(collectionQuery, [userId]);
-      
+
       // Get profile information
       const profileQuery = `
         SELECT profile_picture_url, nft_count, last_nft_added
         FROM user_nft_profiles
         WHERE user_id = $1
       `;
-      
+
       const profileResult = await this.db.query(profileQuery, [userId]);
-      
+
       // Get platform distribution
       const platformQuery = `
         SELECT platform, COUNT(*) as count
@@ -331,7 +331,7 @@ class NFTService {
         GROUP BY platform
         ORDER BY count DESC
       `;
-      
+
       const platformResult = await this.db.query(platformQuery, [userId]);
 
       const stats = {
@@ -340,13 +340,13 @@ class NFTService {
         collections: parseInt(collectionResult.rows[0]?.collections || 0),
         platformDistribution: platformResult.rows.map(row => ({
           platform: row.platform,
-          count: parseInt(row.count)
+          count: parseInt(row.count),
         })),
         profile: profileResult.rows[0] ? {
           hasProfilePicture: !!profileResult.rows[0].profile_picture_url,
           nftCount: parseInt(profileResult.rows[0].nft_count || 0),
-          lastNFTAdded: profileResult.rows[0].last_nft_added
-        } : null
+          lastNFTAdded: profileResult.rows[0].last_nft_added,
+        } : null,
       };
 
       // Cache stats for 5 minutes
@@ -376,7 +376,7 @@ class NFTService {
         updated_at = CURRENT_TIMESTAMP
         WHERE user_id = $1
       `;
-      
+
       await this.db.query(query, [userId]);
     } catch (error) {
       logger.error(`Error updating user NFT count: ${error.message}`);
@@ -392,9 +392,9 @@ class NFTService {
         DELETE FROM pairing_tokens 
         WHERE expires_at < CURRENT_TIMESTAMP
       `;
-      
+
       const result = await this.db.query(query);
-      
+
       if (result.rowCount > 0) {
         logger.info(`Cleaned up ${result.rowCount} expired pairing tokens`);
       }

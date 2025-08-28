@@ -9,7 +9,7 @@ jest.mock('@prisma/client', () => ({
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      findUnique: jest.fn()
+      findUnique: jest.fn(),
     },
     session: {
       create: jest.fn(),
@@ -17,16 +17,16 @@ jest.mock('@prisma/client', () => ({
       update: jest.fn(),
       updateMany: jest.fn(),
       findMany: jest.fn(),
-      count: jest.fn()
-    }
-  }))
+      count: jest.fn(),
+    },
+  })),
 }));
 
 // Mock logger
 jest.mock('../../src/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
-  warn: jest.fn()
+  warn: jest.fn(),
 }));
 
 describe('Authentication API Endpoints', () => {
@@ -34,7 +34,7 @@ describe('Authentication API Endpoints', () => {
 
   beforeEach(() => {
     mockPrisma = new (require('@prisma/client').PrismaClient)();
-    
+
     // Set up environment variables
     process.env.JWT_SECRET = 'test-secret-key-for-testing';
     process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing';
@@ -47,14 +47,14 @@ describe('Authentication API Endpoints', () => {
   });
 
   describe('POST /api/v1/auth/device/register', () => {
-    it('should register a new device successfully', async () => {
+    it('should register a new device successfully', async() => {
       const mockDevice = {
         id: 'device-123',
         fingerprint: 'fingerprint-123',
         ipAddress: '192.168.1.1',
         userAgent: 'Mozilla/5.0',
         isActive: true,
-        lastSeen: new Date()
+        lastSeen: new Date(),
       };
 
       const mockSession = {
@@ -64,7 +64,7 @@ describe('Authentication API Endpoints', () => {
         refreshToken: 'hashed-refresh-token',
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
-        isActive: true
+        isActive: true,
       };
 
       mockPrisma.device.findFirst.mockResolvedValue(null);
@@ -86,12 +86,12 @@ describe('Authentication API Endpoints', () => {
       expect(response.body.data).toHaveProperty('refreshExpiresIn');
     });
 
-    it('should return existing device if already registered', async () => {
+    it('should return existing device if already registered', async() => {
       const existingDevice = {
         id: 'device-123',
         fingerprint: 'fingerprint-123',
         ipAddress: '192.168.1.1',
-        isActive: true
+        isActive: true,
       };
 
       const mockSession = {
@@ -101,7 +101,7 @@ describe('Authentication API Endpoints', () => {
         refreshToken: 'hashed-refresh-token',
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
-        isActive: true
+        isActive: true,
       };
 
       mockPrisma.device.findFirst.mockResolvedValue(existingDevice);
@@ -119,14 +119,14 @@ describe('Authentication API Endpoints', () => {
   });
 
   describe('POST /api/v1/auth/login', () => {
-    it('should login with valid refresh token', async () => {
+    it('should login with valid refresh token', async() => {
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
         refreshToken: 'hashed-refresh-token',
         isActive: true,
         refreshExpiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       const mockNewSession = {
@@ -136,7 +136,7 @@ describe('Authentication API Endpoints', () => {
         refreshToken: 'new-hashed-refresh-token',
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
-        isActive: true
+        isActive: true,
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
@@ -156,7 +156,7 @@ describe('Authentication API Endpoints', () => {
       expect(response.body.data).toHaveProperty('refreshToken');
     });
 
-    it('should reject login with invalid refresh token', async () => {
+    it('should reject login with invalid refresh token', async() => {
       mockPrisma.session.findFirst.mockResolvedValue(null);
 
       const response = await request(app)
@@ -168,7 +168,7 @@ describe('Authentication API Endpoints', () => {
       expect(response.body.error).toBe('Login failed');
     });
 
-    it('should reject login without refresh token', async () => {
+    it('should reject login without refresh token', async() => {
       const response = await request(app)
         .post('/api/v1/auth/login')
         .send({})
@@ -180,14 +180,14 @@ describe('Authentication API Endpoints', () => {
   });
 
   describe('POST /api/v1/auth/refresh', () => {
-    it('should refresh tokens successfully', async () => {
+    it('should refresh tokens successfully', async() => {
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
         refreshToken: 'hashed-refresh-token',
         isActive: true,
         refreshExpiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       const mockNewSession = {
@@ -197,7 +197,7 @@ describe('Authentication API Endpoints', () => {
         refreshToken: 'new-hashed-refresh-token',
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
-        isActive: true
+        isActive: true,
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
@@ -218,14 +218,14 @@ describe('Authentication API Endpoints', () => {
   });
 
   describe('POST /api/v1/auth/validate', () => {
-    it('should validate a valid token', async () => {
+    it('should validate a valid token', async() => {
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
         accessToken: 'hashed-access-token',
         isActive: true,
         expiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
@@ -241,7 +241,7 @@ describe('Authentication API Endpoints', () => {
       expect(response.body.data.deviceId).toBe('device-123');
     });
 
-    it('should reject validation without token', async () => {
+    it('should reject validation without token', async() => {
       const response = await request(app)
         .post('/api/v1/auth/validate')
         .expect(400);
@@ -252,7 +252,7 @@ describe('Authentication API Endpoints', () => {
   });
 
   describe('GET /api/v1/auth/device/info', () => {
-    it('should get device info with valid token', async () => {
+    it('should get device info with valid token', async() => {
       const mockDevice = {
         id: 'device-123',
         fingerprint: 'fingerprint-123',
@@ -261,7 +261,7 @@ describe('Authentication API Endpoints', () => {
         isActive: true,
         createdAt: new Date(),
         lastSeen: new Date(),
-        sessions: []
+        sessions: [],
       };
 
       const mockSession = {
@@ -270,7 +270,7 @@ describe('Authentication API Endpoints', () => {
         accessToken: 'hashed-access-token',
         isActive: true,
         expiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
@@ -286,7 +286,7 @@ describe('Authentication API Endpoints', () => {
       expect(response.body.data.id).toBe('device-123');
     });
 
-    it('should reject request without valid token', async () => {
+    it('should reject request without valid token', async() => {
       mockPrisma.session.findFirst.mockResolvedValue(null);
 
       const response = await request(app)
@@ -300,14 +300,14 @@ describe('Authentication API Endpoints', () => {
   });
 
   describe('POST /api/v1/auth/logout', () => {
-    it('should logout successfully with valid token', async () => {
+    it('should logout successfully with valid token', async() => {
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
         accessToken: 'hashed-access-token',
         isActive: true,
         expiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);

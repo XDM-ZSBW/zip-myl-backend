@@ -12,18 +12,18 @@ const prisma = new PrismaClient({
 });
 
 describe('Thought Service', () => {
-  beforeEach(async () => {
+  beforeEach(async() => {
     // Clean up test data
     await prisma.thought.deleteMany();
   });
 
-  afterEach(async () => {
+  afterEach(async() => {
     // Clean up test data
     await prisma.thought.deleteMany();
   });
 
   describe('createThought', () => {
-    it('should create a new thought', async () => {
+    it('should create a new thought', async() => {
       const thoughtData = {
         content: 'Test thought content',
         metadata: { source: 'test' },
@@ -40,7 +40,7 @@ describe('Thought Service', () => {
       expect(thought.userId).toBe(thoughtData.userId);
     });
 
-    it('should create a thought without optional fields', async () => {
+    it('should create a thought without optional fields', async() => {
       const thoughtData = {
         content: 'Minimal thought content',
       };
@@ -56,7 +56,7 @@ describe('Thought Service', () => {
   });
 
   describe('getThoughtById', () => {
-    it('should retrieve a thought by ID', async () => {
+    it('should retrieve a thought by ID', async() => {
       const thoughtData = {
         content: 'Test thought for retrieval',
         userId: uuidv4(),
@@ -70,7 +70,7 @@ describe('Thought Service', () => {
       expect(retrievedThought.content).toBe(thoughtData.content);
     });
 
-    it('should return null for non-existent thought', async () => {
+    it('should return null for non-existent thought', async() => {
       const nonExistentId = uuidv4();
       const thought = await thoughtService.getThoughtById(nonExistentId);
 
@@ -79,14 +79,14 @@ describe('Thought Service', () => {
   });
 
   describe('updateThought', () => {
-    it('should update a thought', async () => {
+    it('should update a thought', async() => {
       const thoughtData = {
         content: 'Original content',
         userId: uuidv4(),
       };
 
       const createdThought = await thoughtService.createThought(thoughtData);
-      
+
       const updateData = {
         content: 'Updated content',
         metadata: { updated: true },
@@ -98,7 +98,7 @@ describe('Thought Service', () => {
       expect(updatedThought.metadata).toEqual(updateData.metadata);
     });
 
-    it('should throw error for non-existent thought', async () => {
+    it('should throw error for non-existent thought', async() => {
       const nonExistentId = uuidv4();
       const updateData = { content: 'Updated content' };
 
@@ -108,7 +108,7 @@ describe('Thought Service', () => {
   });
 
   describe('deleteThought', () => {
-    it('should delete a thought', async () => {
+    it('should delete a thought', async() => {
       const thoughtData = {
         content: 'Thought to be deleted',
         userId: uuidv4(),
@@ -123,7 +123,7 @@ describe('Thought Service', () => {
       expect(deletedThought).toBeNull();
     });
 
-    it('should throw error for non-existent thought', async () => {
+    it('should throw error for non-existent thought', async() => {
       const nonExistentId = uuidv4();
 
       await expect(thoughtService.deleteThought(nonExistentId))

@@ -43,17 +43,17 @@ router.get('/v2', (req, res) => {
       metrics: '/metrics',
       websocket: '/ws',
       grpc: '/grpc',
-      graphql: '/graphql'
+      graphql: '/graphql',
     },
     clientPlatforms: {
       web: 'Chrome, Firefox, Safari, Edge Extensions',
       desktop: 'Obsidian, VS Code, Sublime Text, Atom',
       mobile: 'iOS Safari, Android Chrome',
       development: 'JetBrains IDEs, Eclipse, Vim/Neovim',
-      enterprise: 'Slack, Discord, Teams'
+      enterprise: 'Slack, Discord, Teams',
     },
     documentation: 'https://github.com/XDM-ZSBW/zip-myl-backend#api-v2-documentation',
-    changelog: 'https://github.com/XDM-ZSBW/zip-myl-backend#changelog'
+    changelog: 'https://github.com/XDM-ZSBW/zip-myl-backend#changelog',
   });
 });
 
@@ -61,18 +61,18 @@ router.get('/v2', (req, res) => {
 router.get('/v2/capabilities', (req, res) => {
   const clientPlatform = req.headers['x-client-platform'] || 'unknown';
   const clientVersion = req.headers['x-client-version'] || '1.0.0';
-  
+
   const capabilities = {
     clientPlatform,
     clientVersion,
     supportedFeatures: getClientCapabilities(clientPlatform),
     apiLimits: getApiLimits(clientPlatform),
-    recommendedProtocols: getRecommendedProtocols(clientPlatform)
+    recommendedProtocols: getRecommendedProtocols(clientPlatform),
   };
-  
+
   res.json({
     success: true,
-    data: capabilities
+    data: capabilities,
   });
 });
 
@@ -83,9 +83,9 @@ function getClientCapabilities(platform) {
     desktop: ['file-system', 'native-integration', 'plugin-system', 'offline-first'],
     mobile: ['touch-optimized', 'offline-first', 'push-notifications', 'biometric-auth'],
     development: ['ide-integration', 'workspace-management', 'extension-api', 'debug-support'],
-    enterprise: ['ldap-auth', 'audit-logging', 'compliance', 'sso-integration']
+    enterprise: ['ldap-auth', 'audit-logging', 'compliance', 'sso-integration'],
   };
-  
+
   return capabilities[platform] || capabilities.web;
 }
 
@@ -96,9 +96,9 @@ function getApiLimits(platform) {
     desktop: { rateLimit: 500, maxPayload: '50mb', websocket: true },
     mobile: { rateLimit: 200, maxPayload: '5mb', websocket: false },
     development: { rateLimit: 2000, maxPayload: '100mb', websocket: true },
-    enterprise: { rateLimit: 5000, maxPayload: '100mb', websocket: true }
+    enterprise: { rateLimit: 5000, maxPayload: '100mb', websocket: true },
   };
-  
+
   return limits[platform] || limits.web;
 }
 
@@ -109,9 +109,9 @@ function getRecommendedProtocols(platform) {
     desktop: ['REST', 'WebSocket', 'gRPC'],
     mobile: ['REST', 'GraphQL'],
     development: ['REST', 'WebSocket', 'gRPC', 'GraphQL'],
-    enterprise: ['REST', 'gRPC', 'SSH/TLS']
+    enterprise: ['REST', 'gRPC', 'SSH/TLS'],
   };
-  
+
   return protocols[platform] || protocols.web;
 }
 

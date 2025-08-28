@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run linting
+echo "📝 Checking code style..."
+npm run lint:strict || exit 1
+
+# Run formatting check
+echo "🎨 Checking code formatting..."
+npm run format:check || exit 1
+
+# Run unit tests
+echo "🧪 Running unit tests..."
+npm run test:unit || exit 1
+
+# Check for security vulnerabilities
+echo "🔒 Checking for security vulnerabilities..."
+npm run security:audit || exit 1
+
+# Check for outdated dependencies
+echo "📦 Checking for outdated dependencies..."
+npm run deps:check || exit 1
+
+echo "✅ All pre-commit checks passed!"

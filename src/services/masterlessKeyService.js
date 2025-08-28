@@ -16,12 +16,12 @@ class MasterlessKeyService {
     this.ivLength = 16; // 128 bits
     this.tagLength = 16; // 128 bits
     this.keyDerivationIterations = 100000;
-    
+
     // No master key required!
     this.keyVersion = 1;
     this.keyRotationInterval = 30 * 24 * 60 * 60 * 1000; // 30 days
     this.lastKeyRotation = Date.now();
-    
+
     logger.info('Masterless Key Service initialized - no master key required');
   }
 
@@ -33,27 +33,27 @@ class MasterlessKeyService {
     try {
       // Combine device ID, user password, and device fingerprint
       const keyMaterial = `${deviceId}:${userPassword}:${deviceFingerprint}`;
-      
+
       // Generate a salt from device characteristics
       const salt = crypto.createHash('sha256')
         .update(deviceId + deviceFingerprint)
         .digest();
-      
+
       // Derive key using PBKDF2
       const key = crypto.pbkdf2Sync(
-        keyMaterial, 
-        salt, 
-        this.keyDerivationIterations, 
-        this.keyLength, 
-        'sha256'
+        keyMaterial,
+        salt,
+        this.keyDerivationIterations,
+        this.keyLength,
+        'sha256',
       );
-      
+
       return {
-        key: key,
+        key,
         salt: salt.toString('hex'),
         keyId: this.generateKeyId(deviceId, 'device-specific'),
         algorithm: 'PBKDF2-SHA256',
-        iterations: this.keyDerivationIterations
+        iterations: this.keyDerivationIterations,
       };
     } catch (error) {
       throw new Error(`Device-specific key generation failed: ${error.message}`);
@@ -70,7 +70,7 @@ class MasterlessKeyService {
       if (!this.validateKeyFormat(userProvidedKey)) {
         throw new Error('Invalid key format');
       }
-      
+
       return {
         key: Buffer.from(userProvidedKey, 'hex'),
         keyId: keyId || this.generateKeyId('user-provided', 'imported'),
@@ -78,8 +78,8 @@ class MasterlessKeyService {
         metadata: {
           ...metadata,
           importedAt: new Date().toISOString(),
-          version: this.keyVersion
-        }
+          version: this.keyVersion,
+        },
       };
     } catch (error) {
       throw new Error(`User key import failed: ${error.message}`);
@@ -95,25 +95,25 @@ class MasterlessKeyService {
       if (deviceIds.length < threshold) {
         throw new Error(`Need at least ${threshold} devices for threshold cryptography`);
       }
-      
+
       // Generate a random master key
       const masterKey = crypto.randomBytes(this.keyLength);
-      
+
       // Split the key using Shamir's Secret Sharing (simplified)
       const keyShares = this.splitKey(masterKey, deviceIds.length, threshold);
-      
+
       const result = {
         keyShares: keyShares.map((share, index) => ({
           deviceId: deviceIds[index],
           share: share.toString('hex'),
-          index: index + 1
+          index: index + 1,
         })),
-        threshold: threshold,
+        threshold,
         totalShares: deviceIds.length,
         keyId: this.generateKeyId('threshold', 'shared'),
-        algorithm: 'threshold-shamir'
+        algorithm: 'threshold-shamir',
       };
-      
+
       logger.info(`Generated threshold key with ${threshold}/${deviceIds.length} threshold`);
       return result;
     } catch (error) {
@@ -129,29 +129,29 @@ class MasterlessKeyService {
     try {
       // Generate a salt for the passphrase
       const salt = crypto.randomBytes(32);
-      
+
       // Derive escrow key from user passphrase
       const escrowKey = crypto.pbkdf2Sync(
         userPassphrase,
         salt,
         this.keyDerivationIterations,
         this.keyLength,
-        'sha256'
+        'sha256',
       );
-      
+
       // Encrypt the original key with the escrow key
       const encryptedKey = this.encryptData(
         originalKey.toString('hex'),
-        escrowKey
+        escrowKey,
       );
-      
+
       return {
-        encryptedKey: encryptedKey,
+        encryptedKey,
         salt: salt.toString('hex'),
-        escrowDevices: escrowDevices,
+        escrowDevices,
         keyId: this.generateKeyId('escrow', 'user-controlled'),
         algorithm: 'AES-256-GCM',
-        recoveryMethod: 'user-passphrase'
+        recoveryMethod: 'user-passphrase',
       };
     } catch (error) {
       throw new Error(`Key escrow creation failed: ${error.message}`);
@@ -165,28 +165,28 @@ class MasterlessKeyService {
   initiateKeyExchange(sourceDeviceId, targetDeviceId, keyExchangeData) {
     try {
       const exchangeId = this.generateKeyId('exchange', 'cross-device');
-      
+
       // Create key exchange token
       const exchangeToken = {
-        exchangeId: exchangeId,
-        sourceDeviceId: sourceDeviceId,
-        targetDeviceId: targetDeviceId,
-        keyExchangeData: keyExchangeData,
+        exchangeId,
+        sourceDeviceId,
+        targetDeviceId,
+        keyExchangeData,
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
-        status: 'pending'
+        status: 'pending',
       };
-      
+
       // In a real implementation, this would be stored temporarily
       // and the target device would retrieve it using the exchangeId
-      
+
       return {
-        exchangeId: exchangeId,
-        exchangeToken: exchangeToken,
+        exchangeId,
+        exchangeToken,
         instructions: {
           targetDevice: `Use exchangeId ${exchangeId} to complete key exchange`,
-          expiresIn: '10 minutes'
-        }
+          expiresIn: '10 minutes',
+        },
       };
     } catch (error) {
       throw new Error(`Key exchange initiation failed: ${error.message}`);
@@ -201,28 +201,28 @@ class MasterlessKeyService {
     try {
       // Combine biometric hash with device ID and user PIN
       const keyMaterial = `${deviceId}:${biometricHash}:${userPin}`;
-      
+
       // Generate salt from device characteristics
       const salt = crypto.createHash('sha256')
         .update(deviceId + biometricHash)
         .digest();
-      
+
       // Derive key
       const key = crypto.pbkdf2Sync(
         keyMaterial,
         salt,
         this.keyDerivationIterations,
         this.keyLength,
-        'sha256'
+        'sha256',
       );
-      
+
       return {
-        key: key,
+        key,
         salt: salt.toString('hex'),
         keyId: this.generateKeyId(deviceId, 'biometric'),
         algorithm: 'PBKDF2-SHA256',
         biometricUsed: true,
-        deviceBound: true
+        deviceBound: true,
       };
     } catch (error) {
       throw new Error(`Biometric key generation failed: ${error.message}`);
@@ -239,14 +239,14 @@ class MasterlessKeyService {
     // In production, use a proper secret sharing library
     const shares = [];
     const keyHex = key.toString('hex');
-    
+
     for (let i = 0; i < totalShares; i++) {
       const share = crypto.createHash('sha256')
         .update(keyHex + i.toString())
         .digest();
       shares.push(share);
     }
-    
+
     return shares;
   }
 
@@ -259,7 +259,7 @@ class MasterlessKeyService {
     if (shares.length < threshold) {
       throw new Error(`Need at least ${threshold} shares to reconstruct key`);
     }
-    
+
     // For this simplified version, we'll use the first share
     // In reality, you'd implement proper Shamir reconstruction
     return shares[0];
@@ -282,12 +282,12 @@ class MasterlessKeyService {
     const tag = cipher.getAuthTag();
 
     return {
-      encrypted: encrypted,
+      encrypted,
       iv: iv.toString('hex'),
       tag: tag.toString('hex'),
       algorithm: this.algorithm,
       keyVersion: this.keyVersion,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -352,8 +352,8 @@ class MasterlessKeyService {
         'threshold-cryptography',
         'key-escrow-user-control',
         'cross-device-exchange',
-        'biometric-device-binding'
-      ]
+        'biometric-device-binding',
+      ],
     };
   }
 
@@ -375,13 +375,13 @@ class MasterlessKeyService {
     }
 
     logger.info('Starting masterless key rotation...');
-    
+
     // Update key version
     this.keyVersion += 1;
     this.lastKeyRotation = Date.now();
-    
+
     logger.info(`Masterless key rotation completed. New key version: ${this.keyVersion}`);
-    
+
     return true;
   }
 }

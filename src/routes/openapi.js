@@ -10,40 +10,40 @@ const openApiSpec = {
     version: '1.0.0',
     contact: {
       name: 'API Support',
-      url: 'https://api.myl.zip/docs'
+      url: 'https://api.myl.zip/docs',
     },
     license: {
       name: 'MIT',
-      url: 'https://opensource.org/licenses/MIT'
-    }
+      url: 'https://opensource.org/licenses/MIT',
+    },
   },
   servers: [
     {
       url: 'https://api.myl.zip',
-      description: 'Production server'
+      description: 'Production server',
     },
     {
       url: 'https://api.myl.zip',
-      description: 'Cloud Run service'
-    }
+      description: 'Cloud Run service',
+    },
   ],
   tags: [
     {
       name: 'Authentication',
-      description: 'Anonymous device-based authentication endpoints'
+      description: 'Anonymous device-based authentication endpoints',
     },
     {
       name: 'Device Management',
-      description: 'Device information and management'
+      description: 'Device information and management',
     },
     {
       name: 'Admin',
-      description: 'Administrative functions and API key management'
+      description: 'Administrative functions and API key management',
     },
     {
       name: 'Health',
-      description: 'Health checks and monitoring'
-    }
+      description: 'Health checks and monitoring',
+    },
   ],
   paths: {
     '/api/v1/auth/device/register': {
@@ -62,20 +62,20 @@ const openApiSpec = {
                   deviceId: {
                     type: 'string',
                     format: 'uuid',
-                    description: 'Unique device identifier'
+                    description: 'Unique device identifier',
                   },
                   deviceFingerprint: {
                     type: 'string',
-                    description: 'Device fingerprint for security'
+                    description: 'Device fingerprint for security',
                   },
                   userAgent: {
                     type: 'string',
-                    description: 'Browser user agent string'
-                  }
-                }
-              }
-            }
-          }
+                    description: 'Browser user agent string',
+                  },
+                },
+              },
+            },
+          },
         },
         responses: {
           '201': {
@@ -87,30 +87,30 @@ const openApiSpec = {
                   properties: {
                     success: { type: 'boolean' },
                     deviceId: { type: 'string' },
-                    message: { type: 'string' }
-                  }
-                }
-              }
-            }
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
           },
           '400': {
             description: 'Bad request - invalid input',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Error' }
-              }
-            }
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
           },
           '429': {
             description: 'Rate limit exceeded',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Error' }
-              }
-            }
-          }
-        }
-      }
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/auth/login': {
       post: {
@@ -127,15 +127,15 @@ const openApiSpec = {
                 properties: {
                   deviceId: {
                     type: 'string',
-                    format: 'uuid'
+                    format: 'uuid',
                   },
                   deviceFingerprint: {
-                    type: 'string'
-                  }
-                }
-              }
-            }
-          }
+                    type: 'string',
+                  },
+                },
+              },
+            },
+          },
         },
         responses: {
           '200': {
@@ -148,22 +148,22 @@ const openApiSpec = {
                     success: { type: 'boolean' },
                     accessToken: { type: 'string' },
                     refreshToken: { type: 'string' },
-                    expiresIn: { type: 'integer' }
-                  }
-                }
-              }
-            }
+                    expiresIn: { type: 'integer' },
+                  },
+                },
+              },
+            },
           },
           '401': {
             description: 'Authentication failed',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Error' }
-              }
-            }
-          }
-        }
-      }
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/auth/refresh': {
       post: {
@@ -181,22 +181,22 @@ const openApiSpec = {
                   properties: {
                     success: { type: 'boolean' },
                     accessToken: { type: 'string' },
-                    expiresIn: { type: 'integer' }
-                  }
-                }
-              }
-            }
+                    expiresIn: { type: 'integer' },
+                  },
+                },
+              },
+            },
           },
           '401': {
             description: 'Invalid refresh token',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Error' }
-              }
-            }
-          }
-        }
-      }
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/auth/logout': {
       post: {
@@ -213,14 +213,14 @@ const openApiSpec = {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/device/info': {
       get: {
@@ -239,22 +239,22 @@ const openApiSpec = {
                     deviceId: { type: 'string' },
                     createdAt: { type: 'string', format: 'date-time' },
                     lastActive: { type: 'string', format: 'date-time' },
-                    userAgent: { type: 'string' }
-                  }
-                }
-              }
-            }
+                    userAgent: { type: 'string' },
+                  },
+                },
+              },
+            },
           },
           '401': {
             description: 'Unauthorized',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Error' }
-              }
-            }
-          }
-        }
-      }
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/admin/keys/create': {
       post: {
@@ -272,22 +272,22 @@ const openApiSpec = {
                 properties: {
                   name: {
                     type: 'string',
-                    description: 'API key name/description'
+                    description: 'API key name/description',
                   },
                   type: {
                     type: 'string',
                     enum: ['service', 'admin'],
-                    description: 'API key type'
+                    description: 'API key type',
                   },
                   permissions: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'List of permissions'
-                  }
-                }
-              }
-            }
-          }
+                    description: 'List of permissions',
+                  },
+                },
+              },
+            },
+          },
         },
         responses: {
           '201': {
@@ -299,22 +299,22 @@ const openApiSpec = {
                   properties: {
                     success: { type: 'boolean' },
                     apiKey: { type: 'string' },
-                    keyId: { type: 'string' }
-                  }
-                }
-              }
-            }
+                    keyId: { type: 'string' },
+                  },
+                },
+              },
+            },
           },
           '403': {
             description: 'Forbidden - admin access required',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Error' }
-              }
-            }
-          }
-        }
-      }
+                schema: { $ref: '#/components/schemas/Error' },
+              },
+            },
+          },
+        },
+      },
     },
     '/health': {
       get: {
@@ -331,14 +331,14 @@ const openApiSpec = {
                   properties: {
                     status: { type: 'string', enum: ['ok', 'error'] },
                     timestamp: { type: 'string', format: 'date-time' },
-                    uptime: { type: 'number' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    uptime: { type: 'number' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     '/health/detailed': {
       get: {
@@ -361,16 +361,16 @@ const openApiSpec = {
                       properties: {
                         database: { type: 'string' },
                         redis: { type: 'string' },
-                        secrets: { type: 'string' }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                        secrets: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     '/metrics': {
       get: {
@@ -383,27 +383,27 @@ const openApiSpec = {
             content: {
               'text/plain': {
                 schema: {
-                  type: 'string'
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
       bearerAuth: {
         type: 'http',
         scheme: 'bearer',
-        bearerFormat: 'JWT'
+        bearerFormat: 'JWT',
       },
       apiKeyAuth: {
         type: 'apiKey',
         in: 'header',
-        name: 'X-API-Key'
-      }
+        name: 'X-API-Key',
+      },
     },
     schemas: {
       Error: {
@@ -411,24 +411,24 @@ const openApiSpec = {
         properties: {
           success: {
             type: 'boolean',
-            example: false
+            example: false,
           },
           error: {
             type: 'string',
-            description: 'Error message'
+            description: 'Error message',
           },
           code: {
             type: 'string',
-            description: 'Error code'
+            description: 'Error code',
           },
           timestamp: {
             type: 'string',
-            format: 'date-time'
-          }
-        }
-      }
-    }
-  }
+            format: 'date-time',
+          },
+        },
+      },
+    },
+  },
 };
 
 // Serve OpenAPI spec as JSON
@@ -494,7 +494,7 @@ router.get('/swagger', (req, res) => {
 </body>
 </html>
   `;
-  
+
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
 });

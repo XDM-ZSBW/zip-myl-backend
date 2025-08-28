@@ -1,7 +1,7 @@
-import { logger } from '../utils/logger.js';
-import { config } from '../utils/config.js';
+const { logger } = require('../utils/logger');
+const { config } = require('../utils/config');
 
-export const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
@@ -68,11 +68,11 @@ export const errorHandler = (err, req, res, next) => {
   };
 
   // Include stack trace in development
-  if (config.nodeEnv === 'development') {
+  if (config.NODE_ENV === 'development') {
     response.stack = err.stack;
   }
 
   res.status(statusCode).json(response);
 };
 
-export default errorHandler;
+module.exports = errorHandler;

@@ -27,6 +27,15 @@ router.post('/devices/pairing-code', deviceTrustController.generatePairingCode);
 router.post('/devices/pairing/generate', deviceTrustController.generatePairingCode);
 router.post('/devices/pairing/verify', deviceTrustController.verifyPairingCode);
 
+// Enhanced pairing code status endpoint
+router.get('/devices/pairing-code/status/:pairingCode', deviceTrustController.getPairingCodeStatus);
+
+// Retry failed pairing code generation
+router.post('/devices/pairing-code/retry/:pairingCode', deviceTrustController.retryPairingCodeGeneration);
+
+// Real-time status updates via Server-Sent Events
+router.get('/devices/pairing-code/status/:pairingCode/stream', deviceTrustController.streamPairingCodeStatus);
+
 // Cross-device sharing
 router.post('/share', deviceTrustController.shareThought);
 router.get('/shared/:deviceId', deviceTrustController.getSharedThoughts);

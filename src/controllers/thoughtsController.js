@@ -1,13 +1,13 @@
 const { thoughtService } = require('../services/thoughtService');
 const { logger } = require('../utils/logger');
 
-const createThought = async (req, res, next) => {
+const createThought = async(req, res, next) => {
   try {
     const { content, metadata, url, userId } = req.body;
-    
+
     // Use authenticated user ID if available, otherwise use provided userId
     const finalUserId = req.user?.id || userId;
-    
+
     const thought = await thoughtService.createThought({
       content,
       metadata,
@@ -27,13 +27,13 @@ const createThought = async (req, res, next) => {
   }
 };
 
-const getThoughts = async (req, res, next) => {
+const getThoughts = async(req, res, next) => {
   try {
     const { page, limit, sortBy, sortOrder, url, userId } = req.query;
-    
+
     // Use authenticated user ID if available and no specific userId requested
     const finalUserId = req.user?.id || userId;
-    
+
     const options = {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 10,
@@ -60,12 +60,12 @@ const getThoughts = async (req, res, next) => {
   }
 };
 
-const getThoughtById = async (req, res, next) => {
+const getThoughtById = async(req, res, next) => {
   try {
     const { id } = req.params;
-    
+
     const thought = await thoughtService.getThoughtById(id);
-    
+
     if (!thought) {
       return res.status(404).json({
         success: false,
@@ -83,13 +83,13 @@ const getThoughtById = async (req, res, next) => {
   }
 };
 
-const updateThought = async (req, res, next) => {
+const updateThought = async(req, res, next) => {
   try {
     const { id } = req.params;
     const { content, metadata, url } = req.body;
-    
+
     const thought = await thoughtService.getThoughtById(id);
-    
+
     if (!thought) {
       return res.status(404).json({
         success: false,
@@ -125,12 +125,12 @@ const updateThought = async (req, res, next) => {
   }
 };
 
-const deleteThought = async (req, res, next) => {
+const deleteThought = async(req, res, next) => {
   try {
     const { id } = req.params;
-    
+
     const thought = await thoughtService.getThoughtById(id);
-    
+
     if (!thought) {
       return res.status(404).json({
         success: false,
@@ -161,10 +161,10 @@ const deleteThought = async (req, res, next) => {
   }
 };
 
-const searchThoughts = async (req, res, next) => {
+const searchThoughts = async(req, res, next) => {
   try {
     const { q: query, page, limit, userId } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({
         success: false,
@@ -175,7 +175,7 @@ const searchThoughts = async (req, res, next) => {
 
     // Use authenticated user ID if available
     const finalUserId = req.user?.id || userId;
-    
+
     const options = {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 10,
@@ -195,7 +195,7 @@ const searchThoughts = async (req, res, next) => {
   }
 };
 
-const getThoughtStats = async (req, res, next) => {
+const getThoughtStats = async(req, res, next) => {
   try {
     const stats = await thoughtService.getThoughtStats();
 

@@ -5,14 +5,14 @@ const { logger } = require('../utils/logger');
 /**
  * Authentication middleware for device-based authentication
  */
-const authenticateDevice = async (req, res, next) => {
+const authenticateDevice = async(req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Authentication required',
-        message: 'Bearer token is required'
+        message: 'Bearer token is required',
       });
     }
 
@@ -24,12 +24,12 @@ const authenticateDevice = async (req, res, next) => {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         path: req.path,
-        error: validation.error
+        error: validation.error,
       });
 
       return res.status(401).json({
         error: 'Invalid token',
-        message: 'The provided token is invalid or expired'
+        message: 'The provided token is invalid or expired',
       });
     }
 
@@ -51,7 +51,7 @@ const authenticateDevice = async (req, res, next) => {
     logger.error('Error in device authentication', { error: error.message });
     return res.status(500).json({
       error: 'Authentication error',
-      message: 'An error occurred during authentication'
+      message: 'An error occurred during authentication',
     });
   }
 };
@@ -59,10 +59,10 @@ const authenticateDevice = async (req, res, next) => {
 /**
  * Optional device authentication (doesn't fail if no token provided)
  */
-const authenticateDeviceOptional = async (req, res, next) => {
+const authenticateDeviceOptional = async(req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       req.deviceId = null;
       req.sessionId = null;
@@ -133,7 +133,7 @@ const requireRole = (role) => {
 /**
  * Combined authentication: Device OR API Key
  */
-const authenticateDeviceOrApiKey = async (req, res, next) => {
+const authenticateDeviceOrApiKey = async(req, res, next) => {
   try {
     // Check for API key first
     const apiKey = req.headers['x-api-key'];
@@ -147,7 +147,7 @@ const authenticateDeviceOrApiKey = async (req, res, next) => {
     logger.error('Error in combined authentication', { error: error.message });
     return res.status(500).json({
       error: 'Authentication error',
-      message: 'An error occurred during authentication'
+      message: 'An error occurred during authentication',
     });
   }
 };
@@ -155,7 +155,7 @@ const authenticateDeviceOrApiKey = async (req, res, next) => {
 /**
  * Require admin role (for admin endpoints)
  */
-const requireAdmin = async (req, res, next) => {
+const requireAdmin = async(req, res, next) => {
   try {
     // Check if API key has admin role
     if (req.apiKey && req.apiKeyRole === 'admin') {
@@ -169,13 +169,13 @@ const requireAdmin = async (req, res, next) => {
 
     return res.status(403).json({
       error: 'Admin access required',
-      message: 'This endpoint requires admin privileges'
+      message: 'This endpoint requires admin privileges',
     });
   } catch (error) {
     logger.error('Error in admin authentication', { error: error.message });
     return res.status(500).json({
       error: 'Authentication error',
-      message: 'An error occurred during authentication'
+      message: 'An error occurred during authentication',
     });
   }
 };
@@ -186,7 +186,7 @@ const requireAdmin = async (req, res, next) => {
 const rateLimitByAuth = (req, res, next) => {
   // This would integrate with your rate limiting system
   // Different rate limits for different authentication types
-  
+
   if (req.apiKey) {
     req.rateLimitType = 'api_key';
     req.rateLimitKey = `api_key:${req.apiKey.id}`;
@@ -205,7 +205,7 @@ const rateLimitByAuth = (req, res, next) => {
  * Log authentication events
  */
 const logAuthEvent = (action) => {
-  return async (req, res, next) => {
+  return async(req, res, next) => {
     try {
       const logData = {
         action,
@@ -215,7 +215,7 @@ const logAuthEvent = (action) => {
         method: req.method,
         deviceId: req.deviceId,
         apiKeyId: req.apiKey?.id,
-        success: true
+        success: true,
       };
 
       logger.info('Authentication event', logData);
@@ -238,5 +238,5 @@ module.exports = {
   authenticateDeviceOrApiKey,
   requireAdmin,
   rateLimitByAuth,
-  logAuthEvent
+  logAuthEvent,
 };

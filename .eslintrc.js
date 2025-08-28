@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   env: {
     node: true,
     es2022: true,
@@ -12,6 +12,7 @@ export default {
     sourceType: 'module',
   },
   rules: {
+    // Code quality rules
     'no-console': 'warn',
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'no-var': 'error',

@@ -9,11 +9,11 @@ class AuthController {
   async registerDevice(req, res) {
     try {
       const result = await deviceAuth.registerDevice(req);
-      
+
       logger.info('Device registered successfully', {
         deviceId: result.deviceId,
         ip: req.ip,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent'),
       });
 
       res.status(201).json({
@@ -24,15 +24,15 @@ class AuthController {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
           expiresIn: result.expiresIn,
-          refreshExpiresIn: result.refreshExpiresIn
-        }
+          refreshExpiresIn: result.refreshExpiresIn,
+        },
       });
     } catch (error) {
       logger.error('Error registering device', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to register device',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -48,15 +48,15 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Refresh token required',
-          message: 'Refresh token is required for login'
+          message: 'Refresh token is required for login',
         });
       }
 
       const result = await deviceAuth.refreshToken(refreshToken, req);
-      
+
       logger.info('Device logged in successfully', {
         deviceId: result.deviceId,
-        ip: req.ip
+        ip: req.ip,
       });
 
       res.json({
@@ -67,15 +67,15 @@ class AuthController {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
           expiresIn: result.expiresIn,
-          refreshExpiresIn: result.refreshExpiresIn
-        }
+          refreshExpiresIn: result.refreshExpiresIn,
+        },
       });
     } catch (error) {
       logger.error('Error during login', { error: error.message });
       res.status(401).json({
         success: false,
         error: 'Login failed',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -91,15 +91,15 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Refresh token required',
-          message: 'Refresh token is required'
+          message: 'Refresh token is required',
         });
       }
 
       const result = await deviceAuth.refreshToken(refreshToken, req);
-      
+
       logger.info('Token refreshed successfully', {
         deviceId: result.deviceId,
-        ip: req.ip
+        ip: req.ip,
       });
 
       res.json({
@@ -110,15 +110,15 @@ class AuthController {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
           expiresIn: result.expiresIn,
-          refreshExpiresIn: result.refreshExpiresIn
-        }
+          refreshExpiresIn: result.refreshExpiresIn,
+        },
       });
     } catch (error) {
       logger.error('Error refreshing token', { error: error.message });
       res.status(401).json({
         success: false,
         error: 'Token refresh failed',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -134,27 +134,27 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Device ID required',
-          message: 'Device ID is required for logout'
+          message: 'Device ID is required for logout',
         });
       }
 
       await deviceAuth.logout(deviceId);
-      
+
       logger.info('Device logged out successfully', {
         deviceId,
-        ip: req.ip
+        ip: req.ip,
       });
 
       res.json({
         success: true,
-        message: 'Logout successful'
+        message: 'Logout successful',
       });
     } catch (error) {
       logger.error('Error during logout', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Logout failed',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -165,12 +165,12 @@ class AuthController {
   async validateToken(req, res) {
     try {
       const authHeader = req.headers.authorization;
-      
+
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(400).json({
           success: false,
           error: 'Token required',
-          message: 'Bearer token is required'
+          message: 'Bearer token is required',
         });
       }
 
@@ -181,7 +181,7 @@ class AuthController {
         return res.status(401).json({
           success: false,
           error: 'Invalid token',
-          message: validation.error
+          message: validation.error,
         });
       }
 
@@ -191,15 +191,15 @@ class AuthController {
         data: {
           deviceId: validation.deviceId,
           sessionId: validation.sessionId,
-          isValid: true
-        }
+          isValid: true,
+        },
       });
     } catch (error) {
       logger.error('Error validating token', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Token validation failed',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -215,23 +215,23 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Device ID required',
-          message: 'Device ID is required'
+          message: 'Device ID is required',
         });
       }
 
       const deviceInfo = await deviceAuth.getDeviceInfo(deviceId);
-      
+
       res.json({
         success: true,
         message: 'Device information retrieved successfully',
-        data: deviceInfo
+        data: deviceInfo,
       });
     } catch (error) {
       logger.error('Error getting device info', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to get device information',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -248,7 +248,7 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Device ID required',
-          message: 'Device ID is required'
+          message: 'Device ID is required',
         });
       }
 
@@ -258,23 +258,23 @@ class AuthController {
       delete updateData.createdAt;
 
       const updatedDevice = await deviceAuth.updateDevice(deviceId, updateData);
-      
+
       logger.info('Device updated successfully', {
         deviceId,
-        ip: req.ip
+        ip: req.ip,
       });
 
       res.json({
         success: true,
         message: 'Device updated successfully',
-        data: updatedDevice
+        data: updatedDevice,
       });
     } catch (error) {
       logger.error('Error updating device', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to update device',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -290,27 +290,27 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Device ID required',
-          message: 'Device ID is required'
+          message: 'Device ID is required',
         });
       }
 
       await deviceAuth.revokeDevice(deviceId);
-      
+
       logger.info('Device access revoked successfully', {
         deviceId,
-        ip: req.ip
+        ip: req.ip,
       });
 
       res.json({
         success: true,
-        message: 'Device access revoked successfully'
+        message: 'Device access revoked successfully',
       });
     } catch (error) {
       logger.error('Error revoking device access', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to revoke device access',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -326,23 +326,23 @@ class AuthController {
         return res.status(400).json({
           success: false,
           error: 'Device ID required',
-          message: 'Device ID is required'
+          message: 'Device ID is required',
         });
       }
 
       const sessions = await sessionManager.getDeviceSessions(deviceId);
-      
+
       res.json({
         success: true,
         message: 'Device sessions retrieved successfully',
-        data: sessions
+        data: sessions,
       });
     } catch (error) {
       logger.error('Error getting device sessions', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to get device sessions',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -353,18 +353,18 @@ class AuthController {
   async getSessionStats(req, res) {
     try {
       const stats = await sessionManager.getSessionStats();
-      
+
       res.json({
         success: true,
         message: 'Session statistics retrieved successfully',
-        data: stats
+        data: stats,
       });
     } catch (error) {
       logger.error('Error getting session stats', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to get session statistics',
-        message: error.message
+        message: error.message,
       });
     }
   }

@@ -1,4 +1,3 @@
-const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
 const { PrismaClient } = require('@prisma/client');
 const deviceAuth = require('../../src/auth/deviceAuth');
 const jwtService = require('../../src/auth/jwtService');
@@ -11,7 +10,7 @@ jest.mock('@prisma/client', () => ({
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      findUnique: jest.fn()
+      findUnique: jest.fn(),
     },
     session: {
       create: jest.fn(),
@@ -19,16 +18,16 @@ jest.mock('@prisma/client', () => ({
       update: jest.fn(),
       updateMany: jest.fn(),
       findMany: jest.fn(),
-      count: jest.fn()
-    }
-  }))
+      count: jest.fn(),
+    },
+  })),
 }));
 
 // Mock logger
 jest.mock('../../src/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
-  warn: jest.fn()
+  warn: jest.fn(),
 }));
 
 describe('Device Authentication', () => {
@@ -44,10 +43,10 @@ describe('Device Authentication', () => {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           'Accept-Language': 'en-US,en;q=0.9',
           'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive'
+          'Connection': 'keep-alive',
         };
         return headers[header];
-      })
+      }),
     };
   });
 
@@ -59,17 +58,17 @@ describe('Device Authentication', () => {
     it('should generate consistent fingerprint for same request', () => {
       const fingerprint1 = deviceAuth.generateDeviceFingerprint(mockReq);
       const fingerprint2 = deviceAuth.generateDeviceFingerprint(mockReq);
-      
+
       expect(fingerprint1).toBe(fingerprint2);
       expect(fingerprint1).toMatch(/^[a-f0-9]{64}$/);
     });
 
     it('should generate different fingerprints for different requests', () => {
       const fingerprint1 = deviceAuth.generateDeviceFingerprint(mockReq);
-      
+
       mockReq.ip = '192.168.1.2';
       const fingerprint2 = deviceAuth.generateDeviceFingerprint(mockReq);
-      
+
       expect(fingerprint1).not.toBe(fingerprint2);
     });
   });
@@ -83,7 +82,7 @@ describe('Device Authentication', () => {
         ipAddress: '192.168.1.1',
         userAgent: 'Mozilla/5.0',
         isActive: true,
-        lastSeen: new Date()
+        lastSeen: new Date(),
       });
       mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
@@ -92,7 +91,7 @@ describe('Device Authentication', () => {
         refreshToken: 'hashed-refresh-token',
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
-        isActive: true
+        isActive: true,
       });
       mockPrisma.device.update.mockResolvedValue({});
 
@@ -105,12 +104,12 @@ describe('Device Authentication', () => {
       expect(result).toHaveProperty('refreshExpiresIn');
     });
 
-    it('should return existing device if already registered', async () => {
+    it('should return existing device if already registered', async() => {
       const existingDevice = {
         id: 'device-123',
         fingerprint: 'fingerprint-123',
         ipAddress: '192.168.1.1',
-        isActive: true
+        isActive: true,
       };
 
       mockPrisma.device.findFirst.mockResolvedValue(existingDevice);
@@ -121,7 +120,7 @@ describe('Device Authentication', () => {
         refreshToken: 'hashed-refresh-token',
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
-        isActive: true
+        isActive: true,
       });
       mockPrisma.device.update.mockResolvedValue({});
 
@@ -133,14 +132,14 @@ describe('Device Authentication', () => {
   });
 
   describe('validateToken', () => {
-    it('should validate a valid token', async () => {
+    it('should validate a valid token', async() => {
       const mockToken = 'valid-token';
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
         isActive: true,
         expiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
@@ -152,7 +151,7 @@ describe('Device Authentication', () => {
       expect(result.sessionId).toBe('session-123');
     });
 
-    it('should reject an invalid token', async () => {
+    it('should reject an invalid token', async() => {
       mockPrisma.session.findFirst.mockResolvedValue(null);
 
       const result = await deviceAuth.validateToken('invalid-token');
@@ -219,7 +218,7 @@ describe('Session Manager', () => {
   });
 
   describe('createSession', () => {
-    it('should create a new session', async () => {
+    it('should create a new session', async() => {
       const sessionData = {
         deviceId: 'device-123',
         accessToken: 'access-token',
@@ -227,13 +226,13 @@ describe('Session Manager', () => {
         expiresAt: new Date(),
         refreshExpiresAt: new Date(),
         ipAddress: '192.168.1.1',
-        userAgent: 'Mozilla/5.0'
+        userAgent: 'Mozilla/5.0',
       };
 
       mockPrisma.session.count.mockResolvedValue(0);
       mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
-        ...sessionData
+        ...sessionData,
       });
 
       const result = await sessionManager.createSession(sessionData);
@@ -244,13 +243,13 @@ describe('Session Manager', () => {
   });
 
   describe('getSessionByAccessToken', () => {
-    it('should retrieve session by access token', async () => {
+    it('should retrieve session by access token', async() => {
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
         isActive: true,
         expiresAt: new Date(Date.now() + 60000),
-        device: { isActive: true }
+        device: { isActive: true },
       };
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
@@ -262,7 +261,7 @@ describe('Session Manager', () => {
   });
 
   describe('cleanupExpiredSessions', () => {
-    it('should clean up expired sessions', async () => {
+    it('should clean up expired sessions', async() => {
       mockPrisma.session.updateMany.mockResolvedValue({ count: 5 });
 
       const result = await sessionManager.cleanupExpiredSessions();

@@ -23,7 +23,7 @@ class NFTCacheService {
       // Set the value
       this.cache.set(key, {
         value,
-        expiresAt: Date.now() + (ttl * 1000)
+        expiresAt: Date.now() + (ttl * 1000),
       });
 
       // Set expiration timer
@@ -49,7 +49,7 @@ class NFTCacheService {
   async get(key) {
     try {
       const item = this.cache.get(key);
-      
+
       if (!item) {
         return null;
       }
@@ -83,11 +83,11 @@ class NFTCacheService {
 
       // Remove from cache
       const deleted = this.cache.delete(key);
-      
+
       if (deleted) {
         logger.debug(`Deleted cache key: ${key}`);
       }
-      
+
       return deleted;
     } catch (error) {
       logger.error(`Error deleting cache key ${key}: ${error.message}`);
@@ -103,7 +103,7 @@ class NFTCacheService {
   async exists(key) {
     try {
       const item = this.cache.get(key);
-      
+
       if (!item) {
         return false;
       }
@@ -143,7 +143,7 @@ class NFTCacheService {
         totalKeys: this.cache.size,
         validKeys: validCount,
         expiredKeys: expiredCount,
-        timers: this.timers.size
+        timers: this.timers.size,
       };
     } catch (error) {
       logger.error(`Error getting cache stats: ${error.message}`);
@@ -151,7 +151,7 @@ class NFTCacheService {
         totalKeys: 0,
         validKeys: 0,
         expiredKeys: 0,
-        timers: 0
+        timers: 0,
       };
     }
   }

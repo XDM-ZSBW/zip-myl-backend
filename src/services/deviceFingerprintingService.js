@@ -19,12 +19,12 @@ class DeviceFingerprintingService {
     try {
       const fingerprintComponents = await this._collectFingerprintComponents(deviceInfo);
       const fingerprint = await this._generateFingerprintHash(fingerprintComponents);
-      
+
       return {
         fingerprint,
         components: fingerprintComponents,
         timestamp: new Date().toISOString(),
-        version: '2.0.0'
+        version: '2.0.0',
       };
     } catch (error) {
       throw new Error(`Failed to generate device fingerprint: ${error.message}`);
@@ -40,30 +40,30 @@ class DeviceFingerprintingService {
       // Device type and version
       deviceType: deviceInfo.type || 'unknown',
       deviceVersion: deviceInfo.version || '1.0.0',
-      
+
       // Platform information (anonymized)
       platform: this._anonymizePlatform(deviceInfo.platform),
       architecture: this._anonymizeArchitecture(deviceInfo.architecture),
-      
+
       // Capabilities
       capabilities: this._normalizeCapabilities(deviceInfo.capabilities),
-      
+
       // Network characteristics (anonymized)
       timezone: this._anonymizeTimezone(deviceInfo.timezone),
       language: this._anonymizeLanguage(deviceInfo.language),
-      
+
       // Hardware characteristics (anonymized)
       cpuCores: this._anonymizeCpuCores(deviceInfo.cpuCores),
       memory: this._anonymizeMemory(deviceInfo.memory),
-      
+
       // Browser/Environment info (anonymized)
       userAgent: this._anonymizeUserAgent(deviceInfo.userAgent),
       screenResolution: this._anonymizeScreenResolution(deviceInfo.screenResolution),
-      
+
       // Security features
       hasWebCrypto: deviceInfo.hasWebCrypto || false,
       hasLocalStorage: deviceInfo.hasLocalStorage || false,
-      hasIndexedDB: deviceInfo.hasIndexedDB || false
+      hasIndexedDB: deviceInfo.hasIndexedDB || false,
     };
 
     return components;
@@ -76,11 +76,11 @@ class DeviceFingerprintingService {
   async _generateFingerprintHash(components) {
     // Create a deterministic string from components
     const fingerprintString = JSON.stringify(components, Object.keys(components).sort());
-    
+
     // Generate hash with salt
     const hash = crypto.createHash('sha256');
     hash.update(fingerprintString + this.salt);
-    
+
     return hash.digest('hex');
   }
 
@@ -107,15 +107,15 @@ class DeviceFingerprintingService {
    */
   _anonymizePlatform(platform) {
     if (!platform) return 'unknown';
-    
+
     const platformMap = {
       'win32': 'windows',
       'darwin': 'macos',
       'linux': 'linux',
       'android': 'android',
-      'ios': 'ios'
+      'ios': 'ios',
     };
-    
+
     return platformMap[platform.toLowerCase()] || 'other';
   }
 
@@ -125,14 +125,14 @@ class DeviceFingerprintingService {
    */
   _anonymizeArchitecture(arch) {
     if (!arch) return 'unknown';
-    
+
     const archMap = {
       'x64': 'x64',
       'x86': 'x86',
       'arm64': 'arm64',
-      'arm': 'arm'
+      'arm': 'arm',
     };
-    
+
     return archMap[arch.toLowerCase()] || 'other';
   }
 
@@ -142,12 +142,12 @@ class DeviceFingerprintingService {
    */
   _normalizeCapabilities(capabilities) {
     if (!Array.isArray(capabilities)) return [];
-    
+
     const validCapabilities = [
-      'encryption', 'sync', 'storage', 'notifications', 
-      'offline', 'cross-device', 'biometric', 'hardware-security'
+      'encryption', 'sync', 'storage', 'notifications',
+      'offline', 'cross-device', 'biometric', 'hardware-security',
     ];
-    
+
     return capabilities
       .filter(cap => validCapabilities.includes(cap))
       .sort();
@@ -159,10 +159,10 @@ class DeviceFingerprintingService {
    */
   _anonymizeTimezone(timezone) {
     if (!timezone) return 'unknown';
-    
+
     // Extract only the offset part (e.g., "+05:30" -> "+05:00")
     const offsetMatch = timezone.match(/([+-]\d{2}):\d{2}/);
-    return offsetMatch ? offsetMatch[1] + ':00' : 'unknown';
+    return offsetMatch ? `${offsetMatch[1]}:00` : 'unknown';
   }
 
   /**
@@ -171,7 +171,7 @@ class DeviceFingerprintingService {
    */
   _anonymizeLanguage(language) {
     if (!language) return 'unknown';
-    
+
     // Extract only the primary language (e.g., "en-US" -> "en")
     const langMatch = language.match(/^([a-z]{2})/i);
     return langMatch ? langMatch[1].toLowerCase() : 'unknown';
@@ -183,7 +183,7 @@ class DeviceFingerprintingService {
    */
   _anonymizeCpuCores(cores) {
     if (!cores || typeof cores !== 'number') return 'unknown';
-    
+
     const powersOf2 = [1, 2, 4, 8, 16, 32, 64];
     return powersOf2.find(power => cores <= power) || '64+';
   }
@@ -194,7 +194,7 @@ class DeviceFingerprintingService {
    */
   _anonymizeMemory(memory) {
     if (!memory || typeof memory !== 'number') return 'unknown';
-    
+
     const memoryGB = Math.round(memory / (1024 * 1024 * 1024));
     if (memoryGB <= 2) return '2GB';
     if (memoryGB <= 4) return '4GB';
@@ -209,13 +209,13 @@ class DeviceFingerprintingService {
    */
   _anonymizeUserAgent(userAgent) {
     if (!userAgent) return 'unknown';
-    
+
     // Extract browser and major version
     const browserMatch = userAgent.match(/(Chrome|Firefox|Safari|Edge)\/(\d+)/i);
     if (browserMatch) {
       return `${browserMatch[1].toLowerCase()}-${browserMatch[2]}`;
     }
-    
+
     return 'other';
   }
 
@@ -225,9 +225,9 @@ class DeviceFingerprintingService {
    */
   _anonymizeScreenResolution(resolution) {
     if (!resolution || !resolution.width || !resolution.height) return 'unknown';
-    
+
     const { width, height } = resolution;
-    
+
     // Common resolution categories
     if (width <= 1024) return '1024x768';
     if (width <= 1280) return '1280x720';
@@ -245,7 +245,7 @@ class DeviceFingerprintingService {
    */
   generateDeviceId(fingerprint) {
     const hash = crypto.createHash('sha256');
-    hash.update(fingerprint + this.salt + 'device-id');
+    hash.update(`${fingerprint + this.salt}device-id`);
     return hash.digest('hex').substring(0, 32);
   }
 
@@ -255,8 +255,8 @@ class DeviceFingerprintingService {
    * @returns {boolean} Validation result
    */
   validateFingerprint(fingerprint) {
-    return typeof fingerprint === 'string' && 
-           fingerprint.length === 64 && 
+    return typeof fingerprint === 'string' &&
+           fingerprint.length === 64 &&
            /^[a-f0-9]+$/i.test(fingerprint);
   }
 
@@ -270,7 +270,7 @@ class DeviceFingerprintingService {
       hashAlgorithm: 'sha256',
       fingerprintLength: 64,
       version: '2.0.0',
-      privacyLevel: 'high'
+      privacyLevel: 'high',
     };
   }
 }

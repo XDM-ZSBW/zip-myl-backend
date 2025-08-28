@@ -13,10 +13,10 @@ class ThoughtService {
       };
 
       const thought = await Thought.create(thoughtData);
-      
+
       // Cache the new thought
       await cacheService.cacheThought(thought.id, thought.toJSON());
-      
+
       // Invalidate user thoughts cache if userId is provided
       if (data.userId) {
         await cacheService.invalidateUserThoughts(data.userId);
@@ -63,7 +63,7 @@ class ThoughtService {
 
       // Get from database
       const result = await Thought.findByUserId(userId, options);
-      
+
       // Cache the result
       await cacheService.set(cacheKey, result, 1800); // 30 minutes
 
@@ -85,7 +85,7 @@ class ThoughtService {
 
       // Get from database
       const result = await Thought.findAll(options);
-      
+
       // Cache the result
       await cacheService.set(cacheKey, result, 900); // 15 minutes
 
@@ -104,10 +104,10 @@ class ThoughtService {
       }
 
       const updatedThought = await thought.update(data);
-      
+
       // Update cache
       await cacheService.cacheThought(id, updatedThought.toJSON());
-      
+
       // Invalidate user thoughts cache if userId exists
       if (thought.userId) {
         await cacheService.invalidateUserThoughts(thought.userId);
@@ -130,10 +130,10 @@ class ThoughtService {
 
       const userId = thought.userId;
       await thought.delete();
-      
+
       // Remove from cache
       await cacheService.del(`thought:${id}`);
-      
+
       // Invalidate user thoughts cache if userId exists
       if (userId) {
         await cacheService.invalidateUserThoughts(userId);
@@ -152,7 +152,7 @@ class ThoughtService {
       // This would typically use a full-text search in the database
       // For now, we'll implement a simple content search
       const { page = 1, limit = 10, userId } = options;
-      
+
       // Try to get from cache first
       const cacheKey = `thoughts:search:${query}:${JSON.stringify(options)}`;
       const cachedResults = await cacheService.get(cacheKey);
@@ -162,9 +162,9 @@ class ThoughtService {
 
       // Get all thoughts and filter (in production, use database full-text search)
       const allThoughts = await Thought.findAll({ userId, page: 1, limit: 1000 });
-      
+
       const filteredThoughts = allThoughts.thoughts.filter(thought =>
-        thought.content.toLowerCase().includes(query.toLowerCase())
+        thought.content.toLowerCase().includes(query.toLowerCase()),
       );
 
       const startIndex = (page - 1) * limit;

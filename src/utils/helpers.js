@@ -1,11 +1,11 @@
-import { v4 as uuidv4 } from 'uuid';
-import { logger } from './logger.js';
+const { v4: uuidv4 } = require('uuid');
+const { logger } = require('./logger');
 
 /**
  * Generate a unique ID
  * @returns {string} UUID v4
  */
-export const generateId = () => {
+const generateId = () => {
   return uuidv4();
 };
 
@@ -15,7 +15,7 @@ export const generateId = () => {
  * @param {string} defaultMessage - Default error message
  * @returns {string} Formatted error message
  */
-export const formatError = (error, defaultMessage = 'An error occurred') => {
+const formatError = (error, defaultMessage = 'An error occurred') => {
   if (error.message) {
     return error.message;
   }
@@ -27,11 +27,11 @@ export const formatError = (error, defaultMessage = 'An error occurred') => {
  * @param {string} input - Input string to sanitize
  * @returns {string} Sanitized string
  */
-export const sanitizeInput = (input) => {
+const sanitizeInput = (input) => {
   if (typeof input !== 'string') {
     return input;
   }
-  
+
   return input
     .trim()
     .replace(/[<>]/g, '') // Remove potential HTML tags
@@ -43,7 +43,7 @@ export const sanitizeInput = (input) => {
  * @param {string} email - Email to validate
  * @returns {boolean} True if valid email
  */
-export const isValidEmail = (email) => {
+const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
@@ -53,7 +53,7 @@ export const isValidEmail = (email) => {
  * @param {string} url - URL to validate
  * @returns {boolean} True if valid URL
  */
-export const isValidUrl = (url) => {
+const isValidUrl = (url) => {
   try {
     new URL(url);
     return true;
@@ -69,11 +69,11 @@ export const isValidUrl = (url) => {
  * @param {number} total - Total items
  * @returns {object} Pagination metadata
  */
-export const generatePagination = (page, limit, total) => {
+const generatePagination = (page, limit, total) => {
   const pages = Math.ceil(total / limit);
   const hasNext = page < pages;
   const hasPrev = page > 1;
-  
+
   return {
     page,
     limit,
@@ -91,7 +91,7 @@ export const generatePagination = (page, limit, total) => {
  * @param {number} ms - Milliseconds to sleep
  * @returns {Promise} Promise that resolves after sleep
  */
-export const sleep = (ms) => {
+const sleep = (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
@@ -102,19 +102,19 @@ export const sleep = (ms) => {
  * @param {number} baseDelay - Base delay in milliseconds
  * @returns {Promise} Promise that resolves with function result
  */
-export const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
+const retryWithBackoff = async(fn, maxRetries = 3, baseDelay = 1000) => {
   let lastError;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error;
-      
+
       if (attempt === maxRetries) {
         throw lastError;
       }
-      
+
       const delay = baseDelay * Math.pow(2, attempt);
       logger.warn(`Attempt ${attempt + 1} failed, retrying in ${delay}ms:`, error.message);
       await sleep(delay);
@@ -127,19 +127,19 @@ export const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => 
  * @param {any} obj - Object to clone
  * @returns {any} Cloned object
  */
-export const deepClone = (obj) => {
+const deepClone = (obj) => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
-  
+
   if (obj instanceof Date) {
     return new Date(obj.getTime());
   }
-  
+
   if (obj instanceof Array) {
     return obj.map(item => deepClone(item));
   }
-  
+
   if (typeof obj === 'object') {
     const cloned = {};
     for (const key in obj) {
@@ -158,12 +158,12 @@ export const deepClone = (obj) => {
  */
 export const formatBytes = (bytes) => {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
 /**

@@ -19,7 +19,7 @@ class SecretManagerService {
   async getSecret(secretName, useCache = true) {
     // Use the secret name directly (no prefix needed for existing secrets)
     const fullSecretName = secretName;
-    
+
     // Check cache first
     if (useCache && this.cache.has(fullSecretName)) {
       const cached = this.cache.get(fullSecretName);
@@ -34,12 +34,12 @@ class SecretManagerService {
       });
 
       const secretValue = version.payload.data.toString();
-      
+
       // Cache the secret
       if (useCache) {
         this.cache.set(fullSecretName, {
           value: secretValue,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
 
@@ -96,7 +96,7 @@ class SecretManagerService {
         this.getJwtRefreshSecret(),
         this.getServiceApiKey(),
         this.getDatabaseUrl(),
-        this.getRedisPassword()
+        this.getRedisPassword(),
       ]);
 
       return {
@@ -104,7 +104,7 @@ class SecretManagerService {
         jwtRefreshSecret,
         serviceApiKey,
         databaseUrl,
-        redisPassword
+        redisPassword,
       };
     } catch (error) {
       logger.error('Failed to retrieve secrets from Secret Manager:', error);
@@ -141,11 +141,11 @@ class SecretManagerService {
       'JWT_REFRESH_SECRET',
       'INTERNAL_API_KEY',
       'DATABASE_URL',
-      'REDIS_PASSWORD'
+      'REDIS_PASSWORD',
     ];
 
     const status = {};
-    
+
     for (const secret of secrets) {
       try {
         await this.getSecret(secret, false);

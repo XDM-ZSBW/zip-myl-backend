@@ -1,19 +1,18 @@
 const { describe, test, expect, beforeEach } = require('@jest/globals');
 const encryptionService = require('../../src/services/encryptionService');
-const { 
-  isValidPairingCode, 
-  isValidUUIDPairingCode, 
-  isValidShortPairingCode, 
+const {
+  isValidPairingCode,
+  isValidUUIDPairingCode,
+  isValidShortPairingCode,
   isValidLegacyPairingCode,
-  detectPairingCodeFormat 
+  detectPairingCodeFormat,
 } = require('../../src/utils/validation');
 
 describe('Pairing Code Generation and Validation', () => {
-  
   describe('UUID Pairing Code Generation', () => {
     test('should generate valid UUID v4 format', () => {
       const uuid = encryptionService.generateUUIDPairingCode();
-      
+
       // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       expect(uuid).toMatch(uuidRegex);
@@ -23,17 +22,17 @@ describe('Pairing Code Generation and Validation', () => {
     test('should generate unique UUIDs', () => {
       const uuid1 = encryptionService.generateUUIDPairingCode();
       const uuid2 = encryptionService.generateUUIDPairingCode();
-      
+
       expect(uuid1).not.toBe(uuid2);
     });
 
     test('should generate UUID with correct version and variant bits', () => {
       const uuid = encryptionService.generateUUIDPairingCode();
       const parts = uuid.split('-');
-      
+
       // Version 4: first character of third group should be '4'
       expect(parts[2][0]).toBe('4');
-      
+
       // Variant: first character of fourth group should be '8', '9', 'a', or 'b'
       expect(['8', '9', 'a', 'b']).toContain(parts[3][0]);
     });
@@ -42,7 +41,7 @@ describe('Pairing Code Generation and Validation', () => {
   describe('Short Format Pairing Code Generation', () => {
     test('should generate 12-character hex string', () => {
       const shortCode = encryptionService.generateShortPairingCode();
-      
+
       expect(shortCode).toHaveLength(12);
       expect(shortCode).toMatch(/^[0-9a-f]{12}$/i);
     });
@@ -50,7 +49,7 @@ describe('Pairing Code Generation and Validation', () => {
     test('should generate unique short codes', () => {
       const code1 = encryptionService.generateShortPairingCode();
       const code2 = encryptionService.generateShortPairingCode();
-      
+
       expect(code1).not.toBe(code2);
     });
   });
@@ -59,14 +58,14 @@ describe('Pairing Code Generation and Validation', () => {
     test('should generate UUID when format is "uuid"', () => {
       const code = encryptionService.generatePairingCode('uuid');
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      
+
       expect(code).toMatch(uuidRegex);
       expect(code).toHaveLength(36);
     });
 
     test('should generate short code when format is "short"', () => {
       const code = encryptionService.generatePairingCode('short');
-      
+
       expect(code).toHaveLength(12);
       expect(code).toMatch(/^[0-9a-f]{12}$/i);
     });
@@ -74,14 +73,14 @@ describe('Pairing Code Generation and Validation', () => {
     test('should default to UUID when no format specified', () => {
       const code = encryptionService.generatePairingCode();
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      
+
       expect(code).toMatch(uuidRegex);
     });
 
     test('should default to UUID for invalid format', () => {
       const code = encryptionService.generatePairingCode('invalid');
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      
+
       expect(code).toMatch(uuidRegex);
     });
   });
@@ -101,7 +100,7 @@ describe('Pairing Code Generation and Validation', () => {
           '123e4567-e89b-12d3-a456-42661417400g', // invalid character
           '123e4567-e89b-12d3-a456-42661417400', // missing character
           '123e4567-e89b-12d3-a456', // missing parts
-          'not-a-uuid-at-all'
+          'not-a-uuid-at-all',
         ];
 
         invalidUUIDs.forEach(uuid => {
@@ -113,7 +112,7 @@ describe('Pairing Code Generation and Validation', () => {
       test('should validate UUID v4 format specifically', () => {
         const uuidV4 = '123e4567-e89b-42d3-a456-426614174000'; // version 4
         const uuidV1 = '123e4567-e89b-12d3-a456-426614174000'; // version 1
-        
+
         expect(isValidUUIDPairingCode(uuidV4)).toBe(true);
         expect(isValidUUIDPairingCode(uuidV1)).toBe(true); // Still valid UUID
       });
@@ -132,7 +131,7 @@ describe('Pairing Code Generation and Validation', () => {
           '38836d2c44980', // too long
           '38836d2c449g', // invalid character
           '38836d2c449', // missing character
-          'not-a-short-code'
+          'not-a-short-code',
         ];
 
         invalidShorts.forEach(code => {
@@ -155,7 +154,7 @@ describe('Pairing Code Generation and Validation', () => {
           '1234567', // too long
           '12345a', // non-numeric
           '12345', // missing digit
-          'not-numeric'
+          'not-numeric',
         ];
 
         invalidLegacy.forEach(code => {
@@ -199,7 +198,7 @@ describe('Pairing Code Generation and Validation', () => {
         const formats = [
           '123e4567-e89b-12d3-a456-426614174000', // UUID
           '38836d2c4498', // Short
-          '123456' // Legacy
+          '123456', // Legacy
         ];
 
         formats.forEach(code => {
@@ -213,7 +212,7 @@ describe('Pairing Code Generation and Validation', () => {
           '123',
           '123e4567-e89b-12d3-a456-42661417400g',
           '38836d2c449g',
-          '12345a'
+          '12345a',
         ];
 
         invalidFormats.forEach(code => {
@@ -227,7 +226,7 @@ describe('Pairing Code Generation and Validation', () => {
     test('UUID should have sufficient entropy', () => {
       const uuids = Array.from({ length: 1000 }, () => encryptionService.generateUUIDPairingCode());
       const uniqueUuids = new Set(uuids);
-      
+
       // All generated UUIDs should be unique
       expect(uniqueUuids.size).toBe(1000);
     });
@@ -235,18 +234,18 @@ describe('Pairing Code Generation and Validation', () => {
     test('Short codes should have sufficient entropy', () => {
       const codes = Array.from({ length: 1000 }, () => encryptionService.generateShortPairingCode());
       const uniqueCodes = new Set(codes);
-      
+
       // All generated codes should be unique
       expect(uniqueCodes.size).toBe(1000);
     });
 
     test('should not generate predictable patterns', () => {
       const codes = Array.from({ length: 100 }, () => encryptionService.generatePairingCode('uuid'));
-      
+
       // Check that codes don't follow obvious patterns
       const firstChars = codes.map(code => code[0]);
       const uniqueFirstChars = new Set(firstChars);
-      
+
       // Should have variety in first characters
       expect(uniqueFirstChars.size).toBeGreaterThan(5);
     });
@@ -255,29 +254,29 @@ describe('Pairing Code Generation and Validation', () => {
   describe('Performance', () => {
     test('should generate codes quickly', () => {
       const start = Date.now();
-      
+
       for (let i = 0; i < 1000; i++) {
         encryptionService.generatePairingCode('uuid');
       }
-      
+
       const duration = Date.now() - start;
-      
+
       // Should generate 1000 codes in less than 100ms
       expect(duration).toBeLessThan(100);
     });
 
     test('should validate codes quickly', () => {
       const codes = Array.from({ length: 1000 }, () => encryptionService.generatePairingCode('uuid'));
-      
+
       const start = Date.now();
-      
+
       codes.forEach(code => {
         isValidPairingCode(code);
         detectPairingCodeFormat(code);
       });
-      
+
       const duration = Date.now() - start;
-      
+
       // Should validate 1000 codes in less than 50ms
       expect(duration).toBeLessThan(50);
     });

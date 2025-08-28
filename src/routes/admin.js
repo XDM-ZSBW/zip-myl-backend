@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { 
-  requireApiKey, 
-  requireRole, 
+const {
+  requireApiKey,
+  requireRole,
   requirePermissions,
-  logAuthEvent 
+  logAuthEvent,
 } = require('../middleware/auth');
-const { 
-  apiKeyRateLimit, 
-  strictRateLimit 
+const {
+  apiKeyRateLimit,
+  strictRateLimit,
 } = require('../middleware/rateLimiter');
 
 // All admin routes require API key authentication
@@ -17,59 +17,59 @@ router.use(requireApiKey);
 router.use(requireRole('admin'));
 
 // API Key Management
-router.post('/keys/create', 
+router.post('/keys/create',
   apiKeyRateLimit,
   requirePermissions(['api_keys:create']),
   logAuthEvent('api_key_create'),
-  adminController.createApiKey
+  adminController.createApiKey,
 );
 
-router.get('/keys/list', 
+router.get('/keys/list',
   apiKeyRateLimit,
   requirePermissions(['api_keys:read']),
-  adminController.listApiKeys
+  adminController.listApiKeys,
 );
 
-router.put('/keys/:id/update', 
+router.put('/keys/:id/update',
   apiKeyRateLimit,
   requirePermissions(['api_keys:update']),
   logAuthEvent('api_key_update'),
-  adminController.updateApiKey
+  adminController.updateApiKey,
 );
 
-router.delete('/keys/:id/revoke', 
+router.delete('/keys/:id/revoke',
   apiKeyRateLimit,
   requirePermissions(['api_keys:delete']),
   logAuthEvent('api_key_revoke'),
-  adminController.revokeApiKey
+  adminController.revokeApiKey,
 );
 
 // Client Management
-router.post('/clients/create', 
+router.post('/clients/create',
   apiKeyRateLimit,
   requirePermissions(['clients:create']),
   logAuthEvent('client_create'),
-  adminController.createClient
+  adminController.createClient,
 );
 
-router.get('/clients/list', 
+router.get('/clients/list',
   apiKeyRateLimit,
   requirePermissions(['clients:read']),
-  adminController.listClients
+  adminController.listClients,
 );
 
 // System Statistics
-router.get('/stats/system', 
+router.get('/stats/system',
   apiKeyRateLimit,
   requirePermissions(['system:read']),
-  adminController.getSystemStats
+  adminController.getSystemStats,
 );
 
 // Audit Logs
-router.get('/audit/logs', 
+router.get('/audit/logs',
   strictRateLimit,
   requirePermissions(['audit:read']),
-  adminController.getAuditLogs
+  adminController.getAuditLogs,
 );
 
 module.exports = router;

@@ -8,17 +8,17 @@ const securityHeaders = (req, res, next) => {
   try {
     // Content Security Policy
     if (process.env.CSP_ENABLED === 'true') {
-      const cspPolicy = process.env.CSP_POLICY || 
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data: https:; " +
-        "font-src 'self' data:; " +
-        "connect-src 'self' https:; " +
-        "frame-ancestors 'none'; " +
-        "base-uri 'self'; " +
-        "form-action 'self'";
-      
+      const cspPolicy = process.env.CSP_POLICY ||
+        'default-src \'self\'; ' +
+        'script-src \'self\' \'unsafe-inline\'; ' +
+        'style-src \'self\' \'unsafe-inline\'; ' +
+        'img-src \'self\' data: https:; ' +
+        'font-src \'self\' data:; ' +
+        'connect-src \'self\' https:; ' +
+        'frame-ancestors \'none\'; ' +
+        'base-uri \'self\'; ' +
+        'form-action \'self\'';
+
       res.setHeader('Content-Security-Policy', cspPolicy);
     }
 
@@ -41,7 +41,7 @@ const securityHeaders = (req, res, next) => {
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
     // Permissions Policy
-    res.setHeader('Permissions-Policy', 
+    res.setHeader('Permissions-Policy',
       'geolocation=(), ' +
       'microphone=(), ' +
       'camera=(), ' +
@@ -52,7 +52,7 @@ const securityHeaders = (req, res, next) => {
       'speaker=(), ' +
       'vibrate=(), ' +
       'fullscreen=(self), ' +
-      'sync-xhr=()'
+      'sync-xhr=()',
     );
 
     // X-Permitted-Cross-Domain-Policies

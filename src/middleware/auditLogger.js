@@ -12,7 +12,7 @@ const auditLogger = (req, res, next) => {
 
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
-  
+
   // Add request ID to request object
   req.requestId = requestId;
   req.startTime = startTime;
@@ -30,7 +30,7 @@ const auditLogger = (req, res, next) => {
     contentType: req.get('Content-Type'),
     contentLength: req.get('Content-Length'),
     referer: req.get('Referer'),
-    origin: req.get('Origin')
+    origin: req.get('Origin'),
   };
 
   // Log sensitive operations
@@ -39,11 +39,11 @@ const auditLogger = (req, res, next) => {
     '/api/v1/encrypted/devices',
     '/api/v1/encrypted/share',
     '/api/v1/auth/login',
-    '/api/v1/auth/register'
+    '/api/v1/auth/register',
   ];
 
-  const isSensitiveEndpoint = sensitiveEndpoints.some(endpoint => 
-    req.url.startsWith(endpoint)
+  const isSensitiveEndpoint = sensitiveEndpoints.some(endpoint =>
+    req.url.startsWith(endpoint),
   );
 
   if (isSensitiveEndpoint) {
@@ -61,7 +61,7 @@ const auditLogger = (req, res, next) => {
       statusCode: res.statusCode,
       duration,
       responseSize: res.get('Content-Length') || 0,
-      endTime: new Date().toISOString()
+      endTime: new Date().toISOString(),
     };
 
     // Log based on status code
@@ -99,7 +99,7 @@ const logSecurityEvent = (eventType, details) => {
     eventType,
     timestamp: new Date().toISOString(),
     severity: getSeverityLevel(eventType),
-    ...details
+    ...details,
   };
 
   logger.info('Security Event', securityEvent);
@@ -120,7 +120,7 @@ const getSeverityLevel = (eventType) => {
     'UNAUTHORIZED_ACCESS': 'error',
     'INVALID_TOKEN': 'warn',
     'SUSPICIOUS_ACTIVITY': 'error',
-    'DATA_BREACH_ATTEMPT': 'error'
+    'DATA_BREACH_ATTEMPT': 'error',
   };
 
   return severityMap[eventType] || 'info';
@@ -133,7 +133,7 @@ const logDeviceTrustEvent = (eventType, deviceId, userId, details = {}) => {
   logSecurityEvent(eventType, {
     deviceId,
     userId,
-    ...details
+    ...details,
   });
 };
 
@@ -151,7 +151,7 @@ const logAuthEvent = (eventType, userId, deviceId, details = {}) => {
   logSecurityEvent(eventType, {
     userId,
     deviceId,
-    ...details
+    ...details,
   });
 };
 
@@ -160,5 +160,5 @@ module.exports = {
   logSecurityEvent,
   logDeviceTrustEvent,
   logEncryptionEvent,
-  logAuthEvent
+  logAuthEvent,
 };

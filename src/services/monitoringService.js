@@ -13,23 +13,23 @@ class MonitoringService {
         suspiciousFingerprints: 0,
         unusualPairingPatterns: 0,
         keyRotationCompliance: 0,
-        rateLimitViolations: 0
+        rateLimitViolations: 0,
       },
       performance: {
         deviceRegistrations: 0,
         pairingCodeGenerations: 0,
         trustEstablishments: 0,
         keyExchanges: 0,
-        averageResponseTime: 0
+        averageResponseTime: 0,
       },
       privacy: {
         dataRetentionCompliance: 0,
         automaticCleanupSuccess: 0,
         anonymizationEffectiveness: 0,
-        zeroKnowledgeVerification: 0
-      }
+        zeroKnowledgeVerification: 0,
+      },
     };
-    
+
     this.events = [];
     this.maxEvents = 10000; // Keep last 10k events
     this.startTime = Date.now();
@@ -44,15 +44,15 @@ class MonitoringService {
       type: 'security',
       eventType,
       timestamp: new Date().toISOString(),
-      details: this.sanitizeDetails(details)
+      details: this.sanitizeDetails(details),
     };
 
     this.events.push(event);
     this.updateSecurityMetrics(eventType);
-    
+
     // Log security events
     logger.warn(`Security event: ${eventType}`, details);
-    
+
     // Cleanup old events
     this.cleanupEvents();
   }
@@ -67,15 +67,15 @@ class MonitoringService {
       eventType,
       timestamp: new Date().toISOString(),
       duration,
-      details: this.sanitizeDetails(details)
+      details: this.sanitizeDetails(details),
     };
 
     this.events.push(event);
     this.updatePerformanceMetrics(eventType, duration);
-    
+
     // Log performance events
     logger.info(`Performance event: ${eventType}`, { duration, ...details });
-    
+
     // Cleanup old events
     this.cleanupEvents();
   }
@@ -89,15 +89,15 @@ class MonitoringService {
       type: 'privacy',
       eventType,
       timestamp: new Date().toISOString(),
-      details: this.sanitizeDetails(details)
+      details: this.sanitizeDetails(details),
     };
 
     this.events.push(event);
     this.updatePrivacyMetrics(eventType);
-    
+
     // Log privacy events
     logger.info(`Privacy event: ${eventType}`, details);
-    
+
     // Cleanup old events
     this.cleanupEvents();
   }
@@ -109,7 +109,7 @@ class MonitoringService {
     this.trackPerformanceEvent('device_registration', duration, {
       deviceId: this.hashDeviceId(deviceId),
       deviceType,
-      success
+      success,
     });
 
     if (success) {
@@ -117,7 +117,7 @@ class MonitoringService {
     } else {
       this.trackSecurityEvent('failed_device_registration', {
         deviceId: this.hashDeviceId(deviceId),
-        deviceType
+        deviceType,
       });
     }
   }
@@ -128,7 +128,7 @@ class MonitoringService {
   trackPairingCodeGeneration(deviceId, success = true, duration = 0) {
     this.trackPerformanceEvent('pairing_code_generation', duration, {
       deviceId: this.hashDeviceId(deviceId),
-      success
+      success,
     });
 
     if (success) {
@@ -144,7 +144,7 @@ class MonitoringService {
       sourceDeviceId: this.hashDeviceId(sourceDeviceId),
       targetDeviceId: this.hashDeviceId(targetDeviceId),
       trustLevel,
-      success
+      success,
     });
 
     if (success) {
@@ -152,7 +152,7 @@ class MonitoringService {
     } else {
       this.trackSecurityEvent('failed_trust_establishment', {
         sourceDeviceId: this.hashDeviceId(sourceDeviceId),
-        targetDeviceId: this.hashDeviceId(targetDeviceId)
+        targetDeviceId: this.hashDeviceId(targetDeviceId),
       });
     }
   }
@@ -164,7 +164,7 @@ class MonitoringService {
     this.trackPerformanceEvent('key_exchange', duration, {
       sourceDeviceId: this.hashDeviceId(sourceDeviceId),
       targetDeviceId: this.hashDeviceId(targetDeviceId),
-      success
+      success,
     });
 
     if (success) {
@@ -172,7 +172,7 @@ class MonitoringService {
     } else {
       this.trackSecurityEvent('failed_key_exchange', {
         sourceDeviceId: this.hashDeviceId(sourceDeviceId),
-        targetDeviceId: this.hashDeviceId(targetDeviceId)
+        targetDeviceId: this.hashDeviceId(targetDeviceId),
       });
     }
   }
@@ -184,7 +184,7 @@ class MonitoringService {
     this.trackSecurityEvent('failed_authentication', {
       deviceId: this.hashDeviceId(deviceId),
       reason,
-      ipAddress: this.anonymizeIP(ipAddress)
+      ipAddress: this.anonymizeIP(ipAddress),
     });
 
     this.metrics.security.failedAuthentications++;
@@ -197,7 +197,7 @@ class MonitoringService {
     this.trackSecurityEvent('suspicious_fingerprint', {
       deviceId: this.hashDeviceId(deviceId),
       fingerprint: this.hashFingerprint(fingerprint),
-      reason
+      reason,
     });
 
     this.metrics.security.suspiciousFingerprints++;
@@ -210,7 +210,7 @@ class MonitoringService {
     this.trackSecurityEvent('unusual_pairing_pattern', {
       deviceId: this.hashDeviceId(deviceId),
       pattern,
-      details: this.sanitizeDetails(details)
+      details: this.sanitizeDetails(details),
     });
 
     this.metrics.security.unusualPairingPatterns++;
@@ -223,7 +223,7 @@ class MonitoringService {
     this.trackSecurityEvent('rate_limit_violation', {
       action,
       identifier: this.hashIdentifier(identifier),
-      ipAddress: this.anonymizeIP(ipAddress)
+      ipAddress: this.anonymizeIP(ipAddress),
     });
 
     this.metrics.security.rateLimitViolations++;
@@ -235,7 +235,7 @@ class MonitoringService {
   trackKeyRotation(deviceId, success = true) {
     this.trackSecurityEvent('key_rotation', {
       deviceId: this.hashDeviceId(deviceId),
-      success
+      success,
     });
 
     if (success) {
@@ -249,7 +249,7 @@ class MonitoringService {
   trackDataRetention(action, recordCount) {
     this.trackPrivacyEvent('data_retention', {
       action,
-      recordCount
+      recordCount,
     });
 
     this.metrics.privacy.dataRetentionCompliance++;
@@ -262,7 +262,7 @@ class MonitoringService {
     this.trackPrivacyEvent('automatic_cleanup', {
       cleanupType,
       recordsCleaned,
-      success
+      success,
     });
 
     if (success) {
@@ -276,7 +276,7 @@ class MonitoringService {
   trackAnonymization(dataType, effectiveness) {
     this.trackPrivacyEvent('anonymization', {
       dataType,
-      effectiveness
+      effectiveness,
     });
 
     this.metrics.privacy.anonymizationEffectiveness += effectiveness;
@@ -288,7 +288,7 @@ class MonitoringService {
   trackZeroKnowledgeVerification(operation, success = true) {
     this.trackPrivacyEvent('zero_knowledge_verification', {
       operation,
-      success
+      success,
     });
 
     if (success) {
@@ -301,24 +301,24 @@ class MonitoringService {
    */
   getMetrics() {
     const uptime = Date.now() - this.startTime;
-    
+
     return {
       timestamp: new Date().toISOString(),
-      uptime: uptime,
+      uptime,
       uptimeFormatted: this.formatUptime(uptime),
       metrics: this.metrics,
       events: {
         total: this.events.length,
         security: this.events.filter(e => e.type === 'security').length,
         performance: this.events.filter(e => e.type === 'performance').length,
-        privacy: this.events.filter(e => e.type === 'privacy').length
+        privacy: this.events.filter(e => e.type === 'privacy').length,
       },
       system: {
         memoryUsage: process.memoryUsage(),
         cpuUsage: process.cpuUsage(),
         nodeVersion: process.version,
-        platform: process.platform
-      }
+        platform: process.platform,
+      },
     };
   }
 
@@ -330,7 +330,7 @@ class MonitoringService {
       ...this.metrics.security,
       recentSecurityEvents: this.events
         .filter(e => e.type === 'security')
-        .slice(-100) // Last 100 security events
+        .slice(-100), // Last 100 security events
     };
   }
 
@@ -342,7 +342,7 @@ class MonitoringService {
       ...this.metrics.performance,
       recentPerformanceEvents: this.events
         .filter(e => e.type === 'performance')
-        .slice(-100) // Last 100 performance events
+        .slice(-100), // Last 100 performance events
     };
   }
 
@@ -354,7 +354,7 @@ class MonitoringService {
       ...this.metrics.privacy,
       recentPrivacyEvents: this.events
         .filter(e => e.type === 'privacy')
-        .slice(-100) // Last 100 privacy events
+        .slice(-100), // Last 100 privacy events
     };
   }
 
@@ -366,7 +366,7 @@ class MonitoringService {
     const securityScore = this.calculateSecurityScore();
     const performanceScore = this.calculatePerformanceScore();
     const privacyScore = this.calculatePrivacyScore();
-    
+
     return {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -374,10 +374,10 @@ class MonitoringService {
         security: securityScore,
         performance: performanceScore,
         privacy: privacyScore,
-        overall: (securityScore + performanceScore + privacyScore) / 3
+        overall: (securityScore + performanceScore + privacyScore) / 3,
       },
       alerts: this.getActiveAlerts(),
-      uptime: metrics.uptimeFormatted
+      uptime: metrics.uptimeFormatted,
     };
   }
 
@@ -398,8 +398,8 @@ class MonitoringService {
     // Update average response time
     const currentAvg = this.metrics.performance.averageResponseTime;
     const totalEvents = this.events.filter(e => e.type === 'performance').length;
-    
-    this.metrics.performance.averageResponseTime = 
+
+    this.metrics.performance.averageResponseTime =
       (currentAvg * (totalEvents - 1) + duration) / totalEvents;
   }
 
@@ -415,12 +415,12 @@ class MonitoringService {
    */
   sanitizeDetails(details) {
     const sanitized = { ...details };
-    
+
     // Remove any potentially sensitive information
     delete sanitized.password;
     delete sanitized.privateKey;
     delete sanitized.secret;
-    
+
     return sanitized;
   }
 
@@ -450,17 +450,17 @@ class MonitoringService {
    */
   anonymizeIP(ip) {
     if (!ip) return 'unknown';
-    
+
     // Remove last octet for IPv4
     if (ip.includes('.')) {
-      return ip.split('.').slice(0, 3).join('.') + '.xxx';
+      return `${ip.split('.').slice(0, 3).join('.')}.xxx`;
     }
-    
+
     // Remove last segment for IPv6
     if (ip.includes(':')) {
-      return ip.split(':').slice(0, 7).join(':') + ':xxxx';
+      return `${ip.split(':').slice(0, 7).join(':')}:xxxx`;
     }
-    
+
     return 'unknown';
   }
 
@@ -481,7 +481,7 @@ class MonitoringService {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
+
     if (days > 0) return `${days}d ${hours % 24}h ${minutes % 60}m`;
     if (hours > 0) return `${hours}h ${minutes % 60}m`;
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
@@ -492,13 +492,13 @@ class MonitoringService {
    * Calculate security score
    */
   calculateSecurityScore() {
-    const total = this.metrics.security.failedAuthentications + 
+    const total = this.metrics.security.failedAuthentications +
                   this.metrics.security.suspiciousFingerprints +
                   this.metrics.security.unusualPairingPatterns +
                   this.metrics.security.rateLimitViolations;
-    
+
     if (total === 0) return 100;
-    
+
     const score = Math.max(0, 100 - (total * 2));
     return Math.round(score);
   }
@@ -508,7 +508,7 @@ class MonitoringService {
    */
   calculatePerformanceScore() {
     const avgResponseTime = this.metrics.performance.averageResponseTime;
-    
+
     if (avgResponseTime === 0) return 100;
     if (avgResponseTime < 100) return 100;
     if (avgResponseTime < 500) return 90;
@@ -524,9 +524,9 @@ class MonitoringService {
     const total = this.metrics.privacy.dataRetentionCompliance +
                   this.metrics.privacy.automaticCleanupSuccess +
                   this.metrics.privacy.zeroKnowledgeVerification;
-    
+
     if (total === 0) return 100;
-    
+
     return Math.min(100, total);
   }
 
@@ -535,23 +535,23 @@ class MonitoringService {
    */
   getActiveAlerts() {
     const alerts = [];
-    
+
     if (this.metrics.security.failedAuthentications > 10) {
       alerts.push({
         type: 'security',
         level: 'warning',
-        message: 'High number of failed authentications detected'
+        message: 'High number of failed authentications detected',
       });
     }
-    
+
     if (this.metrics.performance.averageResponseTime > 2000) {
       alerts.push({
         type: 'performance',
         level: 'warning',
-        message: 'High average response time detected'
+        message: 'High average response time detected',
       });
     }
-    
+
     return alerts;
   }
 }

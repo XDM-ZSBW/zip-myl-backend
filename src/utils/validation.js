@@ -9,36 +9,36 @@ const crypto = require('crypto');
  */
 const validateDeviceRegistration = (data) => {
   const errors = [];
-  
+
   // Required fields
   if (!data.deviceId) {
     errors.push('deviceId is required');
   } else if (!isValidUUID(data.deviceId)) {
     errors.push('deviceId must be a valid UUID');
   }
-  
+
   if (!data.deviceInfo) {
     errors.push('deviceInfo is required');
   } else {
     const deviceInfoErrors = validateDeviceInfo(data.deviceInfo);
     errors.push(...deviceInfoErrors);
   }
-  
+
   if (!data.publicKey) {
     errors.push('publicKey is required');
   } else if (!isValidPublicKey(data.publicKey)) {
     errors.push('publicKey must be a valid RSA public key in PEM format');
   }
-  
+
   if (!data.encryptedMetadata) {
     errors.push('encryptedMetadata is required');
   } else if (!isValidBase64(data.encryptedMetadata)) {
     errors.push('encryptedMetadata must be valid base64 encoded data');
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
@@ -47,29 +47,29 @@ const validateDeviceRegistration = (data) => {
  */
 const validateDeviceInfo = (deviceInfo) => {
   const errors = [];
-  
+
   if (!deviceInfo.type) {
     errors.push('deviceInfo.type is required');
   } else if (!isValidDeviceType(deviceInfo.type)) {
     errors.push('deviceInfo.type must be a valid device type');
   }
-  
+
   if (!deviceInfo.version) {
     errors.push('deviceInfo.version is required');
   } else if (!isValidVersion(deviceInfo.version)) {
     errors.push('deviceInfo.version must be a valid semantic version');
   }
-  
+
   if (!deviceInfo.fingerprint) {
     errors.push('deviceInfo.fingerprint is required');
   } else if (!isValidFingerprint(deviceInfo.fingerprint)) {
     errors.push('deviceInfo.fingerprint must be a valid SHA-256 hash');
   }
-  
+
   if (deviceInfo.capabilities && !Array.isArray(deviceInfo.capabilities)) {
     errors.push('deviceInfo.capabilities must be an array');
   }
-  
+
   return errors;
 };
 
@@ -78,28 +78,28 @@ const validateDeviceInfo = (deviceInfo) => {
  */
 const validatePairingCode = (data) => {
   const errors = [];
-  
+
   if (!data.deviceId) {
     errors.push('deviceId is required');
   } else if (!isValidUUID(data.deviceId)) {
     errors.push('deviceId must be a valid UUID');
   }
-  
+
   if (!data.pairingCode) {
     errors.push('pairingCode is required');
   } else if (!isValidPairingCode(data.pairingCode)) {
     errors.push('pairingCode must be a 6-digit numeric code');
   }
-  
+
   if (!data.encryptedTrustData) {
     errors.push('encryptedTrustData is required');
   } else if (!isValidBase64(data.encryptedTrustData)) {
     errors.push('encryptedTrustData must be valid base64 encoded data');
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
@@ -108,28 +108,28 @@ const validatePairingCode = (data) => {
  */
 const validateKeyExchange = (data) => {
   const errors = [];
-  
+
   if (!data.deviceId) {
     errors.push('deviceId is required');
   } else if (!isValidUUID(data.deviceId)) {
     errors.push('deviceId must be a valid UUID');
   }
-  
+
   if (!data.targetDeviceId) {
     errors.push('targetDeviceId is required');
   } else if (!isValidUUID(data.targetDeviceId)) {
     errors.push('targetDeviceId must be a valid UUID');
   }
-  
+
   if (!data.encryptedKeyData) {
     errors.push('encryptedKeyData is required');
   } else if (!isValidBase64(data.encryptedKeyData)) {
     errors.push('encryptedKeyData must be valid base64 encoded data');
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
@@ -138,32 +138,32 @@ const validateKeyExchange = (data) => {
  */
 const validateTrustEstablishment = (data) => {
   const errors = [];
-  
+
   if (!data.sourceDeviceId) {
     errors.push('sourceDeviceId is required');
   } else if (!isValidUUID(data.sourceDeviceId)) {
     errors.push('sourceDeviceId must be a valid UUID');
   }
-  
+
   if (!data.targetDeviceId) {
     errors.push('targetDeviceId is required');
   } else if (!isValidUUID(data.targetDeviceId)) {
     errors.push('targetDeviceId must be a valid UUID');
   }
-  
+
   if (data.trustLevel && !isValidTrustLevel(data.trustLevel)) {
     errors.push('trustLevel must be 1, 2, or 3');
   }
-  
+
   if (!data.encryptedTrustData) {
     errors.push('encryptedTrustData is required');
   } else if (!isValidBase64(data.encryptedTrustData)) {
     errors.push('encryptedTrustData must be valid base64 encoded data');
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
@@ -188,7 +188,7 @@ function isValidDeviceType(type) {
     'mobile-app',
     'desktop-app',
     'web-app',
-    'api-client'
+    'api-client',
   ];
   return validTypes.includes(type);
 }
@@ -205,8 +205,8 @@ function isValidVersion(version) {
  * Check if string is a valid SHA-256 fingerprint
  */
 function isValidFingerprint(fingerprint) {
-  return typeof fingerprint === 'string' && 
-         fingerprint.length === 64 && 
+  return typeof fingerprint === 'string' &&
+         fingerprint.length === 64 &&
          /^[a-f0-9]+$/i.test(fingerprint);
 }
 
@@ -216,7 +216,7 @@ function isValidFingerprint(fingerprint) {
 function isValidPublicKey(publicKey) {
   try {
     // Basic PEM format validation
-    return publicKey.includes('-----BEGIN PUBLIC KEY-----') && 
+    return publicKey.includes('-----BEGIN PUBLIC KEY-----') &&
            publicKey.includes('-----END PUBLIC KEY-----') &&
            publicKey.length > 100; // Minimum reasonable key length
   } catch (error) {
@@ -242,22 +242,22 @@ function isValidPairingCode(code) {
   if (typeof code !== 'string') {
     return false;
   }
-  
+
   // Check for UUID format
   if (isValidUUID(code)) {
     return true;
   }
-  
+
   // Check for short format (12-character hex)
   if (code.length === 12 && /^[0-9a-f]{12}$/i.test(code)) {
     return true;
   }
-  
+
   // Legacy 6-digit numeric format (for backward compatibility)
   if (code.length === 6 && /^\d{6}$/.test(code)) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -272,8 +272,8 @@ function isValidUUIDPairingCode(code) {
  * Check if string is a valid short format pairing code
  */
 function isValidShortPairingCode(code) {
-  return typeof code === 'string' && 
-         code.length === 12 && 
+  return typeof code === 'string' &&
+         code.length === 12 &&
          /^[0-9a-f]{12}$/i.test(code);
 }
 
@@ -281,8 +281,8 @@ function isValidShortPairingCode(code) {
  * Check if string is a valid legacy numeric pairing code
  */
 function isValidLegacyPairingCode(code) {
-  return typeof code === 'string' && 
-         code.length === 6 && 
+  return typeof code === 'string' &&
+         code.length === 6 &&
          /^\d{6}$/.test(code);
 }
 
@@ -315,7 +315,7 @@ function sanitizeInput(input) {
   if (typeof input !== 'string') {
     return input;
   }
-  
+
   return input
     .trim()
     .replace(/[<>]/g, '') // Remove potential HTML tags
@@ -328,7 +328,7 @@ function sanitizeInput(input) {
 function isValidIPAddress(ip) {
   const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-  
+
   return ipv4Regex.test(ip) || ipv6Regex.test(ip);
 }
 
@@ -339,9 +339,9 @@ function isValidUserAgent(userAgent) {
   if (typeof userAgent !== 'string') {
     return false;
   }
-  
+
   // Basic validation - should contain browser info
-  return userAgent.length > 10 && 
+  return userAgent.length > 10 &&
          userAgent.length < 1000 &&
          !userAgent.includes('<script>') &&
          !userAgent.includes('javascript:');
@@ -354,7 +354,7 @@ function validateCapabilities(capabilities) {
   if (!Array.isArray(capabilities)) {
     return false;
   }
-  
+
   const validCapabilities = [
     'encryption',
     'sync',
@@ -363,9 +363,9 @@ function validateCapabilities(capabilities) {
     'offline',
     'cross-device',
     'biometric',
-    'hardware-security'
+    'hardware-security',
   ];
-  
+
   return capabilities.every(cap => validCapabilities.includes(cap));
 }
 
@@ -378,7 +378,7 @@ function validateRateLimit(identifier, action, limits) {
   return {
     allowed: true,
     remaining: limits[action] || 10,
-    resetTime: Date.now() + 3600000 // 1 hour
+    resetTime: Date.now() + 3600000, // 1 hour
   };
 }
 
@@ -404,5 +404,5 @@ module.exports = {
   isValidIPAddress,
   isValidUserAgent,
   validateCapabilities,
-  validateRateLimit
+  validateRateLimit,
 };

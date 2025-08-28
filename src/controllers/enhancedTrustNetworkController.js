@@ -8,7 +8,7 @@ class EnhancedTrustNetworkController {
   async getEnhancedSites(req, res) {
     try {
       const sites = await enhancedTrustNetworkService.getEnhancedSites();
-      
+
       logger.info('Enhanced sites retrieved successfully', { count: sites.length });
 
       res.json({
@@ -25,16 +25,16 @@ class EnhancedTrustNetworkController {
             uiInjection: site.ui_injection,
             config: site.config,
             lastUpdated: site.last_updated,
-            isActive: site.is_active
-          }))
-        }
+            isActive: site.is_active,
+          })),
+        },
       });
     } catch (error) {
       logger.error('Error getting enhanced sites', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to retrieve enhanced sites',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -50,17 +50,17 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Domain parameter required',
-          message: 'Domain parameter is required'
+          message: 'Domain parameter is required',
         });
       }
 
       const site = await enhancedTrustNetworkService.getEnhancedSiteByDomain(domain);
-      
+
       if (!site) {
         return res.status(404).json({
           success: false,
           error: 'Site not found',
-          message: `No enhanced configuration found for domain: ${domain}`
+          message: `No enhanced configuration found for domain: ${domain}`,
         });
       }
 
@@ -79,15 +79,15 @@ class EnhancedTrustNetworkController {
           uiInjection: site.ui_injection,
           config: site.config,
           lastUpdated: site.last_updated,
-          isActive: site.is_active
-        }
+          isActive: site.is_active,
+        },
       });
     } catch (error) {
       logger.error('Error getting enhanced site by domain', { domain: req.params.domain, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to retrieve enhanced site configuration',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -104,7 +104,7 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Required fields missing',
-          message: 'Domain and name are required fields'
+          message: 'Domain and name are required fields',
         });
       }
 
@@ -112,7 +112,7 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Invalid data types',
-          message: 'enhancedFeatures and permissionRequirements must be arrays'
+          message: 'enhancedFeatures and permissionRequirements must be arrays',
         });
       }
 
@@ -123,11 +123,11 @@ class EnhancedTrustNetworkController {
         enhancedFeatures: enhancedFeatures || [],
         permissionRequirements: permissionRequirements || [],
         uiInjection: uiInjection || {},
-        config: config || {}
+        config: config || {},
       };
 
       const site = await enhancedTrustNetworkService.upsertEnhancedSite(siteData);
-      
+
       logger.info('Enhanced site upserted successfully', { domain, siteId: site.id });
 
       res.status(201).json({
@@ -143,15 +143,15 @@ class EnhancedTrustNetworkController {
           uiInjection: site.ui_injection,
           config: site.config,
           lastUpdated: site.last_updated,
-          isActive: site.is_active
-        }
+          isActive: site.is_active,
+        },
       });
     } catch (error) {
       logger.error('Error upserting enhanced site', { domain: req.body.domain, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to save enhanced site configuration',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -168,7 +168,7 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Site ID required',
-          message: 'Site ID parameter is required'
+          message: 'Site ID parameter is required',
         });
       }
 
@@ -178,7 +178,7 @@ class EnhancedTrustNetworkController {
         return res.status(404).json({
           success: false,
           error: 'Site not found',
-          message: 'Enhanced site not found'
+          message: 'Enhanced site not found',
         });
       }
 
@@ -189,11 +189,11 @@ class EnhancedTrustNetworkController {
         enhancedFeatures: updateData.enhancedFeatures || existingSite.enhanced_features,
         permissionRequirements: updateData.permissionRequirements || existingSite.permission_requirements,
         uiInjection: updateData.uiInjection || existingSite.ui_injection,
-        config: updateData.config || existingSite.config
+        config: updateData.config || existingSite.config,
       };
 
       const site = await enhancedTrustNetworkService.upsertEnhancedSite(mergedData);
-      
+
       logger.info('Enhanced site updated successfully', { siteId, domain: site.domain });
 
       res.json({
@@ -209,15 +209,15 @@ class EnhancedTrustNetworkController {
           uiInjection: site.ui_injection,
           config: site.config,
           lastUpdated: site.last_updated,
-          isActive: site.is_active
-        }
+          isActive: site.is_active,
+        },
       });
     } catch (error) {
       logger.error('Error updating enhanced site', { siteId: req.params.siteId, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to update enhanced site configuration',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -233,12 +233,12 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Site ID required',
-          message: 'Site ID parameter is required'
+          message: 'Site ID parameter is required',
         });
       }
 
       const deletedSite = await enhancedTrustNetworkService.deleteEnhancedSite(siteId);
-      
+
       logger.info('Enhanced site deleted successfully', { siteId, domain: deletedSite.domain });
 
       res.json({
@@ -247,15 +247,15 @@ class EnhancedTrustNetworkController {
         data: {
           id: deletedSite.id,
           domain: deletedSite.domain,
-          name: deletedSite.name
-        }
+          name: deletedSite.name,
+        },
       });
     } catch (error) {
       logger.error('Error deleting enhanced site', { siteId: req.params.siteId, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to delete enhanced site configuration',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -271,17 +271,17 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'User ID required',
-          message: 'User ID parameter is required'
+          message: 'User ID parameter is required',
         });
       }
 
       const permissions = await enhancedTrustNetworkService.getUserPermissions(userId);
-      
+
       if (!permissions) {
         return res.status(404).json({
           success: false,
           error: 'Permissions not found',
-          message: `No permissions found for user: ${userId}`
+          message: `No permissions found for user: ${userId}`,
         });
       }
 
@@ -298,15 +298,15 @@ class EnhancedTrustNetworkController {
           featureAccess: permissions.feature_access,
           isActive: permissions.is_active,
           expiresAt: permissions.expires_at,
-          lastVerified: permissions.last_verified
-        }
+          lastVerified: permissions.last_verified,
+        },
       });
     } catch (error) {
       logger.error('Error getting user permissions', { userId: req.params.userId, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to retrieve user permissions',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -322,25 +322,25 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Required fields missing',
-          message: 'Device ID and site domain are required fields'
+          message: 'Device ID and site domain are required fields',
         });
       }
 
       const validation = await enhancedTrustNetworkService.validatePermissions(deviceId, siteDomain);
-      
+
       logger.info('Permissions validation completed', { deviceId, siteDomain, hasAccess: validation.hasAccess });
 
       res.json({
         success: true,
         message: 'Permissions validation completed',
-        data: validation
+        data: validation,
       });
     } catch (error) {
       logger.error('Error validating permissions', { deviceId: req.body.deviceId, siteDomain: req.body.siteDomain, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to validate permissions',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -357,7 +357,7 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Required fields missing',
-          message: 'Device ID, device token, permissions, and expiration are required fields'
+          message: 'Device ID, device token, permissions, and expiration are required fields',
         });
       }
 
@@ -365,7 +365,7 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Invalid permissions format',
-          message: 'Permissions must be an array'
+          message: 'Permissions must be an array',
         });
       }
 
@@ -374,11 +374,11 @@ class EnhancedTrustNetworkController {
         operatorId: operatorId || null,
         deviceToken,
         permissions,
-        expiresAt: new Date(expiresAt)
+        expiresAt: new Date(expiresAt),
       };
 
       const authState = await enhancedTrustNetworkService.upsertEnhancedAuthState(authData);
-      
+
       logger.info('Enhanced auth state upserted successfully', { deviceId });
 
       res.status(201).json({
@@ -390,15 +390,15 @@ class EnhancedTrustNetworkController {
           operatorId: authState.operator_id,
           permissions: authState.permissions,
           expiresAt: authState.expires_at,
-          lastVerified: authState.last_verified
-        }
+          lastVerified: authState.last_verified,
+        },
       });
     } catch (error) {
       logger.error('Error upserting enhanced auth state', { deviceId: req.body.deviceId, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to save enhanced authentication state',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -414,25 +414,25 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Required fields missing',
-          message: 'Device ID and device token are required fields'
+          message: 'Device ID and device token are required fields',
         });
       }
 
       const verification = await enhancedTrustNetworkService.verifyEnhancedAuthState(deviceId, deviceToken);
-      
+
       logger.info('Enhanced auth state verification completed', { deviceId, isValid: verification.isValid });
 
       res.json({
         success: true,
         message: 'Enhanced authentication state verification completed',
-        data: verification
+        data: verification,
       });
     } catch (error) {
       logger.error('Error verifying enhanced auth state', { deviceId: req.body.deviceId, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to verify enhanced authentication state',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -449,28 +449,28 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Required fields missing',
-          message: 'Device ID, site domain, feature name, and action are required fields'
+          message: 'Device ID, site domain, feature name, and action are required fields',
         });
       }
 
       await enhancedTrustNetworkService.logFeatureUsage(deviceId, siteDomain, featureName, action, {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
-        ...metadata
+        ...metadata,
       });
-      
+
       logger.info('Enhanced feature usage logged successfully', { deviceId, siteDomain, featureName, action });
 
       res.json({
         success: true,
-        message: 'Feature usage logged successfully'
+        message: 'Feature usage logged successfully',
       });
     } catch (error) {
       logger.error('Error logging feature usage', { deviceId: req.body.deviceId, siteDomain: req.body.siteDomain, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to log feature usage',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -487,7 +487,7 @@ class EnhancedTrustNetworkController {
         return res.status(400).json({
           success: false,
           error: 'Required fields missing',
-          message: 'Device ID, site domain, and access type are required fields'
+          message: 'Device ID, site domain, and access type are required fields',
         });
       }
 
@@ -497,21 +497,21 @@ class EnhancedTrustNetworkController {
       await enhancedTrustNetworkService.logSiteAccess(deviceId, siteDomain, accessType, permissionsUsed, featuresAccessed, {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
-        sessionDuration: sessionDuration || null
+        sessionDuration: sessionDuration || null,
       });
-      
+
       logger.info('Enhanced site access logged successfully', { deviceId, siteDomain, accessType });
 
       res.json({
         success: true,
-        message: 'Site access logged successfully'
+        message: 'Site access logged successfully',
       });
     } catch (error) {
       logger.error('Error logging site access', { deviceId: req.body.deviceId, siteDomain: req.body.siteDomain, error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to log site access',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -522,20 +522,20 @@ class EnhancedTrustNetworkController {
   async getEnhancedSitesStats(req, res) {
     try {
       const stats = await enhancedTrustNetworkService.getEnhancedSitesStats();
-      
+
       logger.info('Enhanced sites statistics retrieved successfully');
 
       res.json({
         success: true,
         message: 'Enhanced sites statistics retrieved successfully',
-        data: stats
+        data: stats,
       });
     } catch (error) {
       logger.error('Error getting enhanced sites stats', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to retrieve enhanced sites statistics',
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -546,20 +546,20 @@ class EnhancedTrustNetworkController {
   async getUserPermissionsStats(req, res) {
     try {
       const stats = await enhancedTrustNetworkService.getUserPermissionsStats();
-      
+
       logger.info('User permissions statistics retrieved successfully');
 
       res.json({
         success: true,
         message: 'User permissions statistics retrieved successfully',
-        data: stats
+        data: stats,
       });
     } catch (error) {
       logger.error('Error getting user permissions stats', { error: error.message });
       res.status(500).json({
         success: false,
         error: 'Failed to retrieve user permissions statistics',
-        message: error.message
+        message: error.message,
       });
     }
   }

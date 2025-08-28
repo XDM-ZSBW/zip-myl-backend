@@ -26,6 +26,21 @@ const config = {
   CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
   CORS_CREDENTIALS: process.env.CORS_CREDENTIALS === 'true',
 
+  // CORS Configuration Object (for middleware)
+  cors: {
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+      'chrome-extension://*',
+      'moz-extension://*',
+      'https://*.google.com',
+      'https://*.github.com',
+      'https://*.myl.zip',
+      'http://localhost:*',
+      'https://localhost:*',
+    ],
+    credentials: process.env.CORS_CREDENTIALS === 'true',
+    optionsSuccessStatus: 200,
+  },
+
   // Logging Configuration
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   LOG_FORMAT: process.env.LOG_FORMAT || 'combined',
@@ -75,7 +90,7 @@ const config = {
   SECURITY_HEADERS: process.env.SECURITY_HEADERS !== 'false',
   HSTS_MAX_AGE: parseInt(process.env.HSTS_MAX_AGE) || 31536000,
   CSP_ENABLED: process.env.CSP_ENABLED !== 'false',
-  CSP_POLICY: process.env.CSP_POLICY || "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+  CSP_POLICY: process.env.CSP_POLICY || 'default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'',
 
   // Feature Flags
   ENABLE_DEVICE_TRUST: process.env.ENABLE_DEVICE_TRUST !== 'false',
@@ -108,35 +123,35 @@ const config = {
   ENABLE_WEBSOCKET: process.env.ENABLE_WEBSOCKET !== 'false',
 
   // Development Configuration
-  isDevelopment: () => config.NODE_ENV === 'development',
-  isProduction: () => config.NODE_ENV === 'production',
-  isTest: () => config.NODE_ENV === 'test',
+  isDevelopment: function() { return this.NODE_ENV === 'development'; },
+  isProduction: function() { return this.NODE_ENV === 'production'; },
+  isTest: function() { return this.NODE_ENV === 'test'; },
 
   // Validation
-  validate: () => {
+  validate: function() {
     const warnings = [];
     const errors = [];
 
     // Check for development defaults in production
-    if (config.isProduction()) {
-      if (config.JWT_SECRET === 'dev-jwt-secret-change-in-production') {
+    if (this.isProduction()) {
+      if (this.JWT_SECRET === 'dev-jwt-secret-change-in-production') {
         warnings.push('JWT_SECRET is using development default');
       }
-      if (config.ENCRYPTION_MASTER_KEY === 'dev-encryption-key-change-in-production') {
+      if (this.ENCRYPTION_MASTER_KEY === 'dev-encryption-key-change-in-production') {
         warnings.push('ENCRYPTION_MASTER_KEY is using development default');
       }
-      if (config.SERVICE_API_KEY === 'dev-api-key-change-in-production') {
+      if (this.SERVICE_API_KEY === 'dev-api-key-change-in-production') {
         warnings.push('SERVICE_API_KEY is using development default');
       }
     }
 
     // Check for required production settings
-    if (config.isProduction() && !config.DATABASE_URL) {
+    if (this.isProduction() && !this.DATABASE_URL) {
       errors.push('DATABASE_URL is required in production');
     }
 
     return { warnings, errors, isValid: errors.length === 0 };
-  }
+  },
 };
 
 module.exports = config;

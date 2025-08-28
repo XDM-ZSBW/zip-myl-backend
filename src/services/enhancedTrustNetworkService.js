@@ -9,7 +9,7 @@ class EnhancedTrustNetworkService {
     this.cacheTTL = {
       enhancedSites: 300, // 5 minutes
       permissions: 900,    // 15 minutes
-      deviceTokens: 3600   // 1 hour
+      deviceTokens: 3600,   // 1 hour
     };
   }
 
@@ -31,13 +31,13 @@ class EnhancedTrustNetworkService {
           WHERE is_active = true 
           ORDER BY name ASC
         `;
-        
+
         const result = await databaseService.query(query);
         sites = result.rows;
 
         // Cache the results
         await cacheService.set(cacheKey, sites, this.cacheTTL.enhancedSites);
-        
+
         logger.info('Enhanced sites retrieved from database', { count: sites.length });
       } else {
         logger.debug('Enhanced sites retrieved from cache', { count: sites.length });
@@ -67,7 +67,7 @@ class EnhancedTrustNetworkService {
           FROM enhanced_sites 
           WHERE domain = $1 AND is_active = true
         `;
-        
+
         const result = await databaseService.query(query, [domain]);
         site = result.rows[0];
 
@@ -132,7 +132,7 @@ class EnhancedTrustNetworkService {
       // Get site info before deletion for logging
       const siteQuery = 'SELECT domain FROM enhanced_sites WHERE id = $1';
       const siteResult = await databaseService.query(siteQuery, [siteId]);
-      
+
       if (siteResult.rows.length === 0) {
         throw new Error('Enhanced site not found');
       }
@@ -141,7 +141,7 @@ class EnhancedTrustNetworkService {
 
       const query = 'DELETE FROM enhanced_sites WHERE id = $1 RETURNING *';
       const result = await databaseService.query(query, [siteId]);
-      
+
       if (result.rows.length === 0) {
         throw new Error('Failed to delete enhanced site');
       }
@@ -176,7 +176,7 @@ class EnhancedTrustNetworkService {
           FROM user_permissions 
           WHERE device_id = $1 AND is_active = true
         `;
-        
+
         const result = await databaseService.query(query, [deviceId]);
         permissions = result.rows[0];
 
@@ -213,17 +213,17 @@ class EnhancedTrustNetworkService {
       // Check if user has required permissions
       const requiredPermissions = siteConfig.permission_requirements || [];
       const userPerms = userPermissions.permissions || [];
-      
-      const hasRequiredPermissions = requiredPermissions.every(perm => 
-        userPerms.includes(perm)
+
+      const hasRequiredPermissions = requiredPermissions.every(perm =>
+        userPerms.includes(perm),
       );
 
       if (!hasRequiredPermissions) {
-        return { 
-          hasAccess: false, 
+        return {
+          hasAccess: false,
           reason: 'Insufficient permissions',
           required: requiredPermissions,
-          has: userPerms
+          has: userPerms,
         };
       }
 
@@ -232,12 +232,12 @@ class EnhancedTrustNetworkService {
         return { hasAccess: false, reason: 'Permissions expired' };
       }
 
-      return { 
-        hasAccess: true, 
+      return {
+        hasAccess: true,
         permissions: userPerms,
         features: siteConfig.enhanced_features,
         uiInjection: siteConfig.ui_injection,
-        config: siteConfig.config
+        config: siteConfig.config,
       };
     } catch (error) {
       logger.error('Error validating permissions', { deviceId, siteDomain, error: error.message });
@@ -297,7 +297,7 @@ class EnhancedTrustNetworkService {
           FROM enhanced_auth_state 
           WHERE device_id = $1 AND is_active = true
         `;
-        
+
         const result = await databaseService.query(query, [deviceId]);
         authState = result.rows[0];
 
@@ -324,11 +324,11 @@ class EnhancedTrustNetworkService {
       // Update last verified
       await this.updateLastVerified(deviceId);
 
-      return { 
-        isValid: true, 
+      return {
+        isValid: true,
         permissions: authState.permissions,
         expiresAt: authState.expires_at,
-        operatorId: authState.operator_id
+        operatorId: authState.operator_id,
       };
     } catch (error) {
       logger.error('Error verifying enhanced auth state', { deviceId, error: error.message });
@@ -355,7 +355,7 @@ class EnhancedTrustNetworkService {
         deviceId,
         siteDomain,
         featureName,
-        action
+        action,
       });
 
       logger.debug('Enhanced feature usage logged', { deviceId, siteDomain, featureName, action });
@@ -377,16 +377,16 @@ class EnhancedTrustNetworkService {
       `;
 
       const values = [
-        deviceId, 
-        siteDomain, 
-        accessType, 
-        permissionsUsed, 
-        featuresAccessed, 
-        metadata.ipAddress, 
-        metadata.userAgent, 
-        metadata.sessionDuration
+        deviceId,
+        siteDomain,
+        accessType,
+        permissionsUsed,
+        featuresAccessed,
+        metadata.ipAddress,
+        metadata.userAgent,
+        metadata.sessionDuration,
       ];
-      
+
       await databaseService.query(query, values);
 
       // Send monitoring event
@@ -395,7 +395,7 @@ class EnhancedTrustNetworkService {
         siteDomain,
         accessType,
         permissionsUsed: permissionsUsed.length,
-        featuresAccessed: featuresAccessed.length
+        featuresAccessed: featuresAccessed.length,
       });
 
       logger.debug('Enhanced site access logged', { deviceId, siteDomain, accessType });
@@ -415,7 +415,7 @@ class EnhancedTrustNetworkService {
         SET last_verified = CURRENT_TIMESTAMP 
         WHERE device_id = $1
       `;
-      
+
       await databaseService.query(query, [deviceId]);
     } catch (error) {
       logger.error('Error updating last verified timestamp', { deviceId, error: error.message });
@@ -429,9 +429,9 @@ class EnhancedTrustNetworkService {
     try {
       const keys = [
         `${this.cacheKeyPrefix}:enhanced_sites`,
-        `${this.cacheKeyPrefix}:site:${domain}`
+        `${this.cacheKeyPrefix}:site:${domain}`,
       ];
-      
+
       await Promise.all(keys.map(key => cacheService.del(key)));
       logger.debug('Site caches cleared', { domain });
     } catch (error) {
@@ -454,9 +454,9 @@ class EnhancedTrustNetworkService {
         `enhanced_site_${operation}`,
         'enhanced_site',
         siteId,
-        JSON.stringify({ domain, operation, timestamp: new Date().toISOString() })
+        JSON.stringify({ domain, operation, timestamp: new Date().toISOString() }),
       ];
-      
+
       await databaseService.query(query, values);
     } catch (error) {
       logger.error('Error logging enhanced site operation', { operation, siteId, domain, error: error.message });
@@ -475,7 +475,7 @@ class EnhancedTrustNetworkService {
           COUNT(CASE WHEN is_active = false THEN 1 END) as inactive_sites
         FROM enhanced_sites
       `;
-      
+
       const result = await databaseService.query(query);
       return result.rows[0];
     } catch (error) {
@@ -496,7 +496,7 @@ class EnhancedTrustNetworkService {
           COUNT(CASE WHEN expires_at < CURRENT_TIMESTAMP THEN 1 END) as expired_permissions
         FROM user_permissions
       `;
-      
+
       const result = await databaseService.query(query);
       return result.rows[0];
     } catch (error) {

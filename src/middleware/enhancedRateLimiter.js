@@ -1,454 +1,185 @@
 const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
-const Redis = require('ioredis');
 const { logger } = require('../utils/logger');
 
-// Redis client for rate limiting
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-
 /**
- * Enhanced Rate Limiter with Client-Specific Limits
- * Provides different rate limits based on client platform and capabilities
+ * Enhanced Rate Limiting for Extension Endpoints
+ * Provides different rate limits based on endpoint sensitivity and device type
  */
-class EnhancedRateLimiter {
-  constructor() {
-    this.platformLimits = this.getPlatformLimits();
-    this.clientLimits = new Map(); // Cache for client-specific limits
-  }
 
-  /**
-   * Get rate limits for different client platforms
-   */
-  getPlatformLimits() {
-    return {
-      web: {
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 1000, // requests per window
-        message: 'Too many requests from web client',
-        standardHeaders: true,
-        legacyHeaders: false,
-        skipSuccessfulRequests: false,
-        skipFailedRequests: false
-      },
-      desktop: {
-        windowMs: 15 * 60 * 1000,
-        max: 500,
-        message: 'Too many requests from desktop client',
-        standardHeaders: true,
-        legacyHeaders: false,
-        skipSuccessfulRequests: false,
-        skipFailedRequests: false
-      },
-      mobile: {
-        windowMs: 15 * 60 * 1000,
-        max: 200,
-        message: 'Too many requests from mobile client',
-        standardHeaders: true,
-        legacyHeaders: false,
-        skipSuccessfulRequests: false,
-        skipFailedRequests: false
-      },
-      development: {
-        windowMs: 15 * 60 * 1000,
-        max: 2000,
-        message: 'Too many requests from development client',
-        standardHeaders: true,
-        legacyHeaders: false,
-        skipSuccessfulRequests: false,
-        skipFailedRequests: false
-      },
-      enterprise: {
-        windowMs: 15 * 60 * 1000,
-        max: 5000,
-        message: 'Too many requests from enterprise client',
-        standardHeaders: true,
-        legacyHeaders: false,
-        skipSuccessfulRequests: false,
-        skipFailedRequests: false
-      }
-    };
-  }
-
-  /**
-   * Create rate limiter for specific endpoint
-   */
-  createEndpointLimiter(endpoint, defaultLimit = 'web') {
-    return rateLimit({
-      store: new RedisStore({
-        sendCommand: (...args) => redis.call(...args),
-      }),
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: (req) => this.getClientLimit(req, endpoint),
-      message: (req) => this.getLimitMessage(req, endpoint),
-      standardHeaders: true,
-      legacyHeaders: false,
-      skipSuccessfulRequests: false,
-      skipFailedRequests: false,
-      keyGenerator: (req) => this.generateKey(req, endpoint),
-      handler: (req, res) => this.handleLimitExceeded(req, res, endpoint),
-      onLimitReached: (req, res, options) => this.onLimitReached(req, res, options, endpoint)
-    });
-  }
-
-  /**
-   * Get client-specific rate limit
-   */
-  getClientLimit(req, endpoint) {
-    const platform = req.clientPlatform || 'web';
-    const baseLimit = this.platformLimits[platform]?.max || this.platformLimits.web.max;
-    
-    // Apply endpoint-specific multipliers
-    const endpointMultipliers = {
-      'auth': 0.5, // Auth endpoints are more restrictive
-      'sync': 2.0, // Sync endpoints allow more requests
-      'thoughts': 1.0, // Standard limit for thoughts
-      'nft': 0.8, // NFT endpoints slightly more restrictive
-      'workspace': 1.5, // Workspace operations allow more requests
-      'plugin': 1.2, // Plugin operations moderately restricted
-      'device': 1.0, // Device operations standard limit
-      'default': 1.0
-    };
-
-    const multiplier = endpointMultipliers[endpoint] || endpointMultipliers.default;
-    return Math.floor(baseLimit * multiplier);
-  }
-
-  /**
-   * Generate rate limit key
-   */
-  generateKey(req, endpoint) {
-    const deviceId = req.device?.id || req.headers['x-device-id'] || 'anonymous';
-    const platform = req.clientPlatform || 'unknown';
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    
-    return `${endpoint}:${platform}:${deviceId}:${ip}`;
-  }
-
-  /**
-   * Get limit exceeded message
-   */
-  getLimitMessage(req, endpoint) {
-    const platform = req.clientPlatform || 'web';
-    const baseMessage = this.platformLimits[platform]?.message || this.platformLimits.web.message;
-    
-    return {
-      error: 'Rate limit exceeded',
-      message: `${baseMessage} for ${endpoint} endpoint`,
-      platform: platform,
-      endpoint: endpoint,
-      retryAfter: Math.ceil(15 * 60 / 60), // minutes
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Handle rate limit exceeded
-   */
-  handleLimitExceeded(req, res, endpoint) {
-    const message = this.getLimitMessage(req, endpoint);
-    
-    logger.warn(`Rate limit exceeded for ${endpoint}`, {
-      deviceId: req.device?.id,
-      platform: req.clientPlatform,
-      ip: req.ip,
-      endpoint: endpoint,
-      userAgent: req.get('User-Agent')
-    });
-
-    res.status(429).json({
+// Extension-specific rate limit configurations
+const extensionRateLimits = {
+  // General extension API calls
+  general: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per window
+    message: {
       success: false,
-      error: message
-    });
-  }
+      error: 'Too many requests, please try again later',
+      retryAfter: '15 minutes',
+      code: 'RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+      // Use extension ID if available, otherwise device ID, then IP
+      return req.headers['x-extension-id'] || req.deviceId || req.ip || 'anonymous';
+    },
+    skip: (req) => {
+      // Skip rate limiting for health checks and internal services
+      return req.path === '/health' ||
+             req.path === '/api/v1/health' ||
+             req.headers['x-internal-service'] === 'true';
+    },
+  },
 
-  /**
-   * Handle rate limit reached event
-   */
-  onLimitReached(req, res, options, endpoint) {
-    logger.info(`Rate limit reached for ${endpoint}`, {
-      deviceId: req.device?.id,
-      platform: req.clientPlatform,
-      ip: req.ip,
-      endpoint: endpoint,
-      limit: options.limit,
-      windowMs: options.windowMs
-    });
-  }
-
-  /**
-   * Create specific endpoint limiters
-   */
-  createAuthLimiter() {
-    return this.createEndpointLimiter('auth');
-  }
-
-  createSyncLimiter() {
-    return this.createEndpointLimiter('sync');
-  }
-
-  createThoughtsLimiter() {
-    return this.createEndpointLimiter('thoughts');
-  }
-
-  createNftLimiter() {
-    return this.createEndpointLimiter('nft');
-  }
-
-  createWorkspaceLimiter() {
-    return this.createEndpointLimiter('workspace');
-  }
-
-  createPluginLimiter() {
-    return this.createEndpointLimiter('plugin');
-  }
-
-  createDeviceLimiter() {
-    return this.createEndpointLimiter('device');
-  }
-
-  /**
-   * Create burst limiter for high-frequency operations
-   */
-  createBurstLimiter(endpoint, burstLimit = 10, windowMs = 60000) {
-    return rateLimit({
-      store: new RedisStore({
-        sendCommand: (...args) => redis.call(...args),
-      }),
-      windowMs: windowMs,
-      max: (req) => this.getBurstLimit(req, endpoint, burstLimit),
-      message: (req) => this.getBurstLimitMessage(req, endpoint),
-      standardHeaders: true,
-      legacyHeaders: false,
-      skipSuccessfulRequests: false,
-      skipFailedRequests: false,
-      keyGenerator: (req) => this.generateBurstKey(req, endpoint),
-      handler: (req, res) => this.handleBurstLimitExceeded(req, res, endpoint)
-    });
-  }
-
-  /**
-   * Get burst limit based on client platform
-   */
-  getBurstLimit(req, endpoint, burstLimit) {
-    const platform = req.clientPlatform || 'web';
-    const platformMultipliers = {
-      'web': 1.0,
-      'desktop': 1.5,
-      'mobile': 0.5,
-      'development': 2.0,
-      'enterprise': 3.0
-    };
-
-    const multiplier = platformMultipliers[platform] || 1.0;
-    return Math.floor(burstLimit * multiplier);
-  }
-
-  /**
-   * Generate burst limit key
-   */
-  generateBurstKey(req, endpoint) {
-    const deviceId = req.device?.id || req.headers['x-device-id'] || 'anonymous';
-    const platform = req.clientPlatform || 'unknown';
-    
-    return `burst:${endpoint}:${platform}:${deviceId}`;
-  }
-
-  /**
-   * Get burst limit message
-   */
-  getBurstLimitMessage(req, endpoint) {
-    const platform = req.clientPlatform || 'web';
-    
-    return {
-      error: 'Burst rate limit exceeded',
-      message: `Too many rapid requests to ${endpoint} endpoint`,
-      platform: platform,
-      endpoint: endpoint,
-      retryAfter: Math.ceil(60 / 60), // seconds
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Handle burst limit exceeded
-   */
-  handleBurstLimitExceeded(req, res, endpoint) {
-    const message = this.getBurstLimitMessage(req, endpoint);
-    
-    logger.warn(`Burst rate limit exceeded for ${endpoint}`, {
-      deviceId: req.device?.id,
-      platform: req.clientPlatform,
-      ip: req.ip,
-      endpoint: endpoint
-    });
-
-    res.status(429).json({
+  // Authentication and pairing operations (stricter limits)
+  auth: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per window
+    message: {
       success: false,
-      error: message
-    });
-  }
+      error: 'Too many authentication attempts',
+      retryAfter: '15 minutes',
+      code: 'AUTH_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+      return `auth:${req.headers['x-extension-id'] || req.deviceId || req.ip || 'anonymous'}`;
+    },
+  },
 
-  /**
-   * Create WebSocket rate limiter
-   */
-  createWebSocketLimiter() {
-    return rateLimit({
-      store: new RedisStore({
-        sendCommand: (...args) => redis.call(...args),
-      }),
-      windowMs: 60 * 1000, // 1 minute
-      max: (req) => this.getWebSocketLimit(req),
-      message: (req) => this.getWebSocketLimitMessage(req),
-      standardHeaders: true,
-      legacyHeaders: false,
-      skipSuccessfulRequests: false,
-      skipFailedRequests: false,
-      keyGenerator: (req) => this.generateWebSocketKey(req),
-      handler: (req, res) => this.handleWebSocketLimitExceeded(req, res)
-    });
-  }
-
-  /**
-   * Get WebSocket rate limit
-   */
-  getWebSocketLimit(req) {
-    const platform = req.clientPlatform || 'web';
-    const platformLimits = {
-      'web': 100,
-      'desktop': 200,
-      'mobile': 50,
-      'development': 500,
-      'enterprise': 1000
-    };
-
-    return platformLimits[platform] || platformLimits.web;
-  }
-
-  /**
-   * Generate WebSocket rate limit key
-   */
-  generateWebSocketKey(req) {
-    const deviceId = req.headers['x-device-id'] || 'anonymous';
-    const platform = req.headers['x-client-platform'] || 'unknown';
-    
-    return `websocket:${platform}:${deviceId}`;
-  }
-
-  /**
-   * Get WebSocket limit message
-   */
-  getWebSocketLimitMessage(req) {
-    const platform = req.headers['x-client-platform'] || 'web';
-    
-    return {
-      error: 'WebSocket rate limit exceeded',
-      message: 'Too many WebSocket connection attempts',
-      platform: platform,
-      retryAfter: Math.ceil(60 / 60), // seconds
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Handle WebSocket limit exceeded
-   */
-  handleWebSocketLimitExceeded(req, res) {
-    const message = this.getWebSocketLimitMessage(req);
-    
-    logger.warn('WebSocket rate limit exceeded', {
-      deviceId: req.headers['x-device-id'],
-      platform: req.headers['x-client-platform'],
-      ip: req.ip
-    });
-
-    res.status(429).json({
+  // Pairing code generation (very strict)
+  pairingCode: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3, // 3 pairing code generations per hour
+    message: {
       success: false,
-      error: message
+      error: 'Too many pairing code generation attempts',
+      retryAfter: '1 hour',
+      code: 'PAIRING_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+      return `pairing:${req.headers['x-extension-id'] || req.deviceId || req.ip || 'anonymous'}`;
+    },
+  },
+
+  // Device registration (strict)
+  deviceRegistration: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 2, // 2 device registrations per hour
+    message: {
+      success: false,
+      error: 'Too many device registration attempts',
+      retryAfter: '1 hour',
+      code: 'DEVICE_REG_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+      return `device_reg:${req.headers['x-extension-id'] || req.deviceId || req.ip || 'anonymous'}`;
+    },
+  },
+
+  // NFT operations (moderate limits)
+  nft: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 NFT operations per 15 minutes
+    message: {
+      success: false,
+      error: 'Too many NFT operations',
+      retryAfter: '15 minutes',
+      code: 'NFT_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+      return `nft:${req.headers['x-extension-id'] || req.deviceId || req.ip || 'anonymous'}`;
+    },
+  },
+};
+
+// Create rate limiters
+const createRateLimiter = (config) => {
+  return rateLimit({
+    ...config,
+    handler: (req, res) => {
+      logger.warn('Extension rate limit exceeded', {
+        ip: req.ip,
+        path: req.path,
+        extensionId: req.headers['x-extension-id'],
+        deviceId: req.deviceId,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.status(429).json(config.message);
+    },
+  });
+};
+
+// Export individual rate limiters
+const generalExtensionLimit = createRateLimiter(extensionRateLimits.general);
+const authExtensionLimit = createRateLimiter(extensionRateLimits.auth);
+const pairingCodeLimit = createRateLimiter(extensionRateLimits.pairingCode);
+const deviceRegistrationLimit = createRateLimiter(extensionRateLimits.deviceRegistration);
+const nftLimit = createRateLimiter(extensionRateLimits.nft);
+
+// Smart rate limiting middleware that applies appropriate limits based on endpoint
+const smartExtensionRateLimit = (req, res, next) => {
+  const path = req.path;
+
+  // Authentication endpoints
+  if (path.includes('/auth/') || path.includes('/login') || path.includes('/register')) {
+    return authExtensionLimit(req, res, next);
+  }
+
+  // Pairing code generation
+  if (path.includes('/pairing-code') || path.includes('/pairing-codes')) {
+    return pairingCodeLimit(req, res, next);
+  }
+
+  // Device registration
+  if (path.includes('/device/register') || path.includes('/devices/register')) {
+    return deviceRegistrationLimit(req, res, next);
+  }
+
+  // NFT operations
+  if (path.includes('/nft/') || path.includes('/generate-nft')) {
+    return nftLimit(req, res, next);
+  }
+
+  // Default to general extension limit
+  return generalExtensionLimit(req, res, next);
+};
+
+// Rate limit bypass for trusted extensions
+const bypassExtensionRateLimit = (req, res, next) => {
+  const extensionId = req.headers['x-extension-id'];
+  const apiKey = req.headers['x-api-key'];
+  const trustedApiKey = process.env.TRUSTED_EXTENSION_API_KEY;
+
+  // Check if this is a trusted extension
+  if (extensionId && apiKey && apiKey === trustedApiKey) {
+    logger.info('Rate limit bypassed for trusted extension', {
+      extensionId,
+      ip: req.ip,
+      path: req.path,
     });
+    return next();
   }
 
-  /**
-   * Get rate limit statistics
-   */
-  async getRateLimitStats() {
-    try {
-      const keys = await redis.keys('rl:*');
-      const stats = {
-        totalKeys: keys.length,
-        platforms: {},
-        endpoints: {}
-      };
+  // Apply smart rate limiting
+  return smartExtensionRateLimit(req, res, next);
+};
 
-      for (const key of keys) {
-        const parts = key.split(':');
-        if (parts.length >= 3) {
-          const endpoint = parts[1];
-          const platform = parts[2];
-          
-          if (!stats.platforms[platform]) {
-            stats.platforms[platform] = 0;
-          }
-          if (!stats.endpoints[endpoint]) {
-            stats.endpoints[endpoint] = 0;
-          }
-          
-          stats.platforms[platform]++;
-          stats.endpoints[endpoint]++;
-        }
-      }
-
-      return stats;
-    } catch (error) {
-      logger.error('Error getting rate limit stats:', error);
-      return { error: 'Failed to get rate limit statistics' };
-    }
-  }
-
-  /**
-   * Reset rate limits for specific client
-   */
-  async resetClientLimits(deviceId, platform) {
-    try {
-      const pattern = `rl:*:${platform}:${deviceId}:*`;
-      const keys = await redis.keys(pattern);
-      
-      if (keys.length > 0) {
-        await redis.del(...keys);
-        logger.info(`Reset rate limits for device ${deviceId} on platform ${platform}`);
-        return { success: true, resetKeys: keys.length };
-      }
-      
-      return { success: true, resetKeys: 0 };
-    } catch (error) {
-      logger.error(`Error resetting rate limits for device ${deviceId}:`, error);
-      return { success: false, error: error.message };
-    }
-  }
-}
-
-// Create singleton instance
-const enhancedRateLimiter = new EnhancedRateLimiter();
-
-// Export specific limiters for easy use
 module.exports = {
-  EnhancedRateLimiter,
-  enhancedRateLimiter,
-  
-  // Specific endpoint limiters
-  authRateLimit: enhancedRateLimiter.createAuthLimiter(),
-  syncRateLimit: enhancedRateLimiter.createSyncLimiter(),
-  thoughtsRateLimit: enhancedRateLimiter.createThoughtsLimiter(),
-  nftRateLimit: enhancedRateLimiter.createNftLimiter(),
-  workspaceRateLimit: enhancedRateLimiter.createWorkspaceLimiter(),
-  pluginRateLimit: enhancedRateLimiter.createPluginLimiter(),
-  deviceRateLimit: enhancedRateLimiter.createDeviceLimiter(),
-  
-  // Special limiters
-  burstRateLimit: (endpoint, burstLimit, windowMs) => 
-    enhancedRateLimiter.createBurstLimiter(endpoint, burstLimit, windowMs),
-  webSocketRateLimit: enhancedRateLimiter.createWebSocketLimiter(),
-  
-  // Utility functions
-  getRateLimitStats: () => enhancedRateLimiter.getRateLimitStats(),
-  resetClientLimits: (deviceId, platform) => enhancedRateLimiter.resetClientLimits(deviceId, platform)
+  generalExtensionLimit,
+  authExtensionLimit,
+  pairingCodeLimit,
+  deviceRegistrationLimit,
+  nftLimit,
+  smartExtensionRateLimit,
+  bypassExtensionRateLimit,
 };
