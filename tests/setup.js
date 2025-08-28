@@ -170,7 +170,7 @@ jest.mock('../src/services/nftDatabaseService', () => ({
           platform: 'ethereum',
           expires_at: new Date(),
           created_at: new Date(),
-        }
+        },
       ],
       rowCount: 1,
     }),
@@ -366,17 +366,17 @@ afterEach(() => {
 // Cleanup after all tests
 afterAll(async() => {
   // No database cleanup needed for now
-  
+
   // Force cleanup of any remaining timers or handles
   jest.clearAllTimers();
-  
+
   // Restore original Date.now and Math.random
   Date.now = originalNow;
   Math.random = originalRandom;
-  
+
   // Clear any remaining timeouts
   jest.clearAllTimers();
-  
+
   // Clean up SessionManager timer if it exists
   try {
     const SessionManager = require('../src/auth/sessionManager');
@@ -386,7 +386,7 @@ afterAll(async() => {
   } catch (error) {
     // Ignore errors if SessionManager is not available
   }
-  
+
   // Wait a bit for any remaining async operations
   await new Promise(resolve => setTimeout(resolve, 50));
 });

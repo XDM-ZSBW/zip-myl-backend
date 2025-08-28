@@ -63,7 +63,7 @@ describe('Device Authentication', () => {
       // Mock device creation
       global.mockPrisma.device.findFirst.mockResolvedValue(null);
       global.mockPrisma.device.create.mockResolvedValue(newDevice);
-      
+
       // Mock session creation
       global.mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
@@ -74,7 +74,7 @@ describe('Device Authentication', () => {
         refreshExpiresAt: new Date(),
         isActive: true,
       });
-      
+
       // Mock device update
       global.mockPrisma.device.update.mockResolvedValue({});
 
@@ -97,7 +97,7 @@ describe('Device Authentication', () => {
 
       // Mock finding existing device
       global.mockPrisma.device.findFirst.mockResolvedValue(existingDevice);
-      
+
       // Mock session creation
       global.mockPrisma.session.create.mockResolvedValue({
         id: 'session-123',
@@ -108,7 +108,7 @@ describe('Device Authentication', () => {
         refreshExpiresAt: new Date(),
         isActive: true,
       });
-      
+
       // Mock device update
       global.mockPrisma.device.update.mockResolvedValue({});
 
@@ -126,9 +126,9 @@ describe('Device Authentication', () => {
       const mockToken = jwt.sign(
         { deviceId: 'device-123', type: 'device' },
         process.env.JWT_SECRET,
-        { expiresIn: '15m' }
+        { expiresIn: '15m' },
       );
-      
+
       const mockSession = {
         id: 'session-123',
         deviceId: 'device-123',
@@ -140,7 +140,7 @@ describe('Device Authentication', () => {
       // Mock the session lookup with the hashed token
       const crypto = require('crypto');
       const hashedToken = crypto.createHash('sha256').update(mockToken).digest('hex');
-      
+
       global.mockPrisma.session.findFirst.mockResolvedValue(mockSession);
 
       const result = await deviceAuth.validateToken(mockToken);

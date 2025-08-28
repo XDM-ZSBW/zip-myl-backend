@@ -9,7 +9,7 @@ class SessionManager {
     this.maxSessionsPerDevice = parseInt(process.env.MAX_SESSIONS_PER_DEVICE) || 5;
     this.sessionCleanupInterval = 60 * 60 * 1000; // 1 hour
     this.cleanupTimer = null; // Store timer ID for cleanup
-    
+
     // Only start cleanup timer if not in test environment
     if (process.env.NODE_ENV !== 'test') {
       this.startCleanupTimer();
@@ -308,7 +308,7 @@ class SessionManager {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
     }
-    
+
     this.cleanupTimer = setInterval(async() => {
       await this.cleanupExpiredSessions();
     }, this.sessionCleanupInterval);

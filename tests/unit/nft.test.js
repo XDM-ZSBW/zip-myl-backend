@@ -46,7 +46,7 @@ describe('NFT Service', () => {
     nftCacheService.nftCacheService = mockCache;
 
     nftService = new NFTService();
-    
+
     // Directly assign mocks to the service instance
     nftService.db = mockDb;
     nftService.encryption = mockEncryption;

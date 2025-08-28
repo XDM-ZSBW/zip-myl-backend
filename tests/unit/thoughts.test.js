@@ -133,7 +133,7 @@ describe('Thought Service', () => {
 
     it('should return null for non-existent thought', async() => {
       const nonExistentId = uuidv4();
-      
+
       // Mock the Thought.findById method to return null
       Thought.findById.mockResolvedValue(null);
 

@@ -136,7 +136,7 @@ class NFTQueueService {
       // Memory-based fallback
       const jobId = `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       logger.info(`NFT generation job ${jobId} added to memory queue for device ${deviceId}`);
-      
+
       return {
         jobId,
         status: 'queued',
@@ -185,7 +185,7 @@ class NFTQueueService {
         const elapsed = Date.now() - timestamp;
         const state = elapsed > 30000 ? 'completed' : 'active';
         const progress = Math.min(100, Math.floor((elapsed / 30000) * 100));
-        
+
         return {
           success: true,
           jobId,
@@ -198,7 +198,7 @@ class NFTQueueService {
           estimatedTime: this.estimateRemainingTime(state, progress),
         };
       }
-      
+
       return {
         success: false,
         error: 'Job not found',

@@ -26,12 +26,12 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
+    'Content-Type',
+    'Authorization',
     'X-Requested-With',
     'x-extension-id',
     'x-extension-version',
-    'x-client-type'
+    'x-client-type',
   ],
 }));
 
@@ -47,10 +47,10 @@ app.use(morgan('combined'));
 
 // Basic health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    message: 'Docker container is running successfully!'
+    message: 'Docker container is running successfully!',
   });
 });
 

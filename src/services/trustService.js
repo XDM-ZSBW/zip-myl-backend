@@ -168,7 +168,7 @@ class TrustService {
   async isDeviceTrustedForUser(deviceId, userId) {
     const device = this.trustedDevices.get(deviceId);
     if (!device) return false;
-    
+
     // Device is trusted if it belongs to the same user (auto-trusted)
     // or if it has been explicitly trusted by another trusted device
     return device.userId === userId || device.isTrusted;
@@ -180,17 +180,17 @@ class TrustService {
   async getDevicePermissions(deviceId, userId) {
     const device = this.trustedDevices.get(deviceId);
     if (!device) return null;
-    
+
     // If device belongs to the same user, return full permissions
     if (device.userId === userId) {
       return {
         canRead: true,
         canWrite: true,
         canShare: false, // No sharing by default for security
-        isOwner: true
+        isOwner: true,
       };
     }
-    
+
     // Return explicit permissions if device is trusted by another device
     return device.isTrusted ? device.permissions : null;
   }
