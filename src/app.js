@@ -22,6 +22,8 @@ const rootRoutes = require('./routes/root');
 const botRoutes = require('./routes/bot');
 const testRoutes = require('./routes/test');
 const minimalRoutes = require('./routes/minimal');
+const encryptedRoutes = require('./routes/encrypted');
+const thoughtsRoutes = require('./routes/thoughts');
 
 // Load environment variables
 dotenv.config();
@@ -97,6 +99,16 @@ app.use('/api', apiRoutes);
 
 // API v2 routes (Multi-Client Ecosystem)
 app.use('/api', apiV2Routes);
+
+// Encrypted routes (device registration, pairing, thoughts)
+console.log('Loading encrypted routes...');
+app.use('/api/v1/encrypted', encryptedRoutes);
+console.log('Encrypted routes loaded successfully');
+
+// Thoughts routes
+console.log('Loading thoughts routes...');
+app.use('/api/v1/thoughts', thoughtsRoutes);
+console.log('Thoughts routes loaded successfully');
 
 // Root routes (must be after API routes)
 app.use('/', rootRoutes);
