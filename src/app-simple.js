@@ -194,7 +194,7 @@ app.post('/api/v1/encrypted/devices/register', (req, res) => {
 });
 
 // Pairing code generation
-app.post('/api/v1/encrypted/devices/pairing-code', (req, res) => {
+app.post('/api/v1/encrypted/devices/pairing-code', async (req, res) => {
   try {
     const { deviceId, format = 'uuid', expiresIn = 600 } = req.body;
     
@@ -226,12 +226,19 @@ app.post('/api/v1/encrypted/devices/pairing-code', (req, res) => {
     
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
     
+    // Generate NFT for UUID pairing codes
+    let nftData = null;
+    if (format.toLowerCase() === 'uuid') {
+      nftData = await generateNFTForPairingCode(pairingCode, deviceId);
+    }
+    
     res.json({
       success: true,
       pairingCode: pairingCode,
       format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
       expiresIn: expiresIn,
+      nft: nftData, // Include NFT data for UUID format
       message: 'Pairing code generated successfully'
     });
   } catch (error) {
@@ -244,7 +251,7 @@ app.post('/api/v1/encrypted/devices/pairing-code', (req, res) => {
 });
 
 // Extension compatibility endpoint - device-registration/pairing-codes (UUID only)
-app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
+app.post('/api/v1/device-registration/pairing-codes', async (req, res) => {
   try {
     const { deviceId, format = 'uuid', expiresIn = 300 } = req.body;
 
@@ -267,6 +274,12 @@ app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
     }
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
+    // Generate NFT for UUID pairing codes
+    let nftData = null;
+    if (format.toLowerCase() === 'uuid') {
+      nftData = await generateNFTForPairingCode(pairingCode, deviceId);
+    }
+
     // Store the pairing code for verification (in-memory for testing)
     // In production, this would be stored in a database
     if (!global.pairingCodes) {
@@ -278,7 +291,8 @@ app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
       format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
       createdAt: new Date().toISOString(),
-      used: false
+      used: false,
+      nftId: nftData ? nftData.id : null // Link NFT ID to pairing code
     });
 
     res.json({
@@ -288,6 +302,7 @@ app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
       expiresAt: expiresAt.toISOString(),
       expiresIn: expiresIn,
       deviceId: deviceId,
+      nft: nftData, // Include NFT data for UUID format
       message: `${format} pairing code generated successfully`
     });
   } catch (error) {
@@ -646,6 +661,191 @@ app.post('/api/v1/keys/device-specific', (req, res) => {
     log('error', `Key generation failed: ${error.message}`);
     res.status(500).json({
       error: 'Key generation failed',
+      message: error.message
+    });
+  }
+});
+
+// NFT generation function for pairing codes
+async function generateNFTForPairingCode(pairingCode, deviceId) {
+  try {
+    // Generate unique NFT data
+    const nftId = crypto.randomUUID();
+    const shapeKeys = [4, 5, 6, 8, 10, 12]; // Geometric shapes
+    const randomShape = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+    
+    // Generate color palette
+    const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    // Create NFT metadata
+    const nftData = {
+      id: nftId,
+      pairingCode: pairingCode, // Link to pairing code
+      deviceId: deviceId,
+      shape: {
+        sides: randomShape,
+        name: `${randomShape}-gon`
+      },
+      color: randomColor,
+      segments: generateSegments(randomShape),
+      connectionPoints: generateConnectionPoints(randomShape),
+      isPairingToken: true,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+      metadata: {
+        type: 'pairing-code-nft',
+        version: '1.0.0',
+        algorithm: 'geometric-pattern'
+      }
+    };
+    
+    // Store NFT in global cache (in production, this would be in a database)
+    if (!global.nftCollection) {
+      global.nftCollection = new Map();
+    }
+    
+    global.nftCollection.set(nftId, nftData);
+    
+    // Also store by pairing code for quick lookup
+    if (!global.pairingCodeNFTs) {
+      global.pairingCodeNFTs = new Map();
+    }
+    global.pairingCodeNFTs.set(pairingCode, nftData);
+    
+    return nftData;
+  } catch (error) {
+    log('error', `NFT generation failed: ${error.message}`);
+    return null;
+  }
+}
+
+// Helper function to generate geometric segments
+function generateSegments(sides) {
+  const segments = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (i * 2 * Math.PI) / sides;
+    segments.push({
+      index: i,
+      angle: angle,
+      x: Math.cos(angle) * 50,
+      y: Math.sin(angle) * 50
+    });
+  }
+  return segments;
+}
+
+// Helper function to generate connection points
+function generateConnectionPoints(sides) {
+  const points = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (i * 2 * Math.PI) / sides;
+    points.push({
+      index: i,
+      angle: angle,
+      x: Math.cos(angle) * 40,
+      y: Math.sin(angle) * 40,
+      type: 'connection'
+    });
+  }
+  return points;
+}
+
+// Get NFT by pairing code
+app.get('/api/v1/nft/pairing-code/:pairingCode', (req, res) => {
+  try {
+    const { pairingCode } = req.params;
+    
+    if (!pairingCode) {
+      return res.status(400).json({
+        error: 'Missing pairing code'
+      });
+    }
+    
+    // Look up NFT by pairing code
+    if (!global.pairingCodeNFTs) {
+      return res.status(404).json({
+        error: 'NFT not found',
+        message: 'No NFT associated with this pairing code'
+      });
+    }
+    
+    const nftData = global.pairingCodeNFTs.get(pairingCode);
+    if (!nftData) {
+      return res.status(404).json({
+        error: 'NFT not found',
+        message: 'No NFT associated with this pairing code'
+      });
+    }
+    
+    // Check if NFT has expired
+    if (new Date() > new Date(nftData.expiresAt)) {
+      return res.status(410).json({
+        error: 'NFT expired',
+        message: 'This NFT has expired',
+        expiredAt: nftData.expiresAt
+      });
+    }
+    
+    res.json({
+      success: true,
+      nft: nftData,
+      message: 'NFT retrieved successfully'
+    });
+  } catch (error) {
+    log('error', `NFT retrieval failed: ${error.message}`);
+    res.status(500).json({
+      error: 'NFT retrieval failed',
+      message: error.message
+    });
+  }
+});
+
+// Get NFT by ID
+app.get('/api/v1/nft/:nftId', (req, res) => {
+  try {
+    const { nftId } = req.params;
+    
+    if (!nftId) {
+      return res.status(400).json({
+        error: 'Missing NFT ID'
+      });
+    }
+    
+    // Look up NFT by ID
+    if (!global.nftCollection) {
+      return res.status(404).json({
+        error: 'NFT not found',
+        message: 'NFT collection not available'
+      });
+    }
+    
+    const nftData = global.nftCollection.get(nftId);
+    if (!nftData) {
+      return res.status(404).json({
+        error: 'NFT not found',
+        message: 'NFT with this ID does not exist'
+      });
+    }
+    
+    // Check if NFT has expired
+    if (new Date() > new Date(nftData.expiresAt)) {
+      return res.status(410).json({
+        error: 'NFT expired',
+        message: 'This NFT has expired',
+        expiredAt: nftData.expiresAt
+      });
+    }
+    
+    res.json({
+      success: true,
+      nft: nftData,
+      message: 'NFT retrieved successfully'
+    });
+  } catch (error) {
+    log('error', `NFT retrieval failed: ${error.message}`);
+    res.status(500).json({
+      error: 'NFT retrieval failed',
       message: error.message
     });
   }
