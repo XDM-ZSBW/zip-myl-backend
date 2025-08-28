@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { logger } = require('../utils/logger');
-const keyManagementService = require('../services/keyManagementService');
+const { simpleKeyManagementService: keyManagementService } = require('../services/simpleKeyManagementService');
 
 /**
  * Device Authentication Middleware

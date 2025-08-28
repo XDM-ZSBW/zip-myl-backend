@@ -1,6 +1,6 @@
 const { logger } = require('../utils/logger');
 const deviceFingerprintingService = require('../services/deviceFingerprintingService');
-const keyManagementService = require('../services/keyManagementService');
+const { simpleKeyManagementService: keyManagementService } = require('../services/simpleKeyManagementService');
 const trustService = require('../services/trustService');
 const encryptionService = require('../services/encryptionService');
 const { validateDeviceRegistration, validatePairingCode, detectPairingCodeFormat } = require('../utils/validation');

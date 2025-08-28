@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 /**
  * Generic validation middleware
@@ -245,6 +245,53 @@ const schemas = {
     apiKeyId: Joi.string().uuid().optional(),
     startDate: Joi.date().optional(),
     endDate: Joi.date().optional()
+  }),
+
+  // Thought schemas
+  id: Joi.object({
+    id: Joi.string().uuid().required()
+  }),
+
+  createThought: Joi.object({
+    content: Joi.string().min(1).max(10000).required(),
+    tags: Joi.array().items(Joi.string().max(50)).optional(),
+    isPublic: Joi.boolean().optional().default(false),
+    metadata: Joi.object().optional()
+  }),
+
+  updateThought: Joi.object({
+    content: Joi.string().min(1).max(10000).optional(),
+    tags: Joi.array().items(Joi.string().max(50)).optional(),
+    isPublic: Joi.boolean().optional(),
+    metadata: Joi.object().optional()
+  }),
+
+  // NFT schemas
+  nftGeneratePairing: Joi.object({
+    platform: Joi.string().max(50).required(),
+    collectionName: Joi.string().max(255).optional()
+  }),
+
+  nftValidatePairing: Joi.object({
+    token: Joi.string().max(255).required(),
+    nftData: Joi.object().required()
+  }),
+
+  nftProfileCollection: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    platform: Joi.string().max(50).optional()
+  }),
+
+  nftStoreInvalid: Joi.object({
+    nftData: Joi.object().required(),
+    reason: Joi.string().max(255).required(),
+    platform: Joi.string().max(50).optional()
+  }),
+
+  nftProfilePicture: Joi.object({
+    imageData: Joi.string().max(10485760).required(), // 10MB base64
+    imageFormat: Joi.string().valid('jpeg', 'png', 'gif').default('jpeg')
   })
 };
 

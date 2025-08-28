@@ -1,6 +1,6 @@
 const deviceAuth = require('../auth/deviceAuth');
 const sessionManager = require('../auth/sessionManager');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 class AuthController {
   /**

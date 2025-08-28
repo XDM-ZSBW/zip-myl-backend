@@ -1,7 +1,7 @@
-import thoughtService from '../services/thoughtService.js';
-import { logger } from '../utils/logger.js';
+const { thoughtService } = require('../services/thoughtService');
+const { logger } = require('../utils/logger');
 
-export const createThought = async (req, res, next) => {
+const createThought = async (req, res, next) => {
   try {
     const { content, metadata, url, userId } = req.body;
     
@@ -27,7 +27,7 @@ export const createThought = async (req, res, next) => {
   }
 };
 
-export const getThoughts = async (req, res, next) => {
+const getThoughts = async (req, res, next) => {
   try {
     const { page, limit, sortBy, sortOrder, url, userId } = req.query;
     
@@ -60,7 +60,7 @@ export const getThoughts = async (req, res, next) => {
   }
 };
 
-export const getThoughtById = async (req, res, next) => {
+const getThoughtById = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -83,7 +83,7 @@ export const getThoughtById = async (req, res, next) => {
   }
 };
 
-export const updateThought = async (req, res, next) => {
+const updateThought = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content, metadata, url } = req.body;
@@ -125,7 +125,7 @@ export const updateThought = async (req, res, next) => {
   }
 };
 
-export const deleteThought = async (req, res, next) => {
+const deleteThought = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -161,7 +161,7 @@ export const deleteThought = async (req, res, next) => {
   }
 };
 
-export const searchThoughts = async (req, res, next) => {
+const searchThoughts = async (req, res, next) => {
   try {
     const { q: query, page, limit, userId } = req.query;
     
@@ -195,7 +195,7 @@ export const searchThoughts = async (req, res, next) => {
   }
 };
 
-export const getThoughtStats = async (req, res, next) => {
+const getThoughtStats = async (req, res, next) => {
   try {
     const stats = await thoughtService.getThoughtStats();
 
@@ -208,7 +208,7 @@ export const getThoughtStats = async (req, res, next) => {
   }
 };
 
-export default {
+module.exports = {
   createThought,
   getThoughts,
   getThoughtById,

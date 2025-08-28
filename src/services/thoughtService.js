@@ -1,7 +1,7 @@
-import { Thought } from '../models/Thought.js';
-import cacheService from './cacheService.js';
-import { logger } from '../utils/logger.js';
-import { v4 as uuidv4 } from 'uuid';
+const { Thought } = require('../models/Thought');
+const cacheService = require('./cacheService');
+const { logger } = require('../utils/logger');
+const { v4: uuidv4 } = require('uuid');
 
 class ThoughtService {
   async createThought(data) {
@@ -201,7 +201,7 @@ class ThoughtService {
       }
 
       // Get stats from database
-      const databaseService = (await import('./databaseService.js')).default;
+      const databaseService = require('./databaseService');
       const prisma = databaseService.getClient();
 
       const [totalThoughts, recentThoughts, uniqueUsers] = await Promise.all([
@@ -242,4 +242,4 @@ class ThoughtService {
 // Create singleton instance
 const thoughtService = new ThoughtService();
 
-export default thoughtService;
+module.exports = { thoughtService };

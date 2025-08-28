@@ -1,6 +1,6 @@
 const deviceAuth = require('../auth/deviceAuth');
 const apiKeyValidator = require('./apiKeyValidator');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 /**
  * Authentication middleware for device-based authentication

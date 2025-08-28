@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { logger } from '../utils/logger.js';
+const { PrismaClient } = require('@prisma/client');
+const { logger } = require('../utils/logger');
 
 const prisma = new PrismaClient();
 
-export class Thought {
+class Thought {
   constructor(data) {
     this.id = data.id;
     this.content = data.content;
@@ -173,4 +173,4 @@ export class Thought {
   }
 }
 
-export default Thought;
+module.exports = { Thought };

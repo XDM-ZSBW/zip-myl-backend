@@ -1,5 +1,6 @@
 const express = require('express');
 const thoughtsRoutes = require('./thoughts');
+const nftRoutes = require('./nft');
 
 const router = express.Router();
 
@@ -11,6 +12,7 @@ router.use('/v1', (req, res, next) => {
 
 // Mount route modules
 router.use('/v1/thoughts', thoughtsRoutes);
+router.use('/v1/nft', nftRoutes);
 
 // API info endpoint
 router.get('/v1', (req, res) => {
@@ -20,6 +22,7 @@ router.get('/v1', (req, res) => {
     version: '1.0.0',
     endpoints: {
       thoughts: '/api/v1/thoughts',
+      nft: '/api/v1/nft',
       health: '/health',
       metrics: '/metrics',
     },

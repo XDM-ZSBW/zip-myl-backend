@@ -12,6 +12,7 @@ const { endpointRateLimit } = require('./middleware/rateLimiter');
 const { corsConfig } = require('./middleware/cors');
 const { sanitizeInput, validateRequestSize } = require('./middleware/validation');
 const apiRoutes = require('./routes/api');
+const apiV2Routes = require('./routes/api-v2');
 const healthRoutes = require('./routes/health');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -26,7 +27,7 @@ const minimalRoutes = require('./routes/minimal');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Security middleware
 app.use(helmet({
@@ -94,6 +95,9 @@ app.use('/api/v1/admin', adminRoutes);
 // API routes
 app.use('/api', apiRoutes);
 
+// API v2 routes (Multi-Client Ecosystem)
+app.use('/api', apiV2Routes);
+
 // Root routes (must be after API routes)
 app.use('/', rootRoutes);
 
@@ -129,9 +133,28 @@ process.on('SIGINT', () => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+// Initialize WebSocket service for real-time communication
+if (process.env.ENABLE_WEBSOCKET !== 'false') {
+  try {
+    const WebSocketService = require('./services/websocketService');
+    const wsService = new WebSocketService(server);
+    logger.info('WebSocket service initialized successfully');
+    
+    // Add WebSocket stats endpoint
+    app.get('/ws/stats', (req, res) => {
+      res.json({
+        success: true,
+        data: wsService.getStats()
+      });
+    });
+  } catch (error) {
+    logger.error('Failed to initialize WebSocket service:', error);
+  }
+}
 
 module.exports = app;

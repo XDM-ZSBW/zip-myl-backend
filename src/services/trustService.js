@@ -1,6 +1,6 @@
 const { logger } = require('../utils/logger');
 const encryptionService = require('./encryptionService');
-const keyManagementService = require('./keyManagementService');
+const { simpleKeyManagementService: keyManagementService } = require('./simpleKeyManagementService');
 
 /**
  * Enhanced Device Trust Management Service
