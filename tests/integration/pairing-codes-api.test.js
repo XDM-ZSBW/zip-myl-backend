@@ -19,7 +19,7 @@ describe('Pairing Codes API Integration Tests', () => {
       expect(response.body.expiresAt).toBeDefined();
       expect(response.body.expiresIn).toBe(600);
 
-      // Validate UUID format
+      // Validate UUID format (UUID v4)
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       expect(response.body.pairingCode).toMatch(uuidRegex);
     });
@@ -143,7 +143,7 @@ describe('Pairing Codes API Integration Tests', () => {
         .post('/api/v1/encrypted/devices/pair')
         .send({
           deviceId: 'test-device-123',
-          pairingCode: '123e4567-e89b-12d3-a456-426614174000',
+          pairingCode: '123e4567-e89b-42d3-a456-426614174000',
           encryptedTrustData: 'encrypted-data'
         })
         .expect(200);
@@ -211,7 +211,7 @@ describe('Pairing Codes API Integration Tests', () => {
       const response = await request(app)
         .post('/api/v1/encrypted/devices/pair')
         .send({
-          pairingCode: '123e4567-e89b-12d3-a456-426614174000',
+          pairingCode: '123e4567-e89b-42d3-a456-426614174000',
           encryptedTrustData: 'encrypted-data'
         })
         .expect(400);

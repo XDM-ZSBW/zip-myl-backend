@@ -51,6 +51,17 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Error handling for JSON parsing errors
+app.use((error, req, res, next) => {
+  if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+    return res.status(400).json({
+      error: 'Invalid JSON format',
+      message: 'The request body contains malformed JSON'
+    });
+  }
+  next();
+});
+
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -206,9 +217,11 @@ app.post('/api/v1/encrypted/devices/pairing-code', (req, res) => {
     if (format.toLowerCase() === 'uuid') {
       pairingCode = crypto.randomUUID();
     } else if (format.toLowerCase() === 'short') {
-      pairingCode = crypto.randomBytes(8).toString('hex').toUpperCase();
-    } else {
-      pairingCode = crypto.randomBytes(16).toString('hex').toUpperCase();
+      // Generate 12-character hexadecimal code
+      pairingCode = crypto.randomBytes(6).toString('hex').toUpperCase();
+    } else if (format.toLowerCase() === 'legacy') {
+      // Generate 6-digit numeric code
+      pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     }
     
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
@@ -241,16 +254,17 @@ app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
       });
     }
 
-    // Only support UUID format for security
-    if (format && format.toLowerCase() !== 'uuid') {
-      return res.status(400).json({
-        error: 'Invalid format parameter',
-        message: 'Only UUID format is supported for security reasons'
-      });
+    // Generate pairing code in requested format
+    let pairingCode;
+    if (format.toLowerCase() === 'uuid') {
+      pairingCode = crypto.randomUUID();
+    } else if (format.toLowerCase() === 'short') {
+      // Generate 12-character hexadecimal code
+      pairingCode = crypto.randomBytes(6).toString('hex').toUpperCase();
+    } else if (format.toLowerCase() === 'legacy') {
+      // Generate 6-digit numeric code
+      pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     }
-
-    // Generate UUID pairing code
-    const pairingCode = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
     // Store the pairing code for verification (in-memory for testing)
@@ -261,7 +275,7 @@ app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
 
     global.pairingCodes.set(pairingCode, {
       deviceId: deviceId,
-      format: 'uuid',
+      format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
       createdAt: new Date().toISOString(),
       used: false
@@ -270,11 +284,11 @@ app.post('/api/v1/device-registration/pairing-codes', (req, res) => {
     res.json({
       success: true,
       pairingCode: pairingCode,
-      format: 'uuid',
+      format: format.toLowerCase(),
       expiresAt: expiresAt.toISOString(),
       expiresIn: expiresIn,
       deviceId: deviceId,
-      message: 'UUID pairing code generated successfully'
+      message: `${format} pairing code generated successfully`
     });
   } catch (error) {
     log('error', `Pairing code generation failed: ${error.message}`);
@@ -297,16 +311,25 @@ app.post('/api/v1/encrypted/devices/pair', (req, res) => {
       });
     }
 
-    // Basic UUID validation
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(pairingCode)) {
+    // Validate pairing code format based on detected format
+    let detectedFormat = 'unknown';
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pairingCode)) {
+      detectedFormat = 'uuid';
+    } else if (/^[0-9a-f]{12}$/i.test(pairingCode)) {
+      detectedFormat = 'short';
+    } else if (/^\d{6}$/.test(pairingCode)) {
+      detectedFormat = 'legacy';
+    }
+
+    if (detectedFormat === 'unknown') {
       return res.status(400).json({
-        error: 'Invalid pairing code format'
+        error: 'Invalid pairing code format',
+        message: 'Pairing code must be in UUID, short, or legacy format'
       });
     }
 
-    // In a real implementation, you would verify the pairing code against the database
-    // For now, we'll just validate the format and return success
+    // For testing purposes, we'll accept any valid format without requiring a stored code
+    // In production, this would verify the pairing code against the database
     
     res.json({
       success: true,
@@ -320,7 +343,7 @@ app.post('/api/v1/encrypted/devices/pair', (req, res) => {
         deviceType: 'chrome-extension',
         deviceVersion: '2.0.0'
       },
-      pairingCodeFormat: 'uuid',
+      pairingCodeFormat: detectedFormat,
       message: 'Devices paired successfully'
     });
   } catch (error) {
@@ -344,13 +367,20 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
       });
     }
 
-    // Validate pairing code format (UUID only)
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    
-    if (!uuidPattern.test(pairingCode)) {
+    // Validate pairing code format based on detected format
+    let detectedFormat = 'unknown';
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pairingCode)) {
+      detectedFormat = 'uuid';
+    } else if (/^[0-9a-f]{12}$/i.test(pairingCode)) {
+      detectedFormat = 'short';
+    } else if (/^\d{6}$/.test(pairingCode)) {
+      detectedFormat = 'legacy';
+    }
+
+    if (detectedFormat === 'unknown') {
       return res.status(400).json({
         error: 'Invalid pairing code format',
-        message: 'Only UUID format pairing codes are supported'
+        message: 'Pairing code must be in UUID, short, or legacy format'
       });
     }
 
@@ -404,7 +434,7 @@ app.post('/api/v1/device-registration/pair', (req, res) => {
         deviceType: 'chrome-extension',
         deviceVersion: '2.0.0'
       },
-      pairingCodeFormat: 'uuid',
+      pairingCodeFormat: detectedFormat,
       message: 'Devices paired successfully'
     });
   } catch (error) {
