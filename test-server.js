@@ -15,13 +15,22 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Import and mount device registration routes
+// Import and mount encrypted routes (includes device registration)
 try {
-  const deviceRegistrationRoutes = require('./src/routes/deviceRegistration');
-  app.use('/api/v1/encrypted/devices', deviceRegistrationRoutes);
-  console.log('✅ Device registration routes loaded');
+  const encryptedRoutes = require('./src/routes/encrypted');
+  app.use('/api/v1/encrypted', encryptedRoutes);
+  console.log('✅ Encrypted routes loaded (includes device registration)');
 } catch (error) {
-  console.log('⚠️  Device registration routes not available:', error.message);
+  console.log('⚠️  Encrypted routes not available:', error.message);
+}
+
+// Import and mount thoughts routes
+try {
+  const thoughtsRoutes = require('./src/routes/thoughts');
+  app.use('/api/v1/thoughts', thoughtsRoutes);
+  console.log('✅ Thoughts routes loaded');
+} catch (error) {
+  console.log('⚠️  Thoughts routes not available:', error.message);
 }
 
 // Root endpoint
@@ -33,7 +42,8 @@ app.get('/', (req, res) => {
     features: {
       endToEndEncryption: true,
       deviceTrust: true,
-      crossDeviceSharing: true
+      crossDeviceSharing: true,
+      thoughts: true
     }
   });
 });

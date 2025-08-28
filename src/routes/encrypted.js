@@ -22,7 +22,8 @@ router.post('/devices/revoke-trust', deviceTrustController.revokeTrust);
 router.get('/devices/trusted/:userId', deviceTrustController.getTrustedDevices);
 router.get('/devices/trust/:deviceId', deviceTrustController.checkDeviceTrust);
 
-// Device pairing
+// Device pairing - ADDING MISSING ENDPOINT
+router.post('/devices/pairing-code', deviceTrustController.generatePairingCode);
 router.post('/devices/pairing/generate', deviceTrustController.generatePairingCode);
 router.post('/devices/pairing/verify', deviceTrustController.verifyPairingCode);
 

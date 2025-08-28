@@ -36,9 +36,34 @@ class DeviceTrustController {
 
     } catch (error) {
       logger.error('Error registering device:', error);
+      
+      // Provide more specific error messages
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          error: 'Validation failed',
+          message: error.message,
+          details: error.details
+        });
+      }
+      
+      if (error.name === 'DatabaseError' || error.code === 'ECONNREFUSED') {
+        return res.status(503).json({
+          error: 'Database unavailable',
+          message: 'Database connection failed',
+          retryAfter: 30
+        });
+      }
+      
+      if (error.name === 'DuplicateDeviceError') {
+        return res.status(409).json({
+          error: 'Device already exists',
+          message: 'A device with this ID is already registered'
+        });
+      }
+      
       res.status(500).json({
-        error: 'Internal server error',
-        message: 'Failed to register device'
+        error: 'Device registration failed',
+        message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       });
     }
   }

@@ -98,14 +98,8 @@ try {
   app.use('/api/v1/encrypted', encryptedRoutes);
   console.log('✅ Encrypted routes loaded');
   
-  // Import device registration routes
-  const deviceRegistrationRoutes = require('./routes/deviceRegistration');
-  app.use('/api/v1/encrypted/devices', deviceRegistrationRoutes);
-  console.log('✅ Device registration routes loaded');
-  
-  // Add compatibility route for extension (device-registration/pairing-codes)
-  app.use('/api/v1/device-registration', deviceRegistrationRoutes);
-  console.log('✅ Device registration compatibility routes loaded');
+  // Encrypted routes now include device registration functionality
+  console.log('✅ Device registration functionality available through encrypted routes');
   
 } catch (error) {
   console.log('⚠️  Enhanced routes not available:', error.message);
