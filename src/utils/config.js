@@ -14,6 +14,12 @@ const config = {
   DB_POOL_MIN: parseInt(process.env.DB_POOL_MIN) || 2,
   DB_POOL_MAX: parseInt(process.env.DB_POOL_MAX) || 10,
   DB_SSL: process.env.DB_SSL === 'true',
+  database: {
+    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/myl_zip',
+    poolMin: parseInt(process.env.DB_POOL_MIN) || 2,
+    poolMax: parseInt(process.env.DB_POOL_MAX) || 10,
+    ssl: process.env.DB_SSL === 'true',
+  },
 
   // Security Configuration
   JWT_SECRET: process.env.JWT_SECRET || 'dev-jwt-secret-change-in-production',
@@ -123,12 +129,12 @@ const config = {
   ENABLE_WEBSOCKET: process.env.ENABLE_WEBSOCKET !== 'false',
 
   // Development Configuration
-  isDevelopment: function() { return this.NODE_ENV === 'development'; },
-  isProduction: function() { return this.NODE_ENV === 'production'; },
-  isTest: function() { return this.NODE_ENV === 'test'; },
+  isDevelopment() { return this.NODE_ENV === 'development'; },
+  isProduction() { return this.NODE_ENV === 'production'; },
+  isTest() { return this.NODE_ENV === 'test'; },
 
   // Validation
-  validate: function() {
+  validate() {
     const warnings = [];
     const errors = [];
 

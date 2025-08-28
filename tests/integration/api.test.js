@@ -6,13 +6,13 @@ describe('API Integration Tests', () => {
   let testUser;
   let authToken;
 
-  beforeAll(async () => {
+  beforeAll(async() => {
     testUser = testUtils.createTestUser();
-    authToken = 'test-auth-token-' + Date.now();
+    authToken = `test-auth-token-${Date.now()}`;
   });
 
   describe('Health Endpoint', () => {
-    it('should return health status', async () => {
+    it('should return health status', async() => {
       const response = await request(app)
         .get('/health')
         .expect(200);
@@ -24,7 +24,7 @@ describe('API Integration Tests', () => {
   });
 
   describe('Authentication Endpoints', () => {
-    it('should require authentication for protected routes', async () => {
+    it('should require authentication for protected routes', async() => {
       const response = await request(app)
         .get('/api/v1/thoughts')
         .expect(401);
@@ -32,7 +32,7 @@ describe('API Integration Tests', () => {
       expect(response.body.error).toBeDefined();
     });
 
-    it('should handle invalid authentication gracefully', async () => {
+    it('should handle invalid authentication gracefully', async() => {
       const response = await request(app)
         .get('/api/v1/thoughts')
         .set('Authorization', 'Bearer invalid-token')
@@ -43,7 +43,7 @@ describe('API Integration Tests', () => {
   });
 
   describe('Thoughts Endpoints', () => {
-    it('should handle thought creation with authentication', async () => {
+    it('should handle thought creation with authentication', async() => {
       const thoughtData = {
         content: 'Test thought content',
         tags: ['test', 'integration'],
@@ -58,7 +58,7 @@ describe('API Integration Tests', () => {
       expect(response.body.error).toBeDefined();
     });
 
-    it('should handle thought retrieval with authentication', async () => {
+    it('should handle thought retrieval with authentication', async() => {
       const response = await request(app)
         .get('/api/v1/thoughts')
         .set('Authorization', `Bearer ${authToken}`)
@@ -69,7 +69,7 @@ describe('API Integration Tests', () => {
   });
 
   describe('Device Endpoints', () => {
-    it('should handle device registration', async () => {
+    it('should handle device registration', async() => {
       const deviceData = {
         fingerprint: 'test-device-fingerprint',
         userAgent: 'Test User Agent',
@@ -84,7 +84,7 @@ describe('API Integration Tests', () => {
       expect(response.body.success).toBe(true);
     });
 
-    it('should handle device authentication', async () => {
+    it('should handle device authentication', async() => {
       const authData = {
         deviceId: 'test-device-id',
         fingerprint: 'test-device-fingerprint',
@@ -100,7 +100,7 @@ describe('API Integration Tests', () => {
   });
 
   describe('Error Handling', () => {
-    it('should return 404 for non-existent routes', async () => {
+    it('should return 404 for non-existent routes', async() => {
       const response = await request(app)
         .get('/non-existent-route')
         .expect(404);
@@ -108,7 +108,7 @@ describe('API Integration Tests', () => {
       expect(response.body.error).toBe('Not Found');
     });
 
-    it('should handle malformed JSON gracefully', async () => {
+    it('should handle malformed JSON gracefully', async() => {
       const response = await request(app)
         .post('/api/v1/thoughts')
         .set('Content-Type', 'application/json')
@@ -120,7 +120,7 @@ describe('API Integration Tests', () => {
   });
 
   describe('CORS Configuration', () => {
-    it('should include CORS headers', async () => {
+    it('should include CORS headers', async() => {
       const response = await request(app)
         .get('/health')
         .set('Origin', 'chrome-extension://test-extension-id')

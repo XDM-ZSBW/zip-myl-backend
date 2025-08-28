@@ -231,7 +231,7 @@ class TrustService {
   async getPairingCodeStatus(pairingCode, deviceId = null) {
     try {
       const pairing = this.pendingPairings.get(pairingCode);
-      
+
       if (!pairing) {
         return null;
       }
@@ -281,7 +281,7 @@ class TrustService {
       }
 
       const step = steps[currentStepIndex];
-      
+
       // Update pairing record
       pairingRecord.status = step.step === 'completed' ? 'completed' : 'generating';
       pairingRecord.currentStep = step.step;
@@ -312,7 +312,7 @@ class TrustService {
     // In production, this would integrate with a proper job queue system
     const activeGenerations = Array.from(this.pendingPairings.values())
       .filter(p => p.status === 'queued' || p.status === 'generating').length;
-    
+
     return activeGenerations > 0 ? activeGenerations : null;
   }
 
@@ -322,7 +322,7 @@ class TrustService {
   async retryPairingCodeGeneration(pairingCode, deviceId) {
     try {
       const pairing = this.pendingPairings.get(pairingCode);
-      
+
       if (!pairing) {
         throw new Error('Pairing code not found');
       }

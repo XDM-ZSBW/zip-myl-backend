@@ -4,7 +4,7 @@ const { authenticateDevice } = require('../middleware/auth');
 const { syncRateLimit } = require('../middleware/rateLimiter');
 
 // Real-time sync status
-router.get('/status', 
+router.get('/status',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
@@ -15,19 +15,19 @@ router.get('/status',
         lastSync: new Date().toISOString(),
         pendingChanges: 0,
         conflicts: 0,
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Get sync changes since last sync
-router.get('/changes', 
+router.get('/changes',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
     const { since, limit = 100 } = req.query;
-    
+
     // TODO: Implement actual sync logic
     res.json({
       success: true,
@@ -35,19 +35,19 @@ router.get('/changes',
         changes: [],
         lastSync: since || new Date().toISOString(),
         hasMore: false,
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Push local changes to server
-router.post('/push', 
+router.post('/push',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
     const { changes, deviceId, timestamp } = req.body;
-    
+
     // TODO: Implement change processing
     res.json({
       success: true,
@@ -55,19 +55,19 @@ router.post('/push',
         processed: changes?.length || 0,
         conflicts: 0,
         timestamp: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 // Pull changes from server
-router.post('/pull', 
+router.post('/pull',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
     const { since, deviceId, lastKnownVersion } = req.body;
-    
+
     // TODO: Implement change retrieval
     res.json({
       success: true,
@@ -75,38 +75,38 @@ router.post('/pull',
         changes: [],
         version: '1.0.0',
         timestamp: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 ),
 
 // Resolve sync conflicts
-router.post('/resolve', 
+router.post('/resolve',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
     const { conflicts, resolution } = req.body;
-    
+
     // TODO: Implement conflict resolution
     res.json({
       success: true,
       data: {
         resolved: conflicts?.length || 0,
         timestamp: new Date().toISOString(),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 ),
 
 // Get sync history
-router.get('/history', 
+router.get('/history',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
     const { limit = 50, offset = 0 } = req.query;
-    
+
     // TODO: Implement sync history
     res.json({
       success: true,
@@ -115,19 +115,19 @@ router.get('/history',
         total: 0,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 ),
 
 // Force full sync
-router.post('/full-sync', 
+router.post('/full-sync',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
     const { deviceId, force = false } = req.body;
-    
+
     // TODO: Implement full sync
     res.json({
       success: true,
@@ -135,14 +135,14 @@ router.post('/full-sync',
         syncType: 'full',
         started: new Date().toISOString(),
         deviceId: req.device.id,
-        estimatedDuration: '5-10 minutes'
-      }
+        estimatedDuration: '5-10 minutes',
+      },
     });
-  }
+  },
 ),
 
 // Get sync statistics
-router.get('/stats', 
+router.get('/stats',
   authenticateDevice,
   syncRateLimit,
   (req, res) => {
@@ -155,10 +155,10 @@ router.get('/stats',
         failedSyncs: 0,
         averageSyncTime: 0,
         lastSyncTime: null,
-        deviceId: req.device.id
-      }
+        deviceId: req.device.id,
+      },
     });
-  }
+  },
 );
 
 module.exports = router;

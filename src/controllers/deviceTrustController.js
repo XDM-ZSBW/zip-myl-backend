@@ -384,7 +384,7 @@ class DeviceTrustController {
       res.json({
         success: true,
         message: 'Retry initiated successfully',
-        pairingCode: pairingCode,
+        pairingCode,
         status: 'queued',
         progress: 0,
         currentStep: 'initializing',
@@ -424,8 +424,8 @@ class DeviceTrustController {
         error: {
           code: errorCode,
           message: error.message,
-          userAction: userAction,
-          retryAfter: retryAfter,
+          userAction,
+          retryAfter,
           alternativeFormats: ['uuid', 'short'],
           estimatedRetryTime: retryAfter > 0 ? `${Math.ceil(retryAfter / 60)} minutes` : 'immediate',
         },
@@ -469,10 +469,10 @@ class DeviceTrustController {
       })}\n\n`);
 
       // Set up status monitoring
-      const statusInterval = setInterval(async () => {
+      const statusInterval = setInterval(async() => {
         try {
           const status = await trustService.getPairingCodeStatus(pairingCode, deviceId);
-          
+
           if (!status) {
             // Pairing code not found or expired
             res.write(`data: ${JSON.stringify({
@@ -484,7 +484,7 @@ class DeviceTrustController {
               },
               timestamp: new Date().toISOString(),
             })}\n\n`);
-            
+
             clearInterval(statusInterval);
             res.end();
             return;
@@ -501,17 +501,17 @@ class DeviceTrustController {
             type: 'status_update',
             pending: status.status !== 'completed' && status.status !== 'failed',
             status: status.status,
-            progress: progress,
+            progress,
             currentStep: status.currentStep || 'initializing',
             message: status.message || this.getStatusMessage(status.status),
-            estimatedTime: estimatedTime,
-            canRetry: canRetry,
-            retryAfter: retryAfter,
+            estimatedTime,
+            canRetry,
+            retryAfter,
             queuePosition: status.queuePosition || null,
             errorDetails: status.errorDetails || null,
             generationStartedAt: status.createdAt,
             lastActivityAt: status.lastActivityAt || status.updatedAt,
-            pairingCode: pairingCode,
+            pairingCode,
             format: status.format || 'uuid',
             expiresAt: status.expiresAt,
             deviceId: status.deviceId,
@@ -526,7 +526,7 @@ class DeviceTrustController {
           }
         } catch (error) {
           logger.error('Error in SSE status stream:', error);
-          
+
           res.write(`data: ${JSON.stringify({
             type: 'error',
             error: {
@@ -536,7 +536,7 @@ class DeviceTrustController {
             },
             timestamp: new Date().toISOString(),
           })}\n\n`);
-          
+
           clearInterval(statusInterval);
           res.end();
         }
@@ -554,10 +554,9 @@ class DeviceTrustController {
         clearInterval(statusInterval);
         res.end();
       });
-
     } catch (error) {
       logger.error('Error setting up SSE stream:', error);
-      
+
       if (!res.headersSent) {
         res.status(500).json({
           success: false,

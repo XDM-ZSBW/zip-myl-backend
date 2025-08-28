@@ -74,7 +74,7 @@ describe('Device Authentication', () => {
   });
 
   describe('registerDevice', () => {
-    it('should register a new device successfully', async () => {
+    it('should register a new device successfully', async() => {
       mockPrisma.device.findFirst.mockResolvedValue(null);
       mockPrisma.device.create.mockResolvedValue({
         id: 'device-123',

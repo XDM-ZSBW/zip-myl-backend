@@ -119,7 +119,7 @@ console.warn = (...args) => {
 const crypto = require('crypto');
 if (!crypto.randomUUID) {
   crypto.randomUUID = () => {
-    return 'test-uuid-' + Math.random().toString(36).substr(2, 9);
+    return `test-uuid-${Math.random().toString(36).substr(2, 9)}`;
   };
 }
 
@@ -132,7 +132,7 @@ const originalRandom = Math.random;
 Math.random = jest.fn(() => 0.5);
 
 // Enhanced test database setup
-const setupTestDatabase = async () => {
+const setupTestDatabase = async() => {
   try {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient({
@@ -142,18 +142,18 @@ const setupTestDatabase = async () => {
         },
       },
     });
-    
+
     // Clean up test database
     await prisma.$executeRaw`DROP SCHEMA IF EXISTS public CASCADE`;
     await prisma.$executeRaw`CREATE SCHEMA public`;
-    
+
     // Run migrations
     const { execSync } = require('child_process');
-    execSync('npx prisma migrate deploy', { 
+    execSync('npx prisma migrate deploy', {
       env: { ...process.env, DATABASE_URL: testConfig.DATABASE_URL },
-      stdio: 'inherit' 
+      stdio: 'inherit',
     });
-    
+
     await prisma.$disconnect();
     console.log('✅ Test database setup complete');
   } catch (error) {
@@ -165,13 +165,13 @@ const setupTestDatabase = async () => {
 global.testUtils = {
   // Generate test extension ID
   generateExtensionId: () => `test-ext-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  
+
   // Generate test device ID
   generateDeviceId: (extensionId) => `chrome-extension-${extensionId}`,
-  
+
   // Generate test pairing code
   generatePairingCode: () => `test-code-${Math.random().toString(36).substr(2, 9)}`,
-  
+
   // Mock extension request headers
   mockExtensionHeaders: (extensionId) => ({
     'x-extension-id': extensionId,
@@ -179,7 +179,7 @@ global.testUtils = {
     'x-client-type': 'chrome-extension',
     'Content-Type': 'application/json',
   }),
-  
+
   // Mock extension storage data
   mockExtensionStorage: (extensionId, overrides = {}) => ({
     deviceId: `chrome-extension-${extensionId}`,
@@ -194,7 +194,7 @@ global.testUtils = {
     nftCollection: [],
     ...overrides,
   }),
-  
+
   // Create test user data
   createTestUser: (overrides = {}) => ({
     id: crypto.randomUUID(),
@@ -204,7 +204,7 @@ global.testUtils = {
     updatedAt: new Date(),
     ...overrides,
   }),
-  
+
   // Create test thought data
   createTestThought: (overrides = {}) => ({
     id: crypto.randomUUID(),
@@ -214,7 +214,7 @@ global.testUtils = {
     updatedAt: new Date(),
     ...overrides,
   }),
-  
+
   // Create test pairing code
   createTestPairingCode: (overrides = {}) => ({
     id: crypto.randomUUID(),
@@ -224,7 +224,7 @@ global.testUtils = {
     createdAt: new Date(),
     ...overrides,
   }),
-  
+
   // Mock Redis operations
   mockRedis: {
     get: jest.fn(),
@@ -233,7 +233,7 @@ global.testUtils = {
     exists: jest.fn(),
     expire: jest.fn(),
   },
-  
+
   // Reset all mocks
   resetMocks: () => {
     jest.clearAllMocks();
@@ -244,7 +244,7 @@ global.testUtils = {
         }
       });
     }
-    
+
     // Reset console mocks safely
     if (console.log && typeof console.log.mockClear === 'function') {
       console.log.mockClear();
@@ -261,22 +261,22 @@ global.testUtils = {
     if (console.error && typeof console.error.mockClear === 'function') {
       console.error.mockClear();
     }
-    
+
     // Reset Redis mocks
     Object.values(global.testUtils.mockRedis).forEach(mock => {
       if (mock.mockClear) mock.mockClear();
     });
   },
-  
+
   // Setup test environment
-  setupTestEnv: async () => {
+  setupTestEnv: async() => {
     await setupTestDatabase();
     global.testUtils.resetMocks();
   },
 };
 
 // Global test setup
-beforeAll(async () => {
+beforeAll(async() => {
   await global.testUtils.setupTestEnv();
 });
 
@@ -286,7 +286,7 @@ afterEach(() => {
 });
 
 // Cleanup after all tests
-afterAll(async () => {
+afterAll(async() => {
   // Clean up test database
   try {
     const { PrismaClient } = require('@prisma/client');
@@ -297,7 +297,7 @@ afterAll(async () => {
         },
       },
     });
-    
+
     await prisma.$disconnect();
   } catch (error) {
     // Ignore cleanup errors

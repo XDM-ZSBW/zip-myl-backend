@@ -156,7 +156,7 @@ const deepClone = (obj) => {
  * @param {number} bytes - Bytes to convert
  * @returns {string} Human readable format
  */
-export const formatBytes = (bytes) => {
+const formatBytes = (bytes) => {
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
@@ -170,7 +170,7 @@ export const formatBytes = (bytes) => {
  * Get current timestamp
  * @returns {string} ISO timestamp
  */
-export const getCurrentTimestamp = () => {
+const getCurrentTimestamp = () => {
   return new Date().toISOString();
 };
 
@@ -180,7 +180,7 @@ export const getCurrentTimestamp = () => {
  * @param {any} defaultValue - Default value if parsing fails
  * @returns {any} Parsed object or default value
  */
-export const safeJsonParse = (jsonString, defaultValue = null) => {
+const safeJsonParse = (jsonString, defaultValue = null) => {
   try {
     return JSON.parse(jsonString);
   } catch (error) {
@@ -195,7 +195,7 @@ export const safeJsonParse = (jsonString, defaultValue = null) => {
  * @param {string} defaultValue - Default value if stringifying fails
  * @returns {string} JSON string or default value
  */
-export const safeJsonStringify = (obj, defaultValue = '{}') => {
+const safeJsonStringify = (obj, defaultValue = '{}') => {
   try {
     return JSON.stringify(obj);
   } catch (error) {
@@ -204,7 +204,7 @@ export const safeJsonStringify = (obj, defaultValue = '{}') => {
   }
 };
 
-export default {
+module.exports = {
   generateId,
   formatError,
   sanitizeInput,

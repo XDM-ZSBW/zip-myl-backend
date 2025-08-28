@@ -8,7 +8,7 @@ const request = require('supertest');
 
 describe('Simple API Integration Tests', () => {
   describe('Health Endpoint', () => {
-    it('should return health status', async () => {
+    it('should return health status', async() => {
       const response = await request(app)
         .get('/health')
         .expect(200);
@@ -20,7 +20,7 @@ describe('Simple API Integration Tests', () => {
   });
 
   describe('Root Endpoint', () => {
-    it('should return API information', async () => {
+    it('should return API information', async() => {
       const response = await request(app)
         .get('/')
         .expect(200);
@@ -30,7 +30,7 @@ describe('Simple API Integration Tests', () => {
   });
 
   describe('404 Handler', () => {
-    it('should return 404 for non-existent routes', async () => {
+    it('should return 404 for non-existent routes', async() => {
       const response = await request(app)
         .get('/non-existent-route')
         .expect(404);
@@ -41,7 +41,7 @@ describe('Simple API Integration Tests', () => {
   });
 
   describe('CORS Configuration', () => {
-    it('should handle CORS preflight requests', async () => {
+    it('should handle CORS preflight requests', async() => {
       const response = await request(app)
         .options('/health')
         .set('Origin', 'chrome-extension://test-extension-id')
@@ -54,7 +54,7 @@ describe('Simple API Integration Tests', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle malformed JSON gracefully', async () => {
+    it('should handle malformed JSON gracefully', async() => {
       const response = await request(app)
         .post('/health')
         .set('Content-Type', 'application/json')
