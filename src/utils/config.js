@@ -8,6 +8,7 @@ const config = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT) || 8080,
   HOST: process.env.HOST || '0.0.0.0',
+  nodeEnv: process.env.NODE_ENV || 'development',
 
   // Database Configuration
   DATABASE_URL: process.env.DATABASE_URL || 'postgresql://localhost:5432/myl_zip',
