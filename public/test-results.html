@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyL.Zip Backend - Service Status</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .status.operational { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .endpoint {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 4px 0;
+            border-left: 3px solid #007bff;
+        }
+        .method {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .get { background: #28a745; color: white; }
+        .post { background: #007bff; color: white; }
+        .put { background: #ffc107; color: black; }
+        .delete { background: #dc3545; color: white; }
+        .metric {
+            display: inline-block;
+            margin: 10px 20px 10px 0;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        .footer {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MyL.Zip Backend</h1>
+        <p>Service Status & API Information</p>
+        <span class="status operational">Operational</span>
+    </div>
+
+    <div class="section">
+        <h2>System Status</h2>
+        <div class="metric">
+            <div class="metric-value" id="passRate">65.5%</div>
+            <div class="metric-label">Test Pass Rate</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">220</div>
+            <div class="metric-label">Total Tests</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">144</div>
+            <div class="metric-label">Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">76</div>
+            <div class="metric-label">Failed</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Core Services</h2>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span>/api/v1/health</span> - System health check
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span>/api/v1/health/live</span> - Liveness probe
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span>/api/v1/health/ready</span> - Readiness probe
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Authentication</h2>
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <span>/api/v1/auth/device/register</span> - Device registration
+        </div>
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <span>/api/v1/auth/device/authenticate</span> - Device authentication
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>NFT Services</h2>
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <span>/api/v1/nft/pairing-code/generate</span> - Generate pairing code
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span>/api/v1/nft/pairing-code/status/:code</span> - Check status
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>MyL.Zip Backend - Pure API Service</p>
+        <p>Last Updated: <span id="timestamp"></span></p>
+    </div>
+
+    <script>
+        // Minimal functionality for authorized service usage
+        function updateTimestamp() {
+            document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateTimestamp);
+        
+        // Expose minimal data for authorized bots/agents
+        window.mylZipBackendStatus = {
+            status: 'operational',
+            passRate: '65.5%',
+            totalTests: 220,
+            timestamp: new Date().toISOString()
+        };
+    </script>
+</body>
+</html>

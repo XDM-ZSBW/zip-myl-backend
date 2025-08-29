@@ -1,148 +1,87 @@
 const express = require('express');
+const path = require('path');
 const router = express.Router();
 
-/**
- * Basic health check endpoint
- * GET /api/v1/health
- */
+// Health check endpoint
 router.get('/', (req, res) => {
-  res.apiSuccess({
-    status: 'healthy',
-    service: 'MyL.Zip API',
-    version: '2.0.0',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  }, 'Service is healthy');
+  res.apiSuccess({ status: 'healthy', service: 'MyL.Zip API', version: '2.0.0' }, 'Service is healthy');
 });
 
-/**
- * Liveness probe for Kubernetes
- * GET /api/v1/health/live
- */
+// Kubernetes liveness probe
 router.get('/live', (req, res) => {
-  res.apiSuccess({
-    status: 'alive',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  }, 'Service is alive');
+  res.apiSuccess({ status: 'alive' }, 'Service is alive');
 });
 
-/**
- * Readiness probe for Kubernetes
- * GET /api/v1/health/ready
- */
+// Kubernetes readiness probe
 router.get('/ready', (req, res) => {
-  // TODO: Add actual readiness checks
-  // - Database connectivity
-  // - Redis connectivity
-  // - External service status
-  
   const isReady = true; // Placeholder - implement actual checks
-  
   if (isReady) {
-    res.apiSuccess({
-      status: 'ready',
-      timestamp: new Date().toISOString(),
-      checks: {
-        database: 'connected',
-        redis: 'connected',
-        externalServices: 'available'
-      }
-    }, 'Service is ready to accept requests');
+    res.apiSuccess({ status: 'ready' }, 'Service is ready to accept requests');
   } else {
-    res.apiError({
-      code: 'SERVICE_NOT_READY',
-      message: 'Service is not ready to accept requests',
-      userAction: 'Please wait for the service to become ready',
-      details: {
-        reason: 'One or more dependencies are unavailable'
-      }
-    }, 503);
+    res.apiError({ code: 'SERVICE_NOT_READY' }, 503);
   }
 });
 
-/**
- * Detailed health check
- * GET /api/v1/health/detailed
- */
+// Minimal service status page for authorized users only
+router.get('/status', (req, res) => {
+  const statusPath = path.join(__dirname, '../../public/test-results.html');
+  res.sendFile(statusPath, (err) => {
+    if (err) {
+      // Fallback to JSON response if HTML file not found
+      res.apiSuccess({
+        message: 'Service Status',
+        description: 'Minimal HTML interface for authorized service usage',
+        endpoints: {
+          html: '/api/v1/health/status',
+          json: '/api/v1/health',
+          metrics: '/api/v1/metrics'
+        },
+        note: 'This endpoint provides minimal HTML for essential service information only'
+      }, 'Service status interface available');
+    }
+  });
+});
+
+// Detailed health status
 router.get('/detailed', (req, res) => {
-  // TODO: Implement actual health checks
   const healthStatus = {
-    status: 'healthy',
+    service: 'MyL.Zip Backend API',
+    version: '2.0.0',
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    version: '2.0.0',
-    checks: {
-      database: {
-        status: 'healthy',
-        responseTime: '2ms',
-        lastCheck: new Date().toISOString()
-      },
-      redis: {
-        status: 'healthy',
-        responseTime: '1ms',
-        lastCheck: new Date().toISOString()
-      },
-      externalServices: {
-        status: 'healthy',
-        services: ['nft-generation', 'device-trust', 'thoughts-management'],
-        lastCheck: new Date().toISOString()
-      },
-      system: {
-        status: 'healthy',
-        memory: {
-          used: process.memoryUsage().heapUsed,
-          total: process.memoryUsage().heapTotal,
-          external: process.memoryUsage().external
-        },
-        cpu: process.cpuUsage(),
-        lastCheck: new Date().toISOString()
-      },
-      queue: {
-        status: 'healthy',
-        pendingJobs: 0,
-        activeJobs: 0,
-        completedJobs: 0,
-        failedJobs: 0,
-        lastCheck: new Date().toISOString()
-      }
+    memory: process.memoryUsage(),
+    platform: process.platform,
+    nodeVersion: process.version,
+    endpoints: {
+      health: '/api/v1/health',
+      status: '/api/v1/health/status',
+      metrics: '/api/v1/metrics',
+      docs: '/api/v1/docs'
+    },
+    features: {
+      authentication: 'enabled',
+      rateLimiting: 'enabled',
+      nftService: 'enabled',
+      websocket: 'enabled',
+      cors: 'enabled'
     }
   };
 
   res.apiSuccess(healthStatus, 'Detailed health status retrieved successfully');
 });
 
-/**
- * Health check with specific component
- * GET /api/v1/health/:component
- */
+// Component-specific health checks
 router.get('/:component', (req, res) => {
   const { component } = req.params;
   
   const componentChecks = {
-    database: () => ({
-      status: 'healthy',
-      responseTime: '2ms',
-      lastCheck: new Date().toISOString()
-    }),
-    redis: () => ({
-      status: 'healthy',
-      responseTime: '1ms',
-      lastCheck: new Date().toISOString()
-    }),
-    nft: () => ({
-      status: 'healthy',
-      generationQueue: 'empty',
-      activeGenerations: 0,
-      lastCheck: new Date().toISOString()
-    }),
-    auth: () => ({
-      status: 'healthy',
-      activeSessions: 0,
-      lastCheck: new Date().toISOString()
-    })
+    database: () => ({ status: 'healthy', type: 'postgresql', mocked: true }),
+    redis: () => ({ status: 'fallback', type: 'memory', reason: 'Redis not available' }),
+    nft: () => ({ status: 'healthy', type: 'service', encryption: 'enabled' }),
+    auth: () => ({ status: 'healthy', type: 'jwt', deviceAuth: 'enabled' }),
+    websocket: () => ({ status: 'healthy', type: 'service', connections: 0 }),
+    rateLimit: () => ({ status: 'healthy', type: 'memory', fallback: true })
   };
 
   if (componentChecks[component]) {
@@ -152,10 +91,10 @@ router.get('/:component', (req, res) => {
     res.apiError({
       code: 'INVALID_HEALTH_COMPONENT',
       message: `Unknown health component: ${component}`,
-      userAction: 'Use one of the available health components',
+      userAction: 'Use one of the available components',
       details: {
-        requestedComponent: component,
-        availableComponents: Object.keys(componentChecks)
+        availableComponents: Object.keys(componentChecks),
+        example: '/api/v1/health/database'
       }
     }, 400);
   }
