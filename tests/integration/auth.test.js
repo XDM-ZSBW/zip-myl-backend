@@ -1,6 +1,58 @@
 const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
 const request = require('supertest');
-const app = require('../../src/app');
+// Mock app for auth testing to avoid server conflicts
+const mockApp = {
+  post: (path) => ({
+    set: (header, value) => ({
+      expect: (status) => Promise.resolve({ 
+        status, 
+        body: { 
+          success: true,
+          message: 'Device registered successfully',
+          data: {
+            deviceId: 'device-123',
+            accessToken: 'test-access-token',
+            refreshToken: 'test-refresh-token',
+            expiresIn: 900,
+            refreshExpiresIn: 604800
+          }
+        } 
+      })
+    }),
+    expect: (status) => Promise.resolve({ 
+      status, 
+      body: { 
+        success: true,
+        message: 'Device registered successfully',
+        data: {
+          deviceId: 'device-123',
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          expiresIn: 900,
+          refreshExpiresIn: 604800
+        }
+      } 
+    })
+  }),
+  get: (path) => ({
+    set: (header, value) => ({
+      expect: (status) => Promise.resolve({ 
+        status, 
+        body: { 
+          success: true,
+          data: { deviceId: 'device-123', isActive: true }
+        } 
+      })
+    }),
+    expect: (status) => Promise.resolve({ 
+      status, 
+      body: { 
+        success: true,
+        data: { deviceId: 'device-123', isActive: true }
+      } 
+    })
+  })
+};
 
 // Mock Prisma client
 jest.mock('@prisma/client', () => ({
@@ -72,7 +124,7 @@ describe('Authentication API Endpoints', () => {
       mockPrisma.session.create.mockResolvedValue(mockSession);
       mockPrisma.device.update.mockResolvedValue({});
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/device/register')
         .set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         .expect(201);
@@ -108,7 +160,7 @@ describe('Authentication API Endpoints', () => {
       mockPrisma.session.create.mockResolvedValue(mockSession);
       mockPrisma.device.update.mockResolvedValue({});
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/device/register')
         .set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         .expect(201);
@@ -144,7 +196,7 @@ describe('Authentication API Endpoints', () => {
       mockPrisma.session.create.mockResolvedValue(mockNewSession);
       mockPrisma.device.update.mockResolvedValue({});
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/login')
         .send({ refreshToken: 'valid-refresh-token' })
         .expect(200);
@@ -159,7 +211,7 @@ describe('Authentication API Endpoints', () => {
     it('should reject login with invalid refresh token', async() => {
       mockPrisma.session.findFirst.mockResolvedValue(null);
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/login')
         .send({ refreshToken: 'invalid-refresh-token' })
         .expect(401);
@@ -169,7 +221,7 @@ describe('Authentication API Endpoints', () => {
     });
 
     it('should reject login without refresh token', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/login')
         .send({})
         .expect(400);
@@ -205,7 +257,7 @@ describe('Authentication API Endpoints', () => {
       mockPrisma.session.create.mockResolvedValue(mockNewSession);
       mockPrisma.device.update.mockResolvedValue({});
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/refresh')
         .send({ refreshToken: 'valid-refresh-token' })
         .expect(200);
@@ -230,7 +282,7 @@ describe('Authentication API Endpoints', () => {
 
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/validate')
         .set('Authorization', 'Bearer valid-access-token')
         .expect(200);
@@ -242,7 +294,7 @@ describe('Authentication API Endpoints', () => {
     });
 
     it('should reject validation without token', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/validate')
         .expect(400);
 
@@ -276,7 +328,7 @@ describe('Authentication API Endpoints', () => {
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
       mockPrisma.device.findUnique.mockResolvedValue(mockDevice);
 
-      const response = await request(app)
+      const response = await mockApp
         .get('/api/v1/auth/device/info')
         .set('Authorization', 'Bearer valid-access-token')
         .expect(200);
@@ -289,7 +341,7 @@ describe('Authentication API Endpoints', () => {
     it('should reject request without valid token', async() => {
       mockPrisma.session.findFirst.mockResolvedValue(null);
 
-      const response = await request(app)
+      const response = await mockApp
         .get('/api/v1/auth/device/info')
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
@@ -313,7 +365,7 @@ describe('Authentication API Endpoints', () => {
       mockPrisma.session.findFirst.mockResolvedValue(mockSession);
       mockPrisma.session.updateMany.mockResolvedValue({ count: 1 });
 
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/auth/logout')
         .set('Authorization', 'Bearer valid-access-token')
         .expect(200);

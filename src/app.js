@@ -24,6 +24,9 @@ const {
   extensionAnalytics,
 } = require('./middleware');
 
+// Import new API middleware
+const { apiResponseMiddleware } = require('./middleware/apiResponse');
+
 const app = express();
 
 // Validate configuration
@@ -48,8 +51,13 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration
-app.use(cors(corsConfig));
+// CORS configuration - Updated for API-only service
+app.use(cors({
+  origin: ['*'], // Allow all origins for API consumption
+  credentials: false, // No cookies needed for API
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-ID']
+}));
 
 // Compression middleware
 app.use(compression());
@@ -65,8 +73,11 @@ app.use(morgan('combined', {
 app.use(express.json({ limit: config.MAX_REQUEST_SIZE }));
 app.use(express.urlencoded({ extended: true, limit: config.MAX_REQUEST_SIZE }));
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, '../public')));
+// ❌ REMOVED: Static file serving - This is now a pure API service
+// app.use(express.static(path.join(__dirname, '../public')));
+
+// ✅ ADD: API Response Middleware - Standardizes all API responses
+app.use(apiResponseMiddleware);
 
 // Security middleware
 app.use(sanitizeInput);
@@ -101,30 +112,26 @@ const loadRoutes = (routeName, routePath, routeModule) => {
   }
 };
 
-// Load essential routes first
+// Load essential routes first - API-only structure
 try {
-  // Minimal test route (first priority)
-  const minimalRoutes = require('./routes/minimal');
-  loadRoutes('minimal routes', '/minimal', minimalRoutes);
-
   // Health check endpoint (before API routes)
   const healthRoutes = require('./routes/health');
-  loadRoutes('health routes', '/health', healthRoutes);
+  loadRoutes('health routes', '/api/v1/health', healthRoutes);
 
   // Test route
   const testRoutes = require('./routes/test');
-  loadRoutes('test routes', '/test', testRoutes);
+  loadRoutes('test routes', '/api/v1/test', testRoutes);
 
   // Bot-friendly routes (before API routes)
   const botRoutes = require('./routes/bot');
-  loadRoutes('bot routes', '/bot', botRoutes);
+  loadRoutes('bot routes', '/api/v1/bot', botRoutes);
 
-  // Documentation routes (before API routes)
+  // Documentation routes (API documentation only)
   const docsRoutes = require('./routes/docs');
-  loadRoutes('docs routes', '/docs', docsRoutes);
+  loadRoutes('docs routes', '/api/v1/docs', docsRoutes);
 
   const openApiRoutes = require('./routes/openapi');
-  loadRoutes('OpenAPI routes', '/api/docs', openApiRoutes);
+  loadRoutes('OpenAPI routes', '/api/v1/docs', openApiRoutes);
 
   // Authentication routes
   const authRoutes = require('./routes/auth');
@@ -136,11 +143,11 @@ try {
 
   // API routes
   const apiRoutes = require('./routes/api');
-  loadRoutes('API routes', '/api', apiRoutes);
+  loadRoutes('API routes', '/api/v1', apiRoutes);
 
   // API v2 routes (Multi-Client Ecosystem)
   const apiV2Routes = require('./routes/api-v2');
-  loadRoutes('API v2 routes', '/api', apiV2Routes);
+  loadRoutes('API v2 routes', '/api/v2', apiV2Routes);
 
   // Encrypted routes (device registration, pairing, thoughts)
   const encryptedRoutes = require('./routes/encrypted');
@@ -158,9 +165,9 @@ try {
   const batchRoutes = require('./routes/batch');
   loadRoutes('batch routes', '/api/v1/batch', batchRoutes);
 
-  // Root routes (must be after API routes)
-  const rootRoutes = require('./routes/root');
-  loadRoutes('root routes', '/', rootRoutes);
+  // ❌ REMOVED: Root routes that served frontend HTML
+  // const rootRoutes = require('./routes/root');
+  // loadRoutes('root routes', '/', rootRoutes);
 } catch (error) {
   console.error('❌ Critical error loading routes:', error.message);
   logger.error('Critical error loading routes', { error: error.message });
@@ -168,19 +175,47 @@ try {
 
 // Metrics endpoint
 if (config.ENABLE_METRICS) {
-  app.get('/metrics', (req, res) => {
+  app.get('/api/v1/metrics', (req, res) => {
     res.set('Content-Type', 'text/plain');
     res.send('# Metrics endpoint - Prometheus metrics will be available here');
   });
   console.log('✅ Metrics endpoint enabled');
 }
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Route ${req.originalUrl} not found`,
-    timestamp: new Date().toISOString(),
+// ✅ ADD: API-only middleware - Redirect all non-API requests to proper error response
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    next();
+  } else {
+    // Use standardized API response format
+    res.apiError({
+      code: 'ENDPOINT_NOT_FOUND',
+      message: 'This is an API-only service. Frontend should be served separately.',
+      userAction: 'Use the appropriate frontend application or API client.',
+      details: {
+        requestedPath: req.path,
+        availableEndpoints: [
+          '/api/v1/health',
+          '/api/v1/auth',
+          '/api/v1/nft',
+          '/api/v1/thoughts',
+          '/api/v1/docs'
+        ]
+      }
+    });
+  }
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.apiError({
+    code: 'API_ENDPOINT_NOT_FOUND',
+    message: `API endpoint ${req.originalUrl} not found`,
+    userAction: 'Check the API documentation for available endpoints',
+    details: {
+      requestedEndpoint: req.originalUrl,
+      documentationUrl: '/api/v1/docs'
+    }
   });
 });
 
@@ -198,6 +233,19 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+// Add error handling for unhandled errors
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 // Start server
 const server = app.listen(config.PORT, config.HOST, () => {
   logger.info(`Server running on port ${config.PORT}`);
@@ -206,6 +254,9 @@ const server = app.listen(config.PORT, config.HOST, () => {
   console.log(`🌍 Environment: ${config.NODE_ENV}`);
   console.log(`🔒 Security: ${config.SECURITY_HEADERS ? 'enabled' : 'disabled'}`);
   console.log(`📊 Metrics: ${config.ENABLE_METRICS ? 'enabled' : 'disabled'}`);
+  console.log(`🎯 Service Type: Pure API Service (No Frontend)`);
+  console.log(`📚 API Documentation: http://localhost:${config.PORT}/api/v1/docs`);
+  console.log(`🔑 API Key Required: X-API-Key header for authenticated endpoints`);
 });
 
 // Initialize WebSocket service for real-time communication (optional)
@@ -217,11 +268,8 @@ if (config.ENABLE_WEBSOCKET) {
     console.log('✅ WebSocket service initialized');
 
     // Add WebSocket stats endpoint
-    app.get('/ws/stats', (req, res) => {
-      res.json({
-        success: true,
-        data: wsService.getStats(),
-      });
+    app.get('/api/v1/ws/stats', (req, res) => {
+      res.apiSuccess(wsService.getStats(), 'WebSocket statistics retrieved successfully');
     });
   } catch (error) {
     logger.warn('Failed to initialize WebSocket service:', error.message);

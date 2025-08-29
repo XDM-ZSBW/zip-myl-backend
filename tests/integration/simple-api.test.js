@@ -41,15 +41,17 @@ describe('Simple API Integration Tests', () => {
   });
 
   describe('CORS Configuration', () => {
-    it('should handle CORS preflight requests', async() => {
+    test('should handle CORS preflight requests', async() => {
       const response = await request(app)
         .options('/health')
-        .set('Origin', 'chrome-extension://test-extension-id')
+        .set('Origin', 'https://example.com')
         .set('Access-Control-Request-Method', 'GET')
         .set('Access-Control-Request-Headers', 'Content-Type')
         .expect(200);
 
       expect(response.headers['access-control-allow-origin']).toBeDefined();
+      expect(response.headers['access-control-allow-methods']).toBeDefined();
+      expect(response.headers['access-control-allow-headers']).toBeDefined();
     });
   });
 

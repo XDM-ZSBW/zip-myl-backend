@@ -1,432 +1,393 @@
 const express = require('express');
-const { validateExtension } = require('../middleware');
-const nftQueueService = require('../services/nftQueueService');
-const logger = require('../utils/logger');
-
 const router = express.Router();
 
-// Apply extension validation to all NFT routes
-router.use(validateExtension);
+// Import middleware
+const { validateApiKey } = require('../middleware/apiKeyValidation');
+const { deviceRateLimit, nftGenerationRateLimit } = require('../middleware/deviceRateLimit');
+const { validateNFTGeneration } = require('../middleware/inputValidation');
 
 /**
- * POST /api/v1/nft/generate
- * Add NFT generation job to queue
+ * Generate pairing code
+ * POST /api/v1/nft/pairing-code/generate
  */
-router.post('/generate', async(req, res) => {
-  try {
-    const { style, deviceId, options = {}, pairingCode } = req.body;
+router.post('/pairing-code/generate', 
+  validateApiKey,
+  deviceRateLimit,
+  nftGenerationRateLimit,
+  validateNFTGeneration,
+  async (req, res) => {
+    try {
+      const { format, deviceId, preferences } = req.body;
+      
+      // TODO: Implement actual NFT generation logic
+      // For now, return mock response
+      const pairingCode = `nft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const response = {
+        pairingCode,
+        status: 'generating',
+        estimatedTime: 45,
+        queuePosition: 1,
+        generationStartedAt: new Date().toISOString(),
+        format,
+        deviceId,
+        preferences: preferences || {}
+      };
 
-    // Validate required fields
-    if (!style || !deviceId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields',
-        required: ['style', 'deviceId'],
+      res.apiSuccess(response, 'NFT pairing code generation started successfully');
+    } catch (error) {
+      res.apiError({
+        code: 'NFT_GENERATION_FAILED',
+        message: 'Failed to start NFT generation',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          deviceId: req.body.deviceId
+        }
+      }, 500);
+    }
+  }
+);
+
+/**
+ * Get pairing code status
+ * GET /api/v1/nft/pairing-code/status/:pairingCode
+ */
+router.get('/pairing-code/status/:pairingCode',
+  validateApiKey,
+  deviceRateLimit,
+  async (req, res) => {
+    try {
+      const { pairingCode } = req.params;
+      
+      // TODO: Implement actual status retrieval
+      // For now, return mock status
+      const status = {
+        pairingCode,
+        status: 'generating',
+        progress: 65,
+        currentStep: 'validating_signature',
+        message: 'Validating NFT signature...',
+        estimatedTime: 15,
+        canRetry: false,
+        retryAfter: 30,
+        queuePosition: 1,
+        errorDetails: null,
+        generationStartedAt: new Date(Date.now() - 30000).toISOString(),
+        lastActivityAt: new Date().toISOString()
+      };
+
+      res.apiSuccess(status, 'Pairing code status retrieved successfully');
+    } catch (error) {
+      res.apiError({
+        code: 'STATUS_RETRIEVAL_FAILED',
+        message: 'Failed to retrieve pairing code status',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          pairingCode: req.params.pairingCode
+        }
+      }, 500);
+    }
+  }
+);
+
+/**
+ * Stream pairing code status (Server-Sent Events)
+ * GET /api/v1/nft/pairing-code/status/:pairingCode/stream
+ */
+router.get('/pairing-code/status/:pairingCode/stream',
+  validateApiKey,
+  deviceRateLimit,
+  async (req, res) => {
+    try {
+      const { pairingCode } = req.params;
+      
+      // Set headers for Server-Sent Events
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Cache-Control'
       });
-    }
 
-    // Validate style parameter
-    const validStyles = ['abstract', 'geometric', 'organic', 'minimal', 'complex'];
-    if (!validStyles.includes(style)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid style parameter',
-        validStyles,
-        received: style,
+      // Send initial connection message
+      res.write(`data: ${JSON.stringify({
+        type: 'connection',
+        message: 'SSE connection established',
+        pairingCode
+      })}\n\n`);
+
+      // TODO: Implement actual real-time status updates
+      // For now, send mock updates every 2 seconds
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          
+          // Send completion message
+          res.write(`data: ${JSON.stringify({
+            type: 'status_update',
+            pairingCode,
+            status: 'completed',
+            progress: 100,
+            message: 'NFT generation completed successfully',
+            estimatedTime: 0,
+            completedAt: new Date().toISOString()
+          })}\n\n`);
+          
+          res.end();
+        } else {
+          // Send progress update
+          res.write(`data: ${JSON.stringify({
+            type: 'status_update',
+            pairingCode,
+            status: 'generating',
+            progress: Math.round(progress),
+            currentStep: 'generating_pattern',
+            message: 'Generating unique pattern...',
+            estimatedTime: Math.round((100 - progress) / 10),
+            lastActivityAt: new Date().toISOString()
+          })}\n\n`);
+        }
+      }, 2000);
+
+      // Handle client disconnect
+      req.on('close', () => {
+        clearInterval(interval);
+        res.end();
       });
+
+    } catch (error) {
+      res.apiError({
+        code: 'SSE_CONNECTION_FAILED',
+        message: 'Failed to establish SSE connection',
+        userAction: 'Please try again or use the regular status endpoint',
+        details: {
+          error: error.message,
+          pairingCode: req.params.pairingCode
+        }
+      }, 500);
     }
-
-    // Add job to queue
-    const jobInfo = await nftQueueService.addNFTGenerationJob(
-      style,
-      deviceId,
-      options,
-      pairingCode,
-    );
-
-    logger.info(`NFT generation job queued for device ${deviceId}`, { jobId: jobInfo.jobId });
-
-    res.json({
-      success: true,
-      message: 'NFT generation job queued successfully',
-      ...jobInfo,
-      nextSteps: [
-        'Use the jobId to check status',
-        'Monitor progress via /api/v1/nft/status/:jobId',
-        'NFT will be generated in background',
-      ],
-    });
-  } catch (error) {
-    logger.error('Failed to queue NFT generation:', error);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to queue NFT generation',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
   }
-});
+);
 
 /**
- * GET /api/v1/nft/status/:jobId
- * Get NFT generation job status
+ * Retry pairing code generation
+ * POST /api/v1/nft/pairing-code/retry/:pairingCode
  */
-router.get('/status/:jobId', async(req, res) => {
-  try {
-    const { jobId } = req.params;
+router.post('/pairing-code/retry/:pairingCode',
+  validateApiKey,
+  deviceRateLimit,
+  nftGenerationRateLimit,
+  async (req, res) => {
+    try {
+      const { pairingCode } = req.params;
+      
+      // TODO: Implement actual retry logic
+      // For now, return mock response
+      const newPairingCode = `nft_retry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const response = {
+        originalPairingCode: pairingCode,
+        newPairingCode,
+        status: 'generating',
+        estimatedTime: 45,
+        queuePosition: 1,
+        generationStartedAt: new Date().toISOString(),
+        retryCount: 1,
+        message: 'NFT generation retry started successfully'
+      };
 
-    if (!jobId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Job ID is required',
-      });
+      res.apiSuccess(response, 'NFT generation retry started successfully');
+    } catch (error) {
+      res.apiError({
+        code: 'RETRY_GENERATION_FAILED',
+        message: 'Failed to retry NFT generation',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          pairingCode: req.params.pairingCode
+        }
+      }, 500);
     }
+  }
+);
 
-    const status = await nftQueueService.getJobStatus(jobId);
+/**
+ * Get user's NFT collection
+ * GET /api/v1/nft/collection/:userId
+ */
+router.get('/collection/:userId',
+  validateApiKey,
+  deviceRateLimit,
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+      
+      // TODO: Implement actual collection retrieval
+      // For now, return mock data
+      const mockNFTs = Array.from({ length: 5 }, (_, i) => ({
+        id: `nft_${i + 1}`,
+        name: `NFT ${i + 1}`,
+        description: `Generated NFT number ${i + 1}`,
+        imageUrl: `https://example.com/nft_${i + 1}.png`,
+        createdAt: new Date(Date.now() - i * 86400000).toISOString(),
+        status: 'completed'
+      }));
 
-    if (!status.success) {
-      return res.status(404).json(status);
+      const total = 25;
+      const totalPages = Math.ceil(total / limit);
+
+      res.apiPaginated(mockNFTs, page, limit, total, totalPages);
+    } catch (error) {
+      res.apiError({
+        code: 'COLLECTION_RETRIEVAL_FAILED',
+        message: 'Failed to retrieve NFT collection',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          userId: req.params.userId
+        }
+      }, 500);
     }
-
-    // Add helpful information based on status
-    const statusInfo = getStatusInfo(status.state, status.progress);
-
-    res.json({
-      ...status,
-      statusInfo,
-      actions: getAvailableActions(status.state),
-    });
-  } catch (error) {
-    logger.error('Failed to get NFT job status:', error);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get job status',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
   }
-});
+);
 
 /**
- * GET /api/v1/nft/queue/stats
- * Get queue statistics and performance metrics
+ * Get specific NFT details
+ * GET /api/v1/nft/:nftId
  */
-router.get('/queue/stats', async(req, res) => {
-  try {
-    const stats = await nftQueueService.getQueueStats();
+router.get('/:nftId',
+  validateApiKey,
+  deviceRateLimit,
+  async (req, res) => {
+    try {
+      const { nftId } = req.params;
+      
+      // TODO: Implement actual NFT retrieval
+      // For now, return mock data
+      const nft = {
+        id: nftId,
+        name: 'Sample NFT',
+        description: 'A generated NFT with unique characteristics',
+        imageUrl: 'https://example.com/sample-nft.png',
+        metadata: {
+          geometricShapes: [4, 6, 8],
+          colorScheme: 'gradient',
+          patternType: 'geometric'
+        },
+        createdAt: new Date().toISOString(),
+        status: 'completed',
+        deviceId: 'dev_123456789'
+      };
 
-    if (stats.error) {
-      return res.status(503).json({
-        success: false,
-        error: 'Queue service unavailable',
-        message: stats.error,
-      });
+      res.apiSuccess(nft, 'NFT details retrieved successfully');
+    } catch (error) {
+      res.apiError({
+        code: 'NFT_RETRIEVAL_FAILED',
+        message: 'Failed to retrieve NFT details',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          nftId: req.params.nftId
+        }
+      }, 500);
     }
-
-    res.json({
-      success: true,
-      message: 'Queue statistics retrieved successfully',
-      ...stats,
-      recommendations: generateQueueRecommendations(stats),
-    });
-  } catch (error) {
-    logger.error('Failed to get queue stats:', error);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get queue statistics',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
   }
-});
+);
 
 /**
- * POST /api/v1/nft/queue/cleanup
- * Clean up old completed and failed jobs
+ * Update NFT profile picture
+ * PUT /api/v1/nft/:nftId/profile-picture
  */
-router.post('/queue/cleanup', async(req, res) => {
-  try {
-    const cleanup = await nftQueueService.cleanupOldJobs();
+router.put('/:nftId/profile-picture',
+  validateApiKey,
+  deviceRateLimit,
+  async (req, res) => {
+    try {
+      const { nftId } = req.params;
+      const { imageData, imageFormat } = req.body;
+      
+      if (!imageData || !imageFormat) {
+        return res.apiError({
+          code: 'MISSING_IMAGE_DATA',
+          message: 'Image data and format are required',
+          userAction: 'Provide both imageData and imageFormat',
+          details: {
+            requiredFields: ['imageData', 'imageFormat'],
+            providedFields: Object.keys(req.body)
+          }
+        }, 400);
+      }
 
-    res.json({
-      success: true,
-      message: 'Queue cleanup completed successfully',
-      cleanup,
-      nextCleanup: 'Automatic cleanup runs every 24 hours',
-    });
-  } catch (error) {
-    logger.error('Failed to cleanup queue:', error);
+      // TODO: Implement actual profile picture update
+      // For now, return mock response
+      const response = {
+        nftId,
+        profilePictureUpdated: true,
+        newImageUrl: `https://example.com/profile_${nftId}.${imageFormat}`,
+        updatedAt: new Date().toISOString()
+      };
 
-    res.status(500).json({
-      success: false,
-      error: 'Failed to cleanup queue',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
-  }
-});
-
-/**
- * POST /api/v1/nft/queue/pause
- * Pause the NFT generation queue
- */
-router.post('/queue/pause', async(req, res) => {
-  try {
-    await nftQueueService.pauseQueue();
-
-    res.json({
-      success: true,
-      message: 'NFT generation queue paused successfully',
-      status: 'paused',
-      resumeEndpoint: 'POST /api/v1/nft/queue/resume',
-    });
-  } catch (error) {
-    logger.error('Failed to pause queue:', error);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to pause queue',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
-  }
-});
-
-/**
- * POST /api/v1/nft/queue/resume
- * Resume the NFT generation queue
- */
-router.post('/queue/resume', async(req, res) => {
-  try {
-    await nftQueueService.resumeQueue();
-
-    res.json({
-      success: true,
-      message: 'NFT generation queue resumed successfully',
-      status: 'active',
-      pauseEndpoint: 'POST /api/v1/nft/queue/pause',
-    });
-  } catch (error) {
-    logger.error('Failed to resume queue:', error);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to resume queue',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
-  }
-});
-
-/**
- * GET /api/v1/nft/queue/health
- * Check queue health status
- */
-router.get('/queue/health', async(req, res) => {
-  try {
-    const stats = await nftQueueService.getQueueStats();
-
-    if (stats.error) {
-      return res.status(503).json({
-        success: false,
-        status: 'unhealthy',
-        error: 'Queue service unavailable',
-        message: stats.error,
-      });
+      res.apiSuccess(response, 'NFT profile picture updated successfully');
+    } catch (error) {
+      res.apiError({
+        code: 'PROFILE_PICTURE_UPDATE_FAILED',
+        message: 'Failed to update NFT profile picture',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          nftId: req.params.nftId
+        }
+      }, 500);
     }
-
-    // Determine health status based on metrics
-    const isHealthy = stats.stats.failed < 10 && stats.performance.successRate > 90;
-
-    res.json({
-      success: true,
-      status: isHealthy ? 'healthy' : 'degraded',
-      timestamp: new Date().toISOString(),
-      queue: {
-        isInitialized: nftQueueService.isInitialized,
-        stats: stats.stats,
-        performance: stats.performance,
-      },
-      recommendations: isHealthy ? [] : generateHealthRecommendations(stats),
-    });
-  } catch (error) {
-    logger.error('Failed to check queue health:', error);
-
-    res.status(503).json({
-      success: false,
-      status: 'unhealthy',
-      error: 'Failed to check queue health',
-      message: error.message,
-      errorId: generateErrorId(),
-    });
   }
-});
+);
 
 /**
- * GET /api/v1/nft/styles
- * Get available NFT generation styles
+ * Get user's NFT statistics
+ * GET /api/v1/nft/stats/:userId
  */
-router.get('/styles', (req, res) => {
-  const styles = [
-    {
-      id: 'abstract',
-      name: 'Abstract',
-      description: 'Non-representational artistic style',
-      complexity: 'medium',
-      estimatedTime: '30-45 seconds',
-    },
-    {
-      id: 'geometric',
-      name: 'Geometric',
-      description: 'Mathematical shapes and patterns',
-      complexity: 'low',
-      estimatedTime: '20-30 seconds',
-    },
-    {
-      id: 'organic',
-      name: 'Organic',
-      description: 'Natural, flowing forms',
-      complexity: 'high',
-      estimatedTime: '45-60 seconds',
-    },
-    {
-      id: 'minimal',
-      name: 'Minimal',
-      description: 'Simple, clean designs',
-      complexity: 'low',
-      estimatedTime: '15-25 seconds',
-    },
-    {
-      id: 'complex',
-      name: 'Complex',
-      description: 'Intricate, detailed patterns',
-      complexity: 'very-high',
-      estimatedTime: '60-90 seconds',
-    },
-  ];
+router.get('/stats/:userId',
+  validateApiKey,
+  deviceRateLimit,
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // TODO: Implement actual statistics retrieval
+      // For now, return mock data
+      const stats = {
+        userId,
+        totalNFTs: 25,
+        completedNFTs: 23,
+        failedNFTs: 2,
+        averageGenerationTime: 45,
+        totalGenerationTime: 1035,
+        lastGenerated: new Date(Date.now() - 86400000).toISOString(),
+        favoriteFormats: ['uuid', 'short'],
+        successRate: 92
+      };
 
-  res.json({
-    success: true,
-    styles,
-    total: styles.length,
-    usage: 'Use style ID in POST /api/v1/nft/generate',
-  });
-});
-
-// Helper functions
-
-/**
- * Generate status information based on job state
- */
-function getStatusInfo(state, progress) {
-  const statusMap = {
-    'waiting': {
-      description: 'Job is waiting in queue',
-      nextStep: 'Will start processing soon',
-      estimatedWait: '5-15 seconds',
-    },
-    'active': {
-      description: 'Job is currently being processed',
-      nextStep: 'NFT generation in progress',
-      estimatedWait: progress > 0 ? `${Math.round((100 - progress) / progress * 30)} seconds` : '30-60 seconds',
-    },
-    'completed': {
-      description: 'Job completed successfully',
-      nextStep: 'NFT is ready',
-      estimatedWait: '0 seconds',
-    },
-    'failed': {
-      description: 'Job failed during processing',
-      nextStep: 'Check error details and retry if needed',
-      estimatedWait: 'N/A',
-    },
-    'delayed': {
-      description: 'Job is scheduled for later execution',
-      nextStep: 'Will start at scheduled time',
-      estimatedWait: 'Until scheduled time',
-    },
-  };
-
-  return statusMap[state] || {
-    description: 'Unknown job state',
-    nextStep: 'Contact support',
-    estimatedWait: 'Unknown',
-  };
-}
-
-/**
- * Get available actions based on job state
- */
-function getAvailableActions(state) {
-  const actionMap = {
-    'waiting': ['cancel', 'check-status'],
-    'active': ['check-status', 'view-logs'],
-    'completed': ['download', 'view-metadata', 'share'],
-    'failed': ['retry', 'view-logs', 'contact-support'],
-    'delayed': ['cancel', 'reschedule', 'check-status'],
-  };
-
-  return actionMap[state] || ['check-status'];
-}
-
-/**
- * Generate queue recommendations based on stats
- */
-function generateQueueRecommendations(stats) {
-  const recommendations = [];
-
-  if (stats.stats.waiting > 20) {
-    recommendations.push('High queue backlog - consider scaling up workers');
+      res.apiSuccess(stats, 'NFT statistics retrieved successfully');
+    } catch (error) {
+      res.apiError({
+        code: 'STATS_RETRIEVAL_FAILED',
+        message: 'Failed to retrieve NFT statistics',
+        userAction: 'Please try again or contact support',
+        details: {
+          error: error.message,
+          userId: req.params.userId
+        }
+      }, 500);
+    }
   }
-
-  if (stats.stats.failed > 10) {
-    recommendations.push('High failure rate - check error logs and system health');
-  }
-
-  if (stats.performance.successRate < 95) {
-    recommendations.push('Success rate below 95% - investigate recent failures');
-  }
-
-  if (stats.performance.averageProcessingTime > 60) {
-    recommendations.push('Slow processing - consider optimizing NFT generation');
-  }
-
-  if (recommendations.length === 0) {
-    recommendations.push('Queue is performing well - no action needed');
-  }
-
-  return recommendations;
-}
-
-/**
- * Generate health recommendations based on metrics
- */
-function generateHealthRecommendations(stats) {
-  const recommendations = [];
-
-  if (stats.stats.failed > 10) {
-    recommendations.push('Reduce failed jobs by checking error logs');
-  }
-
-  if (stats.performance.successRate < 90) {
-    recommendations.push('Improve success rate by investigating failures');
-  }
-
-  if (stats.stats.waiting > 50) {
-    recommendations.push('High queue backlog - consider adding workers');
-  }
-
-  return recommendations;
-}
-
-/**
- * Generate unique error ID for tracking
- */
-function generateErrorId() {
-  return `nft_err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
+);
 
 module.exports = router;

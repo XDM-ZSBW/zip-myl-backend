@@ -315,7 +315,12 @@ describe('Pairing Service', () => {
         is_active: true,
       };
 
+      // Mock the database query to return the token data
       mockDb.query.mockResolvedValue({ rows: [mockTokenData] });
+
+      // Mock the pairingService to use the mocked database
+      const pairingService = new PairingService();
+      pairingService.db = mockDb;
 
       const result = await pairingService.validateTokenFromDatabase(token);
 

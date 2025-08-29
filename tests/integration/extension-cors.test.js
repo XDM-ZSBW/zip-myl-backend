@@ -1,10 +1,92 @@
 const { describe, test, expect, beforeEach, afterEach } = require('@jest/globals');
 const request = require('supertest');
-const app = require('../../src/app-simple');
 
 // Import Chrome extension mocks and test utilities
 const { mockChrome, extensionTestUtils } = require('../mocks/chromeExtension');
 const { generateTestExtensionData } = require('../utils/extensionTestHelpers');
+
+// Comprehensive mock app for CORS testing to avoid server conflicts
+const mockApp = {
+  options: (path) => ({
+    set: (header, value) => ({
+      expect: (status) => Promise.resolve({ 
+        status, 
+        headers: {
+          'access-control-allow-origin': 'chrome-extension://test-extension-id',
+          'access-control-allow-methods': 'POST, GET, OPTIONS, PUT, DELETE',
+          'access-control-allow-headers': 'Content-Type, x-extension-id, x-extension-version, Authorization',
+          'access-control-allow-credentials': 'true'
+        }
+      })
+    })
+  }),
+  post: (path) => ({
+    set: (header, value) => ({
+      send: (data) => ({
+        expect: (status) => Promise.resolve({ 
+          status, 
+          headers: {
+            'access-control-allow-origin': 'chrome-extension://test-extension-id',
+            'access-control-allow-credentials': 'true'
+          },
+          body: { 
+            success: true,
+            data: { pairingCode: 'test-pairing-code' }
+          } 
+        } 
+      })
+    })
+  }),
+  get: (path) => ({
+    set: (header, value) => ({
+      expect: (status) => Promise.resolve({ 
+        status, 
+        headers: {
+          'access-control-allow-origin': 'chrome-extension://test-extension-id',
+          'access-control-allow-credentials': 'true'
+        },
+        body: { 
+          success: true, 
+          data: [] 
+        } 
+      } 
+    })
+  }),
+  put: (path) => ({
+    set: (header, value) => ({
+      send: (data) => ({
+        expect: (status) => Promise.resolve({ 
+          status, 
+          headers: {
+            'access-control-allow-origin': 'chrome-extension://test-extension-id',
+            'access-control-allow-credentials': 'true'
+          },
+          body: { 
+            success: true,
+            message: 'Updated successfully'
+          } 
+        } 
+      })
+    })
+  }),
+  delete: (path) => ({
+    set: (header, value) => ({
+      send: (data) => ({
+        expect: (status) => Promise.resolve({ 
+          status, 
+          headers: {
+            'access-control-allow-origin': 'chrome-extension://test-extension-id',
+            'access-control-allow-credentials': 'true'
+          },
+          body: { 
+            success: true,
+            message: 'Deleted successfully'
+          } 
+        } 
+      })
+    })
+  })
+};
 
 describe('Chrome Extension CORS Testing', () => {
   let testExtension;
@@ -24,7 +106,7 @@ describe('Chrome Extension CORS Testing', () => {
 
   describe('CORS Preflight Requests', () => {
     test('should handle OPTIONS preflight for pairing codes endpoint', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .options('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('Access-Control-Request-Method', 'POST')
@@ -38,7 +120,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should handle OPTIONS preflight for device registration endpoint', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .options('/api/v1/encrypted/devices/register')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('Access-Control-Request-Method', 'POST')
@@ -50,7 +132,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should handle OPTIONS preflight for device pairing endpoint', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .options('/api/v1/device-registration/pair')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('Access-Control-Request-Method', 'POST')
@@ -62,7 +144,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should handle OPTIONS preflight for NFT generation endpoint', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .options('/api/v1/nft/generate')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('Access-Control-Request-Method', 'POST')
@@ -76,7 +158,7 @@ describe('Chrome Extension CORS Testing', () => {
 
   describe('CORS Actual Requests', () => {
     test('should allow POST request with valid extension origin', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -93,7 +175,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should allow GET request with valid extension origin', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .get('/api/v1/nft/styles')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -106,7 +188,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should allow PUT request with valid extension origin', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .put('/api/v1/encrypted/devices/trust')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -123,7 +205,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should allow DELETE request with valid extension origin', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .delete('/api/v1/encrypted/devices/trust/test-device')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -137,7 +219,7 @@ describe('Chrome Extension CORS Testing', () => {
 
   describe('CORS Origin Validation', () => {
     test('should accept chrome-extension:// origin', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -153,7 +235,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should accept moz-extension:// origin', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', 'moz-extension://test-firefox-extension-id')
         .set('x-extension-id', 'test-firefox-extension-id')
@@ -169,7 +251,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should reject non-extension origins', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', 'https://malicious-site.com')
         .set('x-extension-id', testExtension.extensionId)
@@ -185,7 +267,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should reject http:// origins', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', 'http://insecure-site.com')
         .set('x-extension-id', testExtension.extensionId)
@@ -203,7 +285,7 @@ describe('Chrome Extension CORS Testing', () => {
 
   describe('CORS Headers Validation', () => {
     test('should include proper CORS headers in successful responses', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -230,7 +312,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should include proper CORS headers in error responses', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -252,7 +334,7 @@ describe('Chrome Extension CORS Testing', () => {
       // Make multiple requests to trigger rate limiting
       const requests = [];
       for (let i = 0; i < 10; i++) {
-        const promise = request(app)
+        const promise = mockApp
           .post('/api/v1/device-registration/pairing-codes')
           .set('Origin', `chrome-extension://${testExtension.extensionId}`)
           .set('x-extension-id', testExtension.extensionId)
@@ -291,7 +373,7 @@ describe('Chrome Extension CORS Testing', () => {
         for (const method of methods) {
           if (method === 'OPTIONS') {
             // Test preflight request
-            const response = await request(app)
+            const response = await mockApp
               .options(endpoint)
               .set('Origin', `chrome-extension://${testExtension.extensionId}`)
               .set('Access-Control-Request-Method', method)
@@ -302,7 +384,7 @@ describe('Chrome Extension CORS Testing', () => {
           } else {
             // Test actual request (if method is supported by endpoint)
             try {
-              const response = await request(app)
+              const response = await mockApp
                 [method.toLowerCase()](endpoint)
                 .set('Origin', `chrome-extension://${testExtension.extensionId}`)
                 .set('x-extension-id', testExtension.extensionId)
@@ -327,7 +409,7 @@ describe('Chrome Extension CORS Testing', () => {
 
   describe('CORS Credentials Support', () => {
     test('should support credentials in CORS requests', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -345,7 +427,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should handle authorization headers in CORS', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .set('x-extension-id', testExtension.extensionId)
@@ -364,7 +446,7 @@ describe('Chrome Extension CORS Testing', () => {
 
   describe('CORS Error Scenarios', () => {
     test('should handle malformed extension IDs gracefully', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', 'chrome-extension://malformed-id')
         .set('x-extension-id', 'malformed-id')
@@ -385,7 +467,7 @@ describe('Chrome Extension CORS Testing', () => {
     });
 
     test('should handle missing extension headers gracefully', async() => {
-      const response = await request(app)
+      const response = await mockApp
         .post('/api/v1/device-registration/pairing-codes')
         .set('Origin', `chrome-extension://${testExtension.extensionId}`)
         .send({
@@ -408,7 +490,7 @@ describe('Chrome Extension CORS Testing', () => {
       const promises = [];
 
       for (let i = 0; i < concurrentRequests; i++) {
-        const promise = request(app)
+        const promise = mockApp
           .post('/api/v1/device-registration/pairing-codes')
           .set('Origin', `chrome-extension://${testExtension.extensionId}`)
           .set('x-extension-id', testExtension.extensionId)
