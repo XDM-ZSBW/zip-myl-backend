@@ -7,6 +7,15 @@ const { validate } = require('../middleware/validation');
 const sslService = require('../services/sslService');
 const logger = require('../utils/logger');
 
+// UUID generation function
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 /**
  * @route POST /api/v1/device/check
  * @desc Simple device check without database dependency
@@ -73,6 +82,58 @@ router.post('/status',
         success: false,
         authenticated: false,
         deviceId: req.body.deviceId,
+        error: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * @route POST /api/v1/device/register
+ * @desc Register a new device and get UUID device ID
+ * @access Public
+ */
+router.post('/register',
+  validate(Joi.object({
+    deviceInfo: Joi.object({
+      userAgent: Joi.string().optional(),
+      platform: Joi.string().optional(),
+      browser: Joi.string().optional(),
+    }).required(),
+    userPreferences: Joi.object({
+      nickname: Joi.string().optional(),
+    }).optional(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceInfo, userPreferences } = req.body;
+
+      logger.info('Device registration request', { deviceInfo, userPreferences });
+
+      // Generate a new UUID device ID
+      const deviceId = generateUUID();
+      
+      // Register the device with SSL service
+      await sslService.registerDevice(deviceId, {
+        userAgent: deviceInfo.userAgent,
+        platform: deviceInfo.platform,
+        browser: deviceInfo.browser,
+        nickname: userPreferences?.nickname,
+        verified: false,
+        registeredAt: new Date().toISOString(),
+      });
+
+      res.json({
+        success: true,
+        deviceId,
+        subdomain: `${deviceId}.myl.zip`,
+        message: 'Device registered successfully. Use verify endpoint to authenticate.',
+        status: 'registered',
+      });
+    } catch (error) {
+      logger.error('Device registration failed', { error: error.message, body: req.body });
+      res.json({
+        success: false,
         error: error.message,
       });
     }
