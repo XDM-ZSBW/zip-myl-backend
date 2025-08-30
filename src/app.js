@@ -165,6 +165,14 @@ try {
   const batchRoutes = require('./routes/batch');
   loadRoutes('batch routes', '/api/v1/batch', batchRoutes);
 
+  // SSL Certificate routes
+  const sslRoutes = require('./routes/ssl');
+  loadRoutes('SSL routes', '/api/v1/ssl', sslRoutes);
+
+  // Windows SSL Integration routes
+  const windowsSSLRoutes = require('./routes/windows-ssl');
+  loadRoutes('Windows SSL routes', '/api/v1/windows-ssl', windowsSSLRoutes);
+
   // ❌ REMOVED: Root routes that served frontend HTML
   // const rootRoutes = require('./routes/root');
   // loadRoutes('root routes', '/', rootRoutes);
@@ -199,6 +207,8 @@ app.use((req, res, next) => {
           '/api/v1/auth',
           '/api/v1/nft',
           '/api/v1/thoughts',
+          '/api/v1/ssl',
+          '/api/v1/windows-ssl',
           '/api/v1/docs'
         ]
       }
