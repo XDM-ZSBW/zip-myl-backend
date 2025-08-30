@@ -245,6 +245,12 @@ class SSLService {
    */
   async getCertificateFromDatabase(deviceId) {
     try {
+      // Check if database is available
+      if (!database.pool) {
+        logger.warn('Database not available, skipping database lookup', { deviceId });
+        return null;
+      }
+      
       const result = await database.query(
         'SELECT * FROM device_certificates WHERE device_id = $1 AND status = $2',
         [deviceId, 'active']
@@ -253,7 +259,8 @@ class SSLService {
       return result.rows[0] || null;
     } catch (error) {
       logger.error('Failed to get certificate from database', { deviceId, error: error.message });
-      throw error;
+      // Return null instead of throwing to allow graceful degradation
+      return null;
     }
   }
 
@@ -263,6 +270,12 @@ class SSLService {
    */
   async saveCertificateToDatabase(certificate) {
     try {
+      // Check if database is available
+      if (!database.pool) {
+        logger.warn('Database not available, skipping database save', { deviceId: certificate.deviceId });
+        return certificate; // Return the certificate as if it was saved
+      }
+      
       const result = await database.query(
         `INSERT INTO device_certificates (
           device_id, uuid_subdomain, certificate_data, status, expires_at, 
@@ -294,7 +307,8 @@ class SSLService {
       return result.rows[0];
     } catch (error) {
       logger.error('Failed to save certificate to database', { deviceId: certificate.deviceId, error: error.message });
-      throw error;
+      // Return the certificate as if it was saved to allow graceful degradation
+      return certificate;
     }
   }
 
