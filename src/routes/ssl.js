@@ -50,6 +50,15 @@ router.use((req, res, next) => {
 });
 
 /**
+ * @route OPTIONS /api/v1/ssl/setup-wizard/provision
+ * @desc Handle preflight requests for setup wizard SSL provisioning
+ * @access Public
+ */
+router.options('/setup-wizard/provision', (req, res) => {
+  res.status(200).end();
+});
+
+/**
  * @route POST /api/v1/ssl/setup-wizard/provision
  * @desc Public endpoint for setup wizard SSL provisioning (no API key required)
  * @access Public (Setup Wizard Only)
@@ -94,6 +103,15 @@ router.post('/setup-wizard/provision',
     }
   },
 );
+
+/**
+ * @route OPTIONS /api/v1/ssl/setup-wizard/generate-key
+ * @desc Handle preflight requests for setup wizard API key generation
+ * @access Public
+ */
+router.options('/setup-wizard/generate-key', (req, res) => {
+  res.status(200).end();
+});
 
 /**
  * @route POST /api/v1/ssl/setup-wizard/generate-key

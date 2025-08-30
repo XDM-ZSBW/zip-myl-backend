@@ -55,12 +55,12 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration - Updated for API-only service
+// CORS configuration - Simplified for setup wizard compatibility
 app.use(cors({
-  origin: ['*'], // Allow all origins for API consumption
-  credentials: false, // No cookies needed for API
+  origin: true, // Allow all origins for now to fix setup wizard
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-ID'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-ID', 'Origin', 'X-Requested-With', 'Accept'],
 }));
 
 // Compression middleware
