@@ -283,13 +283,20 @@ async function initializeConnections() {
   }
 }
 
-// Start server with database initialization
+// Start server with optional database initialization
 async function startServer() {
-  const connectionsReady = await initializeConnections();
-  
-  if (!connectionsReady) {
-    console.error('❌ Server startup failed due to connection issues');
-    process.exit(1);
+  try {
+    const connectionsReady = await initializeConnections();
+    
+    if (!connectionsReady) {
+      console.log('⚠️  Database connection failed, starting server with limited functionality');
+      logger.warn('Server starting with limited functionality due to database connection issues');
+    } else {
+      console.log('✅ Database connections established');
+    }
+  } catch (error) {
+    console.log('⚠️  Database initialization error, starting server with limited functionality');
+    logger.warn('Server starting with limited functionality due to database initialization error', { error: error.message });
   }
   
   const server = app.listen(config.PORT, config.HOST, () => {
