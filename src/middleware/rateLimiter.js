@@ -61,22 +61,24 @@ const initializeRedis = () => {
       useRedis = false;
     });
 
-    redisStore = new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    });
+    // Only create RedisStore if Redis is available
+    if (redis && redis.status === 'ready') {
+      redisStore = new RedisStore({
+        sendCommand: (...args) => redis.call(...args),
+      });
+    } else {
+      logger.warn('Redis not ready, using memory fallback');
+      useRedis = false;
+    }
   } catch (error) {
     logger.warn('Failed to initialize Redis, using memory fallback', { error: error.message });
     useRedis = false;
   }
 };
 
-// Initialize Redis on module load - handle errors gracefully
-try {
-  initializeRedis();
-} catch (error) {
-  logger.warn('Redis initialization failed during module load, will retry on first request', { error: error.message });
-  useRedis = false;
-}
+// Disable Redis initialization for now - use memory-based rate limiting
+logger.info('Using memory-based rate limiting (Redis disabled)');
+useRedis = false;
 
 // Create rate limiter with fallback
 const createRateLimiter = (config) => {
