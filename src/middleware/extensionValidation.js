@@ -158,6 +158,8 @@ const shouldRequireExtensionId = (path) => {
     '/api/v1/health',
     '/docs',
     '/api/docs',
+    '/api/v1/ssl/setup-wizard/provision',
+    '/api/v1/ssl/setup-wizard/generate-key',
   ];
 
   // Check if path matches required endpoints
