@@ -160,6 +160,11 @@ const shouldRequireExtensionId = (path) => {
     '/api/docs',
     '/api/v1/ssl/setup-wizard/provision',
     '/api/v1/ssl/setup-wizard/generate-key',
+    '/api/v1/device/register',
+    '/api/v1/device/check',
+    '/api/v1/device/validate-api-key',
+    '/api/v1/device/status',
+    '/api/v1/device/verify',
   ];
 
   // Check if path matches required endpoints
