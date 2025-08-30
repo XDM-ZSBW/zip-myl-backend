@@ -110,84 +110,145 @@ const loadRoutes = (routeName, routePath, routeModule) => {
     console.log(`Loading ${routeName}...`);
     app.use(routePath, routeModule);
     console.log(`✅ ${routeName} loaded successfully`);
+    return true;
   } catch (error) {
     console.error(`❌ Failed to load ${routeName}:`, error.message);
     logger.error(`Failed to load ${routeName}`, { error: error.message });
+    return false;
   }
 };
 
 // Load essential routes first - API-only structure
+console.log('🔧 Loading API routes...');
+
+// Health check endpoint (before API routes)
 try {
-  // Health check endpoint (before API routes)
   const healthRoutes = require('./routes/health');
   loadRoutes('health routes', '/api/v1/health', healthRoutes);
+} catch (error) {
+  console.error('❌ Failed to load health routes:', error.message);
+}
 
-  // Test route
+// Test route
+try {
   const testRoutes = require('./routes/test');
   loadRoutes('test routes', '/api/v1/test', testRoutes);
+} catch (error) {
+  console.error('❌ Failed to load test routes:', error.message);
+}
 
-  // Bot-friendly routes (before API routes)
+// Bot-friendly routes (before API routes)
+try {
   const botRoutes = require('./routes/bot');
   loadRoutes('bot routes', '/api/v1/bot', botRoutes);
+} catch (error) {
+  console.error('❌ Failed to load bot routes:', error.message);
+}
 
-  // Documentation routes (API documentation only)
+// Documentation routes (API documentation only)
+try {
   const docsRoutes = require('./routes/docs');
   loadRoutes('docs routes', '/api/v1/docs', docsRoutes);
+} catch (error) {
+  console.error('❌ Failed to load docs routes:', error.message);
+}
 
+try {
   const openApiRoutes = require('./routes/openapi');
   loadRoutes('OpenAPI routes', '/api/v1/docs', openApiRoutes);
+} catch (error) {
+  console.error('❌ Failed to load OpenAPI routes:', error.message);
+}
 
-  // Authentication routes
+// Authentication routes
+try {
   const authRoutes = require('./routes/auth');
   loadRoutes('auth routes', '/api/v1/auth', authRoutes);
+} catch (error) {
+  console.error('❌ Failed to load auth routes:', error.message);
+}
 
-  // Admin routes
+// Admin routes
+try {
   const adminRoutes = require('./routes/admin');
   loadRoutes('admin routes', '/api/v1/admin', adminRoutes);
+} catch (error) {
+  console.error('❌ Failed to load admin routes:', error.message);
+}
 
-  // API routes
+// API routes
+try {
   const apiRoutes = require('./routes/api');
   loadRoutes('API routes', '/api/v1', apiRoutes);
+} catch (error) {
+  console.error('❌ Failed to load API routes:', error.message);
+}
 
-  // API v2 routes (Multi-Client Ecosystem)
+// API v2 routes (Multi-Client Ecosystem)
+try {
   const apiV2Routes = require('./routes/api-v2');
   loadRoutes('API v2 routes', '/api/v2', apiV2Routes);
+} catch (error) {
+  console.error('❌ Failed to load API v2 routes:', error.message);
+}
 
-  // Encrypted routes (device registration, pairing, thoughts)
+// Encrypted routes (device registration, pairing, thoughts)
+try {
   const encryptedRoutes = require('./routes/encrypted');
   loadRoutes('encrypted routes', '/api/v1/encrypted', encryptedRoutes);
+} catch (error) {
+  console.error('❌ Failed to load encrypted routes:', error.message);
+}
 
-  // Thoughts routes
+// Thoughts routes
+try {
   const thoughtsRoutes = require('./routes/thoughts');
   loadRoutes('thoughts routes', '/api/v1/thoughts', thoughtsRoutes);
+} catch (error) {
+  console.error('❌ Failed to load thoughts routes:', error.message);
+}
 
-  // NFT routes
+// NFT routes
+try {
   const nftRoutes = require('./routes/nft');
   loadRoutes('NFT routes', '/api/v1/nft', nftRoutes);
+} catch (error) {
+  console.error('❌ Failed to load NFT routes:', error.message);
+}
 
-  // Batch operations routes
+// Batch operations routes
+try {
   const batchRoutes = require('./routes/batch');
   loadRoutes('batch routes', '/api/v1/batch', batchRoutes);
+} catch (error) {
+  console.error('❌ Failed to load batch routes:', error.message);
+}
 
-  // SSL Certificate routes
+// SSL Certificate routes
+try {
   const sslRoutes = require('./routes/ssl');
   loadRoutes('SSL routes', '/api/v1/ssl', sslRoutes);
+} catch (error) {
+  console.error('❌ Failed to load SSL routes:', error.message);
+}
 
-  // Device routes
+// Device routes
+try {
   const deviceRoutes = require('./routes/device');
   loadRoutes('device routes', '/api/v1/device', deviceRoutes);
+} catch (error) {
+  console.error('❌ Failed to load device routes:', error.message);
+}
 
-  // Windows SSL Integration routes
+// Windows SSL Integration routes
+try {
   const windowsSSLRoutes = require('./routes/windows-ssl');
   loadRoutes('Windows SSL routes', '/api/v1/windows-ssl', windowsSSLRoutes);
-
-  // ❌ REMOVED: Root routes that served frontend HTML
-  // const rootRoutes = require('./routes/root');
-  // loadRoutes('root routes', '/', rootRoutes);
 } catch (error) {
-  console.error('❌ Critical error loading routes:', error.message);
-  logger.error('Critical error loading routes', { error: error.message });
+  console.error('❌ Failed to load Windows SSL routes:', error.message);
 }
+
+console.log('✅ Route loading completed');
 
 // Metrics endpoint
 if (config.ENABLE_METRICS) {
