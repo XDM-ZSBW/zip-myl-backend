@@ -15,6 +15,53 @@ class SSLService {
   }
 
   /**
+   * Provision SSL certificate for UUID subdomain (e.g., deviceId.myl.zip)
+   * @param {string} deviceId - Device identifier
+   * @param {string} uuidSubdomain - UUID subdomain (e.g., deviceId.myl.zip)
+   * @param {Object} options - Certificate options
+   * @returns {Object} Certificate information
+   */
+  async provisionUUIDSubdomain(deviceId, uuidSubdomain, options = {}) {
+    try {
+      logger.info('Provisioning UUID subdomain SSL certificate', { deviceId, uuidSubdomain, options });
+
+      // Verify UUID subdomain format
+      if (!uuidSubdomain.endsWith('.myl.zip')) {
+        throw new Error('Invalid UUID subdomain format. Must end with .myl.zip');
+      }
+
+      // Check if device already has a certificate
+      if (this.certificates.has(deviceId)) {
+        const existing = this.certificates.get(deviceId);
+        if (existing.uuidSubdomain === uuidSubdomain && !existing.expired) {
+          return {
+            success: true,
+            certificate: existing,
+            message: 'UUID subdomain certificate already exists and is valid',
+          };
+        }
+      }
+
+      // Generate certificate data for UUID subdomain
+      const certificate = await this.generateUUIDSubdomainCertificate(deviceId, uuidSubdomain, options);
+
+      // Store certificate
+      this.certificates.set(deviceId, certificate);
+
+      logger.info('UUID subdomain SSL certificate provisioned successfully', { deviceId, uuidSubdomain });
+
+      return {
+        success: true,
+        certificate,
+        message: 'UUID subdomain SSL certificate provisioned successfully',
+      };
+    } catch (error) {
+      logger.error('Failed to provision UUID subdomain SSL certificate', { deviceId, uuidSubdomain, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
    * Provision SSL certificate for a device
    * @param {string} deviceId - Device identifier
    * @param {string} domain - Domain for the certificate
@@ -54,6 +101,48 @@ class SSLService {
       logger.error('Failed to provision SSL certificate', { deviceId, domain, error: error.message });
       throw error;
     }
+  }
+
+  /**
+   * Generate UUID subdomain SSL certificate (uses wildcard *.myl.zip)
+   * @param {string} deviceId - Device identifier
+   * @param {string} uuidSubdomain - UUID subdomain (e.g., deviceId.myl.zip)
+   * @param {Object} options - Certificate options
+   * @returns {Object} Generated certificate
+   */
+  async generateUUIDSubdomainCertificate(deviceId, uuidSubdomain, options) {
+    // Simulate wildcard certificate for *.myl.zip
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000)); // 90 days
+
+    const certificate = {
+      id: crypto.randomUUID(),
+      deviceId,
+      uuidSubdomain,
+      domain: '*.myl.zip', // Wildcard certificate
+      type: 'wildcard',
+      status: 'active',
+      issuedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      autoRenewal: options.autoRenewal !== false,
+      certificateData: {
+        // Simulated certificate data
+        serialNumber: crypto.randomBytes(16).toString('hex'),
+        issuer: 'Google Cloud Certificate Authority',
+        subject: 'CN=*.myl.zip',
+        validFrom: now.toISOString(),
+        validTo: expiresAt.toISOString(),
+        san: ['*.myl.zip', uuidSubdomain], // Subject Alternative Names
+      },
+      privateKey: crypto.randomBytes(32).toString('hex'), // Simulated private key
+      publicKey: crypto.randomBytes(64).toString('hex'), // Simulated public key
+      premium: false,
+      features: this.getBasicFeatures(),
+      userInitials: options.userInitials,
+      deviceName: options.deviceName,
+    };
+
+    return certificate;
   }
 
   /**
@@ -198,6 +287,72 @@ class SSLService {
       };
     } catch (error) {
       logger.error('Failed to revoke SSL certificate', { deviceId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Generate API key for device with UUID subdomain SSL certificate
+   * @param {string} deviceId - Device identifier
+   * @param {Object} options - Device options
+   * @returns {Object} Generated API key information
+   */
+  async generateDeviceApiKey(deviceId, options = {}) {
+    try {
+      logger.info('Generating device API key', { deviceId, options });
+
+      // Verify device has valid UUID subdomain SSL certificate
+      const sslStatus = await this.getDeviceStatus(deviceId);
+      if (!sslStatus.success || !sslStatus.certificate || sslStatus.certificate.expired) {
+        throw new Error('Device must have a valid UUID subdomain SSL certificate to generate API key');
+      }
+
+      // Generate device-specific API key
+      const apiKey = `dev_${crypto.randomBytes(24).toString('hex')}`;
+      const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+
+      // Create device API key record
+      const deviceApiKey = {
+        id: crypto.randomUUID(),
+        deviceId,
+        apiKey,
+        keyHash,
+        deviceName: options.deviceName || 'Unknown Device',
+        userInitials: options.userInitials || 'Unknown',
+        permissions: options.permissions || ['ssl:read', 'device:read', 'api:access'],
+        rateLimit: options.rateLimit || 1000, // requests per hour
+        expiresAt: options.expiresAt || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(), // 30 days default
+        createdAt: new Date().toISOString(),
+        isActive: true,
+        lastUsedAt: null,
+        uuidSubdomain: sslStatus.certificate.uuidSubdomain,
+      };
+
+      // Store the API key (in production, this would be in a database)
+      if (!this.deviceApiKeys) {
+        this.deviceApiKeys = new Map();
+      }
+      this.deviceApiKeys.set(keyHash, deviceApiKey);
+
+      logger.info('Device API key generated successfully', { deviceId, deviceName: deviceApiKey.deviceName });
+
+      return {
+        success: true,
+        data: {
+          apiKey: deviceApiKey.apiKey, // Only returned once
+          deviceId: deviceApiKey.deviceId,
+          deviceName: deviceApiKey.deviceName,
+          userInitials: deviceApiKey.userInitials,
+          permissions: deviceApiKey.permissions,
+          rateLimit: deviceApiKey.rateLimit,
+          expiresAt: deviceApiKey.expiresAt,
+          createdAt: deviceApiKey.createdAt,
+          uuidSubdomain: deviceApiKey.uuidSubdomain,
+        },
+        message: 'Device API key generated successfully',
+      };
+    } catch (error) {
+      logger.error('Failed to generate device API key', { deviceId, error: error.message });
       throw error;
     }
   }

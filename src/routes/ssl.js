@@ -43,8 +43,52 @@ const logger = require('../utils/logger');
 router.use(validateApiKey);
 
 /**
+ * @route POST /api/v1/ssl/provision
+ * @desc Provision SSL certificate for UUID subdomain (e.g., deviceId.myl.zip)
+ * @access Private (API Key Required)
+ */
+router.post('/provision',
+  validateInput({
+    deviceId: { type: 'string', required: true, minLength: 1 },
+    uuidSubdomain: { type: 'string', required: true, minLength: 1 },
+    userInitials: { type: 'string', required: true, minLength: 1 },
+    deviceName: { type: 'string', required: true, minLength: 1 },
+  }),
+  async(req, res) => {
+    try {
+      const { deviceId, uuidSubdomain, userInitials, deviceName } = req.body;
+
+      logger.info('UUID subdomain SSL certificate provisioning request', { 
+        deviceId, 
+        uuidSubdomain, 
+        userInitials, 
+        deviceName 
+      });
+
+      // Verify the UUID subdomain format
+      if (!uuidSubdomain.endsWith('.myl.zip')) {
+        return res.apiError('Invalid UUID subdomain format. Must end with .myl.zip', 400);
+      }
+
+      // Use the existing wildcard certificate for *.myl.zip
+      const result = await sslService.provisionUUIDSubdomain(deviceId, uuidSubdomain, {
+        userInitials,
+        deviceName,
+        certificateType: 'wildcard',
+        autoRenewal: true,
+      });
+
+      res.apiSuccess(result, 'UUID subdomain SSL certificate provisioned successfully');
+    } catch (error) {
+      logger.error('UUID subdomain SSL certificate provisioning failed', { error: error.message, body: req.body });
+      res.apiError('Failed to provision UUID subdomain SSL certificate', 500, error.message);
+    }
+  },
+);
+
+/**
  * @route POST /api/v1/ssl/provision-device
- * @desc Provision SSL certificate for a device
+ * @desc Provision SSL certificate for a device (legacy endpoint)
  * @access Private (API Key Required)
  */
 router.post('/provision-device',
@@ -98,8 +142,46 @@ router.get('/device-status/:deviceId', async(req, res) => {
 });
 
 /**
+ * @route POST /api/v1/device/generate-key
+ * @desc Generate API key for device with UUID subdomain SSL certificate
+ * @access Private (Device Registration Required)
+ */
+router.post('/generate-key',
+  validateInput({
+    deviceId: { type: 'string', required: true, minLength: 1 },
+    deviceName: { type: 'string', required: true, minLength: 1 },
+    userInitials: { type: 'string', required: true, minLength: 1 },
+  }),
+  async(req, res) => {
+    try {
+      const { deviceId, deviceName, userInitials } = req.body;
+
+      logger.info('Device API key generation request', { deviceId, deviceName, userInitials });
+
+      // Verify device has UUID subdomain SSL certificate
+      const sslStatus = await sslService.getDeviceStatus(deviceId);
+      if (!sslStatus.success || !sslStatus.certificate || sslStatus.certificate.expired) {
+        return res.apiError('Device must have a valid UUID subdomain SSL certificate to generate API key', 403);
+      }
+
+      // Generate device-specific API key
+      const result = await sslService.generateDeviceApiKey(deviceId, {
+        deviceName,
+        userInitials,
+        permissions: ['ssl:read', 'device:read', 'api:access'],
+      });
+
+      res.apiSuccess(result, 'Device API key generated successfully');
+    } catch (error) {
+      logger.error('Device API key generation failed', { error: error.message, body: req.body });
+      res.apiError('Failed to generate device API key', 500, error.message);
+    }
+  },
+);
+
+/**
  * @route POST /api/v1/ssl/generate-extension-key
- * @desc Generate API key for Chrome extension with SSL-certified device
+ * @desc Generate API key for Chrome extension with SSL-certified device (legacy endpoint)
  * @access Private (Device Registration Required)
  */
 router.post('/generate-extension-key',

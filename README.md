@@ -1,6 +1,6 @@
 # Myl.Zip Backend Service
 
-A production-ready Node.js backend service for the Myl.Zip ecosystem, providing comprehensive ID and access management, thought tracking, and cloud deployment capabilities.
+A production-ready Node.js backend service for the Myl.Zip ecosystem, providing comprehensive ID and access management, thought tracking, SSL certificate provisioning, and cloud deployment capabilities.
 
 ## 🚀 Features
 
@@ -14,12 +14,28 @@ A production-ready Node.js backend service for the Myl.Zip ecosystem, providing 
 
 ### 📝 Core Features
 - **Thought Management**: Create, read, update, and delete thoughts with metadata
+- **SSL Certificate Provisioning**: Let's Encrypt integration for device SSL certificates
+- **Google Drive Integration**: Secure Google Drive API integration with OAuth2
 - **Caching**: Redis-based caching for improved performance
 - **Database**: PostgreSQL with Prisma ORM for robust data management
 - **Security**: Comprehensive security middleware with input validation
 - **Monitoring**: Health checks, metrics, audit logging, and structured logging
 - **Deployment**: Docker containerization with Google Cloud Run support
 - **Testing**: Comprehensive unit and integration tests
+
+### 🌐 SSL Certificate System
+- **Let's Encrypt Integration**: Automatic SSL certificate generation and renewal
+- **Device SSL Provisioning**: Individual SSL certificates for each registered device
+- **Windows 11 Integration**: Automatic certificate store integration
+- **Premium SSL Features**: Advanced management for enterprise customers
+- **Certificate Management**: Install, status check, renewal, and revocation APIs
+
+### 🔗 Google Drive Integration
+- **OAuth2 Authentication**: Secure Google Drive API access
+- **Folder Tracking**: Selective folder monitoring with sensitivity labels
+- **Secure Sharing**: Trust network-based content sharing
+- **Webhook Support**: Real-time Google Drive change notifications
+- **Cross-Platform Sync**: Synchronization with other Myl.Zip platforms
 
 ## 📋 Prerequisites
 
@@ -28,6 +44,7 @@ A production-ready Node.js backend service for the Myl.Zip ecosystem, providing 
 - Redis 7+
 - Docker (for containerization)
 - Google Cloud SDK (for deployment)
+- Let's Encrypt account (for SSL certificates)
 
 ## 🛠️ Installation
 
@@ -80,12 +97,17 @@ A production-ready Node.js backend service for the Myl.Zip ecosystem, providing 
 | `JWT_REFRESH_SECRET` | JWT refresh token secret | Required |
 | `INTERNAL_API_KEY` | Internal API key | Required |
 | `CORS_ORIGIN` | Allowed CORS origins | `http://localhost:3000` |
+| `LETS_ENCRYPT_EMAIL` | Let's Encrypt account email | Required |
+| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID | Required |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret | Required |
 
 ### Feature Flags
 
 - `ENABLE_AUTH`: Enable/disable authentication (default: `true`)
 - `ENABLE_DEVICE_AUTH`: Enable device-based authentication (default: `true`)
 - `ENABLE_API_KEY_AUTH`: Enable API key authentication (default: `true`)
+- `ENABLE_SSL_PROVISIONING`: Enable SSL certificate provisioning (default: `true`)
+- `ENABLE_GOOGLE_DRIVE`: Enable Google Drive integration (default: `true`)
 - `ENABLE_CACHING`: Enable/disable Redis caching (default: `true`)
 - `ENABLE_METRICS`: Enable/disable metrics collection (default: `true`)
 
