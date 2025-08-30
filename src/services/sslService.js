@@ -820,6 +820,40 @@ class SSLService {
       currency: 'USD',
     };
   }
+
+  /**
+   * Register a new device
+   * @param {string} deviceId - Device identifier
+   * @param {Object} deviceInfo - Device information
+   * @returns {Object} Registration result
+   */
+  async registerDevice(deviceId, deviceInfo = {}) {
+    try {
+      logger.info('Registering device', { deviceId, deviceInfo });
+
+      // For now, just log the registration
+      // In a production environment, this would store device info in database
+      logger.info('Device registered successfully', { 
+        deviceId, 
+        userAgent: deviceInfo.userAgent,
+        platform: deviceInfo.platform,
+        browser: deviceInfo.browser,
+        nickname: deviceInfo.nickname,
+        verified: deviceInfo.verified,
+        registeredAt: deviceInfo.registeredAt || new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        deviceId,
+        message: 'Device registered successfully',
+        registeredAt: deviceInfo.registeredAt || new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error('Device registration failed', { deviceId, error: error.message });
+      throw error;
+    }
+  }
 }
 
 module.exports = new SSLService();
