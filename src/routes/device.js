@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const Joi = require('joi');
 const { authenticateDevice } = require('../middleware/auth');
 const { generalRateLimit } = require('../middleware/rateLimiter');
+const { validate, schemas } = require('../middleware/validation');
+const sslService = require('../services/sslService');
+const logger = require('../utils/logger');
 
 // Get all devices for user
 router.get('/',
@@ -305,6 +309,124 @@ router.post('/:deviceId/ping',
         responseTime: Math.random() * 100 + 10, // Mock response time
       },
     });
+  },
+);
+
+/**
+ * @route POST /api/v1/device/status
+ * @desc Get device authentication status
+ * @access Public
+ */
+router.post('/status',
+  validate(Joi.object({
+    deviceId: Joi.string().min(1).required(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceId } = req.body;
+
+      logger.info('Device status request', { deviceId });
+
+      // Check if device is authenticated/registered
+      const sslStatus = await sslService.getDeviceStatus(deviceId);
+      
+      res.json({
+        success: true,
+        authenticated: sslStatus.success && sslStatus.certificate && !sslStatus.certificate.expired,
+        deviceId: deviceId,
+        sslStatus: sslStatus
+      });
+    } catch (error) {
+      logger.error('Device status check failed', { error: error.message, body: req.body });
+      res.json({
+        success: false,
+        authenticated: false,
+        deviceId: req.body.deviceId,
+        error: error.message
+      });
+    }
+  },
+);
+
+/**
+ * @route POST /api/v1/device/verify
+ * @desc Verify device and register it
+ * @access Public
+ */
+router.post('/verify',
+  validate(Joi.object({
+    deviceId: Joi.string().min(1).required(),
+    userAgent: Joi.string().optional(),
+    platform: Joi.string().optional(),
+    language: Joi.string().optional(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceId, userAgent, platform, language } = req.body;
+
+      logger.info('Device verification request', { deviceId, userAgent, platform, language });
+
+      // Register/verify the device
+      const result = await sslService.registerDevice(deviceId, {
+        userAgent,
+        platform,
+        language,
+        verified: true,
+        verifiedAt: new Date().toISOString()
+      });
+
+      res.json({
+        success: true,
+        message: 'Device verified successfully',
+        deviceId: deviceId,
+        verified: true
+      });
+    } catch (error) {
+      logger.error('Device verification failed', { error: error.message, body: req.body });
+      res.json({
+        success: false,
+        message: 'Device verification failed',
+        error: error.message
+      });
+    }
+  },
+);
+
+/**
+ * @route POST /api/v1/device/generate-key
+ * @desc Generate API key for device with UUID subdomain SSL certificate
+ * @access Private (Device Registration Required)
+ */
+router.post('/generate-key',
+  validate(Joi.object({
+    deviceId: Joi.string().min(1).required(),
+    deviceName: Joi.string().min(1).required(),
+    userInitials: Joi.string().min(1).required(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceId, deviceName, userInitials } = req.body;
+
+      logger.info('Device API key generation request', { deviceId, deviceName, userInitials });
+
+      // Verify device has UUID subdomain SSL certificate
+      const sslStatus = await sslService.getDeviceStatus(deviceId);
+      if (!sslStatus.success || !sslStatus.certificate || sslStatus.certificate.expired) {
+        return res.apiError('Device must have a valid UUID subdomain SSL certificate to generate API key', 403);
+      }
+
+      // Generate device-specific API key
+      const result = await sslService.generateDeviceApiKey(deviceId, {
+        deviceName,
+        userInitials,
+        permissions: ['ssl:read', 'device:read', 'api:access'],
+      });
+
+      res.apiSuccess(result, 'Device API key generated successfully');
+    } catch (error) {
+      logger.error('Device API key generation failed', { error: error.message, body: req.body });
+      res.apiError('Failed to generate device API key', 500, error.message);
+    }
   },
 );
 

@@ -1,9 +1,11 @@
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const database = require('../config/database');
+const redis = require('../config/redis');
 
 class SSLService {
   constructor() {
-    this.certificates = new Map(); // In-memory storage for development
+    this.certificates = new Map(); // Fallback in-memory storage
     this.premiumUsers = new Set(); // Track premium users
     this.letsEncryptConfig = {
       staging: process.env.NODE_ENV === 'development',
@@ -11,6 +13,13 @@ class SSLService {
       server: process.env.NODE_ENV === 'development'
         ? 'https://acme-staging-v02.api.letsencrypt.org/directory'
         : 'https://acme-v02.api.letsencrypt.org/directory',
+    };
+    
+    // Cache configuration
+    this.cacheConfig = {
+      ttl: 3600, // 1 hour
+      prefix: 'cert:',
+      batchSize: 100
     };
   }
 
@@ -30,23 +39,24 @@ class SSLService {
         throw new Error('Invalid UUID subdomain format. Must end with .myl.zip');
       }
 
-      // Check if device already has a certificate
-      if (this.certificates.has(deviceId)) {
-        const existing = this.certificates.get(deviceId);
-        if (existing.uuidSubdomain === uuidSubdomain && !existing.expired) {
-          return {
-            success: true,
-            certificate: existing,
-            message: 'UUID subdomain certificate already exists and is valid',
-          };
-        }
+      // Check if device already has a certificate in database
+      const existingCertificate = await this.getCertificateFromDatabase(deviceId);
+      if (existingCertificate && existingCertificate.uuid_subdomain === uuidSubdomain && existingCertificate.status === 'active') {
+        return {
+          success: true,
+          certificate: existingCertificate,
+          message: 'UUID subdomain certificate already exists and is valid',
+        };
       }
 
       // Generate certificate data for UUID subdomain
       const certificate = await this.generateUUIDSubdomainCertificate(deviceId, uuidSubdomain, options);
 
-      // Store certificate
-      this.certificates.set(deviceId, certificate);
+      // Store certificate in database
+      await this.saveCertificateToDatabase(certificate);
+
+      // Update cache
+      await this.updateCertificateCache(deviceId, certificate);
 
       logger.info('UUID subdomain SSL certificate provisioned successfully', { deviceId, uuidSubdomain });
 
@@ -190,7 +200,16 @@ class SSLService {
    */
   async getDeviceStatus(deviceId) {
     try {
-      const certificate = this.certificates.get(deviceId);
+      // Try cache first
+      let certificate = await this.getCertificateFromCache(deviceId);
+      
+      // If not in cache, get from database
+      if (!certificate) {
+        certificate = await this.getCertificateFromDatabase(deviceId);
+        if (certificate) {
+          await this.updateCertificateCache(deviceId, certificate);
+        }
+      }
 
       if (!certificate) {
         return {
@@ -200,8 +219,8 @@ class SSLService {
         };
       }
 
-      const isExpired = new Date(certificate.expiresAt) < new Date();
-      const daysUntilExpiry = Math.ceil((new Date(certificate.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+      const isExpired = new Date(certificate.expires_at) < new Date();
+      const daysUntilExpiry = Math.ceil((new Date(certificate.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
 
       return {
         success: true,
@@ -216,6 +235,105 @@ class SSLService {
     } catch (error) {
       logger.error('Failed to get SSL device status', { deviceId, error: error.message });
       throw error;
+    }
+  }
+
+  /**
+   * Get certificate from database
+   * @param {string} deviceId - Device identifier
+   * @returns {Object|null} Certificate data
+   */
+  async getCertificateFromDatabase(deviceId) {
+    try {
+      const result = await database.query(
+        'SELECT * FROM device_certificates WHERE device_id = $1 AND status = $2',
+        [deviceId, 'active']
+      );
+      
+      return result.rows[0] || null;
+    } catch (error) {
+      logger.error('Failed to get certificate from database', { deviceId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Save certificate to database
+   * @param {Object} certificate - Certificate data
+   */
+  async saveCertificateToDatabase(certificate) {
+    try {
+      const result = await database.query(
+        `INSERT INTO device_certificates (
+          device_id, uuid_subdomain, certificate_data, status, expires_at, 
+          user_initials, device_name, certificate_type, auto_renewal, premium
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (device_id) 
+        DO UPDATE SET 
+          uuid_subdomain = EXCLUDED.uuid_subdomain,
+          certificate_data = EXCLUDED.certificate_data,
+          status = EXCLUDED.status,
+          expires_at = EXCLUDED.expires_at,
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING *`,
+        [
+          certificate.deviceId,
+          certificate.uuidSubdomain,
+          JSON.stringify(certificate),
+          certificate.status,
+          certificate.expiresAt,
+          certificate.userInitials,
+          certificate.deviceName,
+          certificate.type,
+          certificate.autoRenewal,
+          certificate.premium
+        ]
+      );
+      
+      logger.info('Certificate saved to database', { deviceId: certificate.deviceId });
+      return result.rows[0];
+    } catch (error) {
+      logger.error('Failed to save certificate to database', { deviceId: certificate.deviceId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get certificate from cache
+   * @param {string} deviceId - Device identifier
+   * @returns {Object|null} Certificate data
+   */
+  async getCertificateFromCache(deviceId) {
+    try {
+      if (!redis.isRedisConnected()) {
+        return null;
+      }
+      
+      const cacheKey = `${this.cacheConfig.prefix}${deviceId}`;
+      return await redis.get(cacheKey);
+    } catch (error) {
+      logger.warn('Failed to get certificate from cache', { deviceId, error: error.message });
+      return null;
+    }
+  }
+
+  /**
+   * Update certificate cache
+   * @param {string} deviceId - Device identifier
+   * @param {Object} certificate - Certificate data
+   */
+  async updateCertificateCache(deviceId, certificate) {
+    try {
+      if (!redis.isRedisConnected()) {
+        return;
+      }
+      
+      const cacheKey = `${this.cacheConfig.prefix}${deviceId}`;
+      await redis.set(cacheKey, certificate, this.cacheConfig.ttl);
+      
+      logger.debug('Certificate cache updated', { deviceId });
+    } catch (error) {
+      logger.warn('Failed to update certificate cache', { deviceId, error: error.message });
     }
   }
 
@@ -313,7 +431,6 @@ class SSLService {
 
       // Create device API key record
       const deviceApiKey = {
-        id: crypto.randomUUID(),
         deviceId,
         apiKey,
         keyHash,
@@ -322,17 +439,11 @@ class SSLService {
         permissions: options.permissions || ['ssl:read', 'device:read', 'api:access'],
         rateLimit: options.rateLimit || 1000, // requests per hour
         expiresAt: options.expiresAt || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(), // 30 days default
-        createdAt: new Date().toISOString(),
-        isActive: true,
-        lastUsedAt: null,
-        uuidSubdomain: sslStatus.certificate.uuidSubdomain,
+        uuidSubdomain: sslStatus.certificate.uuid_subdomain,
       };
 
-      // Store the API key (in production, this would be in a database)
-      if (!this.deviceApiKeys) {
-        this.deviceApiKeys = new Map();
-      }
-      this.deviceApiKeys.set(keyHash, deviceApiKey);
+      // Store the API key in database
+      await this.saveApiKeyToDatabase(deviceApiKey);
 
       logger.info('Device API key generated successfully', { deviceId, deviceName: deviceApiKey.deviceName });
 
@@ -346,13 +457,46 @@ class SSLService {
           permissions: deviceApiKey.permissions,
           rateLimit: deviceApiKey.rateLimit,
           expiresAt: deviceApiKey.expiresAt,
-          createdAt: deviceApiKey.createdAt,
+          createdAt: new Date().toISOString(),
           uuidSubdomain: deviceApiKey.uuidSubdomain,
         },
         message: 'Device API key generated successfully',
       };
     } catch (error) {
       logger.error('Failed to generate device API key', { deviceId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Save API key to database
+   * @param {Object} apiKey - API key data
+   */
+  async saveApiKeyToDatabase(apiKey) {
+    try {
+      const result = await database.query(
+        `INSERT INTO device_api_keys (
+          device_id, api_key, key_hash, device_name, user_initials, 
+          permissions, rate_limit, expires_at, uuid_subdomain
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *`,
+        [
+          apiKey.deviceId,
+          apiKey.apiKey,
+          apiKey.keyHash,
+          apiKey.deviceName,
+          apiKey.userInitials,
+          JSON.stringify(apiKey.permissions),
+          apiKey.rateLimit,
+          apiKey.expiresAt,
+          apiKey.uuidSubdomain
+        ]
+      );
+      
+      logger.info('API key saved to database', { deviceId: apiKey.deviceId });
+      return result.rows[0];
+    } catch (error) {
+      logger.error('Failed to save API key to database', { deviceId: apiKey.deviceId, error: error.message });
       throw error;
     }
   }

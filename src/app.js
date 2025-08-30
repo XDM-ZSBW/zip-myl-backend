@@ -27,6 +27,10 @@ const {
 // Import new API middleware
 const { apiResponseMiddleware } = require('./middleware/apiResponse');
 
+// Import database and cache
+const database = require('./config/database');
+const redis = require('./config/redis');
+
 const app = express();
 
 // Validate configuration
@@ -169,6 +173,10 @@ try {
   const sslRoutes = require('./routes/ssl');
   loadRoutes('SSL routes', '/api/v1/ssl', sslRoutes);
 
+  // Device routes
+  const deviceRoutes = require('./routes/device');
+  loadRoutes('device routes', '/api/v1/device', deviceRoutes);
+
   // Windows SSL Integration routes
   const windowsSSLRoutes = require('./routes/windows-ssl');
   loadRoutes('Windows SSL routes', '/api/v1/windows-ssl', windowsSSLRoutes);
@@ -256,35 +264,78 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-// Start server
-const server = app.listen(config.PORT, config.HOST, () => {
-  logger.info(`Server running on port ${config.PORT}`);
-  logger.info(`Environment: ${config.NODE_ENV}`);
-  console.log(`🚀 Server started successfully on port ${config.PORT}`);
-  console.log(`🌍 Environment: ${config.NODE_ENV}`);
-  console.log(`🔒 Security: ${config.SECURITY_HEADERS ? 'enabled' : 'disabled'}`);
-  console.log(`📊 Metrics: ${config.ENABLE_METRICS ? 'enabled' : 'disabled'}`);
-  console.log('🎯 Service Type: Pure API Service (No Frontend)');
-  console.log(`📚 API Documentation: http://localhost:${config.PORT}/api/v1/docs`);
-  console.log('🔑 API Key Required: X-API-Key header for authenticated endpoints');
-});
-
-// Initialize WebSocket service for real-time communication (optional)
-if (config.ENABLE_WEBSOCKET) {
+// Initialize database and cache connections
+async function initializeConnections() {
   try {
-    const WebSocketService = require('./services/websocketService');
-    const wsService = new WebSocketService(server);
-    logger.info('WebSocket service initialized successfully');
-    console.log('✅ WebSocket service initialized');
-
-    // Add WebSocket stats endpoint
-    app.get('/api/v1/ws/stats', (req, res) => {
-      res.apiSuccess(wsService.getStats(), 'WebSocket statistics retrieved successfully');
-    });
+    // Initialize database
+    await database.initialize();
+    console.log('✅ Database connection established');
+    
+    // Initialize Redis cache
+    await redis.initialize();
+    console.log('✅ Redis cache connection established');
+    
+    return true;
   } catch (error) {
-    logger.warn('Failed to initialize WebSocket service:', error.message);
-    console.log('⚠️  WebSocket service not available (optional)');
+    console.error('❌ Failed to initialize connections:', error.message);
+    logger.error('Connection initialization failed', error);
+    return false;
   }
 }
+
+// Start server with database initialization
+async function startServer() {
+  const connectionsReady = await initializeConnections();
+  
+  if (!connectionsReady) {
+    console.error('❌ Server startup failed due to connection issues');
+    process.exit(1);
+  }
+  
+  const server = app.listen(config.PORT, config.HOST, () => {
+    logger.info(`Server running on port ${config.PORT}`);
+    logger.info(`Environment: ${config.NODE_ENV}`);
+    console.log(`🚀 Server started successfully on port ${config.PORT}`);
+    console.log(`🌍 Environment: ${config.NODE_ENV}`);
+    console.log(`🔒 Security: ${config.SECURITY_HEADERS ? 'enabled' : 'disabled'}`);
+    console.log(`📊 Metrics: ${config.ENABLE_METRICS ? 'enabled' : 'disabled'}`);
+    console.log('🎯 Service Type: Pure API Service (No Frontend)');
+    console.log(`📚 API Documentation: http://localhost:${config.PORT}/api/v1/docs`);
+    console.log('🔑 API Key Required: X-API-Key header for authenticated endpoints');
+    console.log('🗄️  Database: PostgreSQL with Redis caching');
+  });
+  
+  return server;
+}
+
+// Initialize WebSocket service for real-time communication (optional)
+async function initializeWebSocket(server) {
+  if (config.ENABLE_WEBSOCKET) {
+    try {
+      const WebSocketService = require('./services/websocketService');
+      const wsService = new WebSocketService(server);
+      logger.info('WebSocket service initialized successfully');
+      console.log('✅ WebSocket service initialized');
+
+      // Add WebSocket stats endpoint
+      app.get('/api/v1/ws/stats', (req, res) => {
+        res.apiSuccess(wsService.getStats(), 'WebSocket statistics retrieved successfully');
+      });
+    } catch (error) {
+      logger.warn('Failed to initialize WebSocket service:', error.message);
+      console.log('⚠️  WebSocket service not available (optional)');
+    }
+  }
+}
+
+// Start the server
+let server;
+startServer().then((startedServer) => {
+  server = startedServer;
+  return initializeWebSocket(server);
+}).catch((error) => {
+  console.error('❌ Server startup failed:', error.message);
+  process.exit(1);
+});
 
 module.exports = app;
