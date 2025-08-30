@@ -70,8 +70,13 @@ const initializeRedis = () => {
   }
 };
 
-// Initialize Redis on module load
-initializeRedis();
+// Initialize Redis on module load - handle errors gracefully
+try {
+  initializeRedis();
+} catch (error) {
+  logger.warn('Redis initialization failed during module load, will retry on first request', { error: error.message });
+  useRedis = false;
+}
 
 // Create rate limiter with fallback
 const createRateLimiter = (config) => {
