@@ -3,9 +3,125 @@ const router = express.Router();
 const Joi = require('joi');
 const { authenticateDevice } = require('../middleware/auth');
 const { generalRateLimit } = require('../middleware/rateLimiter');
-const { validate, schemas } = require('../middleware/validation');
+const { validate } = require('../middleware/validation');
 const sslService = require('../services/sslService');
 const logger = require('../utils/logger');
+
+/**
+ * @route POST /api/v1/device/check
+ * @desc Simple device check without database dependency
+ * @access Public
+ */
+router.post('/check',
+  validate(Joi.object({
+    deviceId: Joi.string().min(1).required(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceId } = req.body;
+
+      logger.info('Device check request', { deviceId });
+
+      // Simple device check that doesn't require database
+      // This is used by the auth page when database is unavailable
+      res.json({
+        success: true,
+        authenticated: false, // Default to false for new devices
+        deviceId,
+        message: 'Device check completed. Use verify endpoint to authenticate.',
+        status: 'ready_for_verification',
+      });
+    } catch (error) {
+      logger.error('Device check failed', { error: error.message, body: req.body });
+      res.json({
+        success: false,
+        authenticated: false,
+        deviceId: req.body.deviceId,
+        error: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * @route POST /api/v1/device/status
+ * @desc Get device authentication status
+ * @access Public
+ */
+router.post('/status',
+  validate(Joi.object({
+    deviceId: Joi.string().min(1).required(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceId } = req.body;
+
+      logger.info('Device status request', { deviceId });
+
+      // Check if device is authenticated/registered
+      const sslStatus = await sslService.getDeviceStatus(deviceId);
+
+      res.json({
+        success: true,
+        authenticated: sslStatus.success && sslStatus.certificate && !sslStatus.certificate.expired,
+        deviceId,
+        sslStatus,
+      });
+    } catch (error) {
+      logger.error('Device status check failed', { error: error.message, body: req.body });
+      res.json({
+        success: false,
+        authenticated: false,
+        deviceId: req.body.deviceId,
+        error: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * @route POST /api/v1/device/verify
+ * @desc Verify device and register it
+ * @access Public
+ */
+router.post('/verify',
+  validate(Joi.object({
+    deviceId: Joi.string().min(1).required(),
+    userAgent: Joi.string().optional(),
+    platform: Joi.string().optional(),
+    language: Joi.string().optional(),
+  })),
+  async(req, res) => {
+    try {
+      const { deviceId, userAgent, platform, language } = req.body;
+
+      logger.info('Device verification request', { deviceId, userAgent, platform, language });
+
+      // Register/verify the device
+      await sslService.registerDevice(deviceId, {
+        userAgent,
+        platform,
+        language,
+        verified: true,
+        verifiedAt: new Date().toISOString(),
+      });
+
+      res.json({
+        success: true,
+        message: 'Device verified successfully',
+        deviceId,
+        verified: true,
+      });
+    } catch (error) {
+      logger.error('Device verification failed', { error: error.message, body: req.body });
+      res.json({
+        success: false,
+        message: 'Device verification failed',
+        error: error.message,
+      });
+    }
+  },
+);
 
 // Get all devices for user
 router.get('/',
@@ -130,8 +246,8 @@ router.get('/:deviceId/sessions',
         deviceId,
         sessions: [],
         total: 0,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10),
       },
     });
   },
@@ -309,86 +425,6 @@ router.post('/:deviceId/ping',
         responseTime: Math.random() * 100 + 10, // Mock response time
       },
     });
-  },
-);
-
-/**
- * @route POST /api/v1/device/status
- * @desc Get device authentication status
- * @access Public
- */
-router.post('/status',
-  validate(Joi.object({
-    deviceId: Joi.string().min(1).required(),
-  })),
-  async(req, res) => {
-    try {
-      const { deviceId } = req.body;
-
-      logger.info('Device status request', { deviceId });
-
-      // Check if device is authenticated/registered
-      const sslStatus = await sslService.getDeviceStatus(deviceId);
-
-      res.json({
-        success: true,
-        authenticated: sslStatus.success && sslStatus.certificate && !sslStatus.certificate.expired,
-        deviceId,
-        sslStatus,
-      });
-    } catch (error) {
-      logger.error('Device status check failed', { error: error.message, body: req.body });
-      res.json({
-        success: false,
-        authenticated: false,
-        deviceId: req.body.deviceId,
-        error: error.message,
-      });
-    }
-  },
-);
-
-/**
- * @route POST /api/v1/device/verify
- * @desc Verify device and register it
- * @access Public
- */
-router.post('/verify',
-  validate(Joi.object({
-    deviceId: Joi.string().min(1).required(),
-    userAgent: Joi.string().optional(),
-    platform: Joi.string().optional(),
-    language: Joi.string().optional(),
-  })),
-  async(req, res) => {
-    try {
-      const { deviceId, userAgent, platform, language } = req.body;
-
-      logger.info('Device verification request', { deviceId, userAgent, platform, language });
-
-      // Register/verify the device
-      const result = await sslService.registerDevice(deviceId, {
-        userAgent,
-        platform,
-        language,
-        verified: true,
-        verifiedAt: new Date().toISOString(),
-      });
-
-      res.json({
-        success: true,
-        message: 'Device verified successfully',
-        deviceId,
-        verified: true,
-      });
-    } catch (error) {
-      logger.error('Device verification failed', { error: error.message, body: req.body });
-      res.json({
-        success: false,
-        message: 'Device verification failed',
-        error: error.message,
-      });
-    }
   },
 );
 
