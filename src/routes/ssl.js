@@ -6,34 +6,34 @@ const { validateApiKey } = require('../middleware/apiKeyValidation');
 const validateInput = (schema) => {
   return (req, res, next) => {
     const errors = [];
-    
+
     // Check required fields
     if (schema.deviceId && schema.deviceId.required && !req.body.deviceId) {
       errors.push('deviceId is required');
     }
-    
+
     if (schema.domain && schema.domain.required && !req.body.domain) {
       errors.push('domain is required');
     }
-    
+
     // Check field types
     if (req.body.deviceId && schema.deviceId && schema.deviceId.minLength && req.body.deviceId.length < schema.deviceId.minLength) {
       errors.push(`deviceId must be at least ${schema.deviceId.minLength} characters`);
     }
-    
+
     if (req.body.domain && schema.domain && schema.domain.minLength && req.body.domain.length < schema.domain.minLength) {
       errors.push(`domain must be at least ${schema.domain.minLength} characters`);
     }
-    
+
     // Check enum values
     if (req.body.certificateType && schema.certificateType && schema.certificateType.enum && !schema.certificateType.enum.includes(req.body.certificateType)) {
       errors.push(`certificateType must be one of: ${schema.certificateType.enum.join(', ')}`);
     }
-    
+
     if (errors.length > 0) {
       return res.apiError('Validation failed', 400, errors.join('; '));
     }
-    
+
     next();
   };
 };
@@ -47,30 +47,30 @@ router.use(validateApiKey);
  * @desc Provision SSL certificate for a device
  * @access Private (API Key Required)
  */
-router.post('/provision-device', 
+router.post('/provision-device',
   validateInput({
     deviceId: { type: 'string', required: true, minLength: 1 },
     domain: { type: 'string', required: true, minLength: 1 },
     certificateType: { type: 'string', required: false, enum: ['single', 'wildcard', 'multi'] },
-    autoRenewal: { type: 'boolean', required: false }
+    autoRenewal: { type: 'boolean', required: false },
   }),
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { deviceId, domain, certificateType, autoRenewal } = req.body;
-      
+
       logger.info('SSL certificate provisioning request', { deviceId, domain, certificateType, autoRenewal });
-      
+
       const result = await sslService.provisionCertificate(deviceId, domain, {
         certificateType,
-        autoRenewal
+        autoRenewal,
       });
-      
+
       res.apiSuccess(result, 'SSL certificate provisioned successfully');
     } catch (error) {
       logger.error('SSL certificate provisioning failed', { error: error.message, body: req.body });
       res.apiError('Failed to provision SSL certificate', 500, error.message);
     }
-  }
+  },
 );
 
 /**
@@ -78,14 +78,14 @@ router.post('/provision-device',
  * @desc Get SSL status for a specific device
  * @access Private (API Key Required)
  */
-router.get('/device-status/:deviceId', async (req, res) => {
+router.get('/device-status/:deviceId', async(req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     logger.info('SSL device status request', { deviceId });
-    
+
     const result = await sslService.getDeviceStatus(deviceId);
-    
+
     if (result.success) {
       res.apiSuccess(result, 'SSL device status retrieved successfully');
     } else {
@@ -102,37 +102,37 @@ router.get('/device-status/:deviceId', async (req, res) => {
  * @desc Generate API key for Chrome extension with SSL-certified device
  * @access Private (Device Registration Required)
  */
-router.post('/generate-extension-key', 
+router.post('/generate-extension-key',
   validateInput({
     deviceId: { type: 'string', required: true, minLength: 1 },
     extensionName: { type: 'string', required: false, minLength: 1 },
-    permissions: { type: 'array', required: false }
+    permissions: { type: 'array', required: false },
   }),
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { deviceId, extensionName = 'Chrome Extension', permissions = ['ssl:read', 'device:read'] } = req.body;
-      
+
       logger.info('Extension API key generation request', { deviceId, extensionName, permissions });
-      
+
       // Verify device has SSL certificate
       const sslStatus = await sslService.getDeviceStatus(deviceId);
       if (!sslStatus.success || !sslStatus.certificate || sslStatus.certificate.expired) {
         return res.apiError('Device must have a valid SSL certificate to generate extension API key', 403);
       }
-      
+
       // Generate extension-specific API key
       const result = await sslService.generateExtensionApiKey(deviceId, {
         extensionName,
         permissions,
-        deviceId
+        deviceId,
       });
-      
+
       res.apiSuccess(result, 'Extension API key generated successfully');
     } catch (error) {
       logger.error('Extension API key generation failed', { error: error.message, body: req.body });
       res.apiError('Failed to generate extension API key', 500, error.message);
     }
-  }
+  },
 );
 
 /**
@@ -140,14 +140,14 @@ router.post('/generate-extension-key',
  * @desc Renew SSL certificate for a device
  * @access Private (API Key Required)
  */
-router.post('/renew-certificate/:deviceId', async (req, res) => {
+router.post('/renew-certificate/:deviceId', async(req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     logger.info('SSL certificate renewal request', { deviceId });
-    
+
     const result = await sslService.renewCertificate(deviceId);
-    
+
     res.apiSuccess(result, 'SSL certificate renewed successfully');
   } catch (error) {
     logger.error('SSL certificate renewal failed', { deviceId: req.params.deviceId, error: error.message });
@@ -160,14 +160,14 @@ router.post('/renew-certificate/:deviceId', async (req, res) => {
  * @desc Revoke SSL certificate for a device
  * @access Private (API Key Required)
  */
-router.delete('/revoke-certificate/:deviceId', async (req, res) => {
+router.delete('/revoke-certificate/:deviceId', async(req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     logger.info('SSL certificate revocation request', { deviceId });
-    
+
     const result = await sslService.revokeCertificate(deviceId);
-    
+
     res.apiSuccess(result, 'SSL certificate revoked successfully');
   } catch (error) {
     logger.error('SSL certificate revocation failed', { deviceId: req.params.deviceId, error: error.message });
@@ -180,14 +180,14 @@ router.delete('/revoke-certificate/:deviceId', async (req, res) => {
  * @desc Get premium SSL features for a device
  * @access Private (API Key Required)
  */
-router.get('/premium-features/:deviceId', async (req, res) => {
+router.get('/premium-features/:deviceId', async(req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     logger.info('Premium SSL features request', { deviceId });
-    
+
     const result = await sslService.getPremiumFeatures(deviceId);
-    
+
     if (result.success) {
       res.apiSuccess(result, 'Premium SSL features retrieved successfully');
     } else {
@@ -206,16 +206,16 @@ router.get('/premium-features/:deviceId', async (req, res) => {
  */
 router.post('/upgrade-to-premium',
   validateInput({
-    deviceId: { type: 'string', required: true, minLength: 1 }
+    deviceId: { type: 'string', required: true, minLength: 1 },
   }),
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { deviceId } = req.body;
-      
+
       logger.info('SSL premium upgrade request', { deviceId });
-      
+
       const result = await sslService.upgradeToPremium(deviceId);
-      
+
       if (result.success) {
         res.apiSuccess(result, 'Successfully upgraded to premium SSL');
       } else {
@@ -225,7 +225,7 @@ router.post('/upgrade-to-premium',
       logger.error('SSL premium upgrade failed', { error: error.message, body: req.body });
       res.apiError('Failed to upgrade to premium SSL', 500, error.message);
     }
-  }
+  },
 );
 
 /**
@@ -233,18 +233,18 @@ router.post('/upgrade-to-premium',
  * @desc Get advanced SSL management features for a device
  * @access Private (API Key Required)
  */
-router.get('/advanced-management/:deviceId', async (req, res) => {
+router.get('/advanced-management/:deviceId', async(req, res) => {
   try {
     const { deviceId } = req.params;
-    
+
     logger.info('Advanced SSL management request', { deviceId });
-    
+
     const result = await sslService.getAdvancedManagement(deviceId);
-    
+
     res.apiSuccess(result, 'Advanced SSL management features retrieved successfully');
   } catch (error) {
     logger.error('Advanced SSL management retrieval failed', { deviceId: req.params.deviceId, error: error.message });
-    
+
     if (error.message.includes('Premium subscription required')) {
       res.apiError('Premium subscription required for advanced management', 403, error.message);
     } else {
@@ -258,12 +258,12 @@ router.get('/advanced-management/:deviceId', async (req, res) => {
  * @desc Get SSL revenue analytics (admin function)
  * @access Private (API Key Required)
  */
-router.get('/analytics/revenue', async (req, res) => {
+router.get('/analytics/revenue', async(req, res) => {
   try {
     logger.info('SSL revenue analytics request');
-    
+
     const metrics = await sslService.getRevenueMetrics();
-    
+
     res.apiSuccess(metrics, 'SSL revenue analytics retrieved successfully');
   } catch (error) {
     logger.error('SSL revenue analytics retrieval failed', { error: error.message });
@@ -276,13 +276,13 @@ router.get('/analytics/revenue', async (req, res) => {
  * @desc Get all SSL certificates (admin function)
  * @access Private (API Key Required)
  */
-router.get('/analytics/certificates', async (req, res) => {
+router.get('/analytics/certificates', async(req, res) => {
   try {
     logger.info('SSL certificates analytics request');
-    
+
     const certificates = await sslService.getAllCertificates();
     const premiumCount = await sslService.getPremiumUsersCount();
-    
+
     const analytics = {
       totalCertificates: certificates.length,
       premiumUsers: premiumCount,
@@ -293,10 +293,10 @@ router.get('/analytics/certificates', async (req, res) => {
         status: cert.status,
         premium: cert.premium,
         issuedAt: cert.issuedAt,
-        expiresAt: cert.expiresAt
-      }))
+        expiresAt: cert.expiresAt,
+      })),
     };
-    
+
     res.apiSuccess(analytics, 'SSL certificates analytics retrieved successfully');
   } catch (error) {
     logger.error('SSL certificates analytics retrieval failed', { error: error.message });
@@ -309,10 +309,10 @@ router.get('/analytics/certificates', async (req, res) => {
  * @desc Get SSL service health status
  * @access Private (API Key Required)
  */
-router.get('/health', async (req, res) => {
+router.get('/health', async(req, res) => {
   try {
     const metrics = await sslService.getRevenueMetrics();
-    
+
     const health = {
       status: 'healthy',
       service: 'SSL Certificate Service',
@@ -321,14 +321,14 @@ router.get('/health', async (req, res) => {
         totalUsers: metrics.totalUsers,
         premiumUsers: metrics.premiumUsers,
         monthlyRevenue: metrics.monthlyRevenue,
-        conversionRate: metrics.conversionRate
+        conversionRate: metrics.conversionRate,
       },
       features: {
         basic: sslService.getBasicFeatures(),
-        premium: sslService.getPremiumFeaturesList()
-      }
+        premium: sslService.getPremiumFeaturesList(),
+      },
     };
-    
+
     res.apiSuccess(health, 'SSL service is healthy');
   } catch (error) {
     logger.error('SSL health check failed', { error: error.message });

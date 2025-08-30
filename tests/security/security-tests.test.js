@@ -7,23 +7,23 @@ const request = require('supertest');
 // Mock app for security testing to avoid server conflicts
 const mockApp = {
   get: (path) => ({
-    expect: (status) => Promise.resolve({ 
-      status, 
-      body: { 
-        error: status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : 'Not Found' 
-      } 
-    })
+    expect: (status) => Promise.resolve({
+      status,
+      body: {
+        error: status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : 'Not Found',
+      },
+    }),
   }),
   post: (path) => ({
     send: (data) => ({
-      expect: (status) => Promise.resolve({ 
-        status, 
-        body: { 
-          error: status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : 'Bad Request' 
-        } 
-      })
-    })
-  })
+      expect: (status) => Promise.resolve({
+        status,
+        body: {
+          error: status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : 'Bad Request',
+        },
+      }),
+    }),
+  }),
 };
 const { testUtils } = require('../setup');
 

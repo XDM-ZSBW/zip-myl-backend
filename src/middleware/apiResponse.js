@@ -16,7 +16,7 @@ const successResponse = (res, data, message = 'Success', statusCode = 200) => {
     data,
     message,
     timestamp: new Date().toISOString(),
-    requestId: generateRequestId()
+    requestId: generateRequestId(),
   };
 
   // Add pagination if present
@@ -41,10 +41,10 @@ const errorResponse = (res, error, statusCode = 500) => {
       message: error.message || 'An unexpected error occurred',
       details: error.details || null,
       userAction: error.userAction || 'Please try again later',
-      retryAfter: error.retryAfter || null
+      retryAfter: error.retryAfter || null,
     },
     timestamp: new Date().toISOString(),
-    requestId: generateRequestId()
+    requestId: generateRequestId(),
   };
 
   return res.status(statusCode).json(response);
@@ -63,10 +63,10 @@ const paginatedResponse = (res, data, page, limit, total, totalPages) => {
       total: parseInt(total) || 0,
       totalPages: parseInt(totalPages) || 1,
       hasNext: (parseInt(page) || 1) < (parseInt(totalPages) || 1),
-      hasPrev: (parseInt(page) || 1) > 1
+      hasPrev: (parseInt(page) || 1) > 1,
     },
     timestamp: new Date().toISOString(),
-    requestId: generateRequestId()
+    requestId: generateRequestId(),
   };
 
   return res.status(200).json(response);
@@ -81,19 +81,19 @@ const commonErrors = {
     code: 'UNAUTHORIZED',
     message: 'Authentication required',
     userAction: 'Please provide valid authentication credentials',
-    statusCode: 401
+    statusCode: 401,
   },
   FORBIDDEN: {
     code: 'FORBIDDEN',
     message: 'Access denied',
     userAction: 'You do not have permission to access this resource',
-    statusCode: 403
+    statusCode: 403,
   },
   INVALID_TOKEN: {
     code: 'INVALID_TOKEN',
     message: 'Invalid or expired token',
     userAction: 'Please authenticate again to get a new token',
-    statusCode: 401
+    statusCode: 401,
   },
 
   // Validation errors
@@ -101,19 +101,19 @@ const commonErrors = {
     code: 'VALIDATION_ERROR',
     message: 'Invalid input data',
     userAction: 'Please check your input and try again',
-    statusCode: 400
+    statusCode: 400,
   },
   MISSING_REQUIRED_FIELD: {
     code: 'MISSING_REQUIRED_FIELD',
     message: 'Required field is missing',
     userAction: 'Please provide all required fields',
-    statusCode: 400
+    statusCode: 400,
   },
   INVALID_FORMAT: {
     code: 'INVALID_FORMAT',
     message: 'Invalid data format',
     userAction: 'Please check the data format and try again',
-    statusCode: 400
+    statusCode: 400,
   },
 
   // Resource errors
@@ -121,13 +121,13 @@ const commonErrors = {
     code: 'NOT_FOUND',
     message: 'Resource not found',
     userAction: 'Please check the resource identifier and try again',
-    statusCode: 404
+    statusCode: 404,
   },
   ALREADY_EXISTS: {
     code: 'ALREADY_EXISTS',
     message: 'Resource already exists',
     userAction: 'Please use a different identifier or update the existing resource',
-    statusCode: 409
+    statusCode: 409,
   },
 
   // Rate limiting
@@ -135,7 +135,7 @@ const commonErrors = {
     code: 'RATE_LIMIT_EXCEEDED',
     message: 'Too many requests',
     userAction: 'Please wait before making another request',
-    statusCode: 429
+    statusCode: 429,
   },
 
   // Server errors
@@ -143,14 +143,14 @@ const commonErrors = {
     code: 'INTERNAL_ERROR',
     message: 'Internal server error',
     userAction: 'Please try again later or contact support if the problem persists',
-    statusCode: 500
+    statusCode: 500,
   },
   SERVICE_UNAVAILABLE: {
     code: 'SERVICE_UNAVAILABLE',
     message: 'Service temporarily unavailable',
     userAction: 'Please try again later',
-    statusCode: 503
-  }
+    statusCode: 503,
+  },
 };
 
 /**
@@ -172,7 +172,7 @@ const apiResponseMiddleware = (req, res, next) => {
       const errorData = {
         ...error,
         message: customMessage || error.message,
-        details: customDetails || error.details
+        details: customDetails || error.details,
       };
       return errorResponse(res, errorData, error.statusCode);
     }
@@ -180,7 +180,7 @@ const apiResponseMiddleware = (req, res, next) => {
     return errorResponse(res, {
       code: 'INTERNAL_ERROR',
       message: 'Unknown error occurred',
-      userAction: 'Please contact support'
+      userAction: 'Please contact support',
     }, 500);
   };
 
@@ -193,5 +193,5 @@ module.exports = {
   errorResponse,
   paginatedResponse,
   commonErrors,
-  generateRequestId
+  generateRequestId,
 };

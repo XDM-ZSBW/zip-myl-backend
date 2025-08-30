@@ -5,9 +5,9 @@ const { logger } = require('../../src/utils/logger');
 // Mock app for enhanced trust network testing to avoid server conflicts
 const mockApp = {
   get: (path) => ({
-    expect: (status) => Promise.resolve({ 
-      status, 
-      body: { 
+    expect: (status) => Promise.resolve({
+      status,
+      body: {
         success: true,
         data: {
           sites: [
@@ -20,7 +20,7 @@ const mockApp = {
               permissionRequirements: ['admin'],
               uiInjection: true,
               config: { theme: 'dark' },
-              isActive: true
+              isActive: true,
             },
             {
               id: 'site-2',
@@ -31,19 +31,19 @@ const mockApp = {
               permissionRequirements: ['user'],
               uiInjection: true,
               config: { theme: 'light' },
-              isActive: true
-            }
-          ]
-        }
-      } 
-    })
+              isActive: true,
+            },
+          ],
+        },
+      },
+    }),
   }),
   post: (path) => ({
     set: (header, value) => ({
       send: (data) => ({
-        expect: (status) => Promise.resolve({ 
-          status, 
-          body: { 
+        expect: (status) => Promise.resolve({
+          status,
+          body: {
             success: true,
             message: status === 201 ? 'Enhanced site created successfully' : 'Feature usage logged successfully',
             data: {
@@ -55,19 +55,19 @@ const mockApp = {
               permissionRequirements: ['user'],
               uiInjection: true,
               config: { theme: 'default' },
-              isActive: true
-            }
-          } 
-        })
-      })
-    })
+              isActive: true,
+            },
+          },
+        }),
+      }),
+    }),
   }),
   put: (path) => ({
     set: (header, value) => ({
       send: (data) => ({
-        expect: (status) => Promise.resolve({ 
-          status, 
-          body: { 
+        expect: (status) => Promise.resolve({
+          status,
+          body: {
             success: true,
             message: 'Enhanced site updated successfully',
             data: {
@@ -79,26 +79,26 @@ const mockApp = {
               permissionRequirements: ['admin'],
               uiInjection: true,
               config: { theme: 'dark', newOption: true },
-              isActive: true
-            }
-          } 
-        })
-      })
-    })
+              isActive: true,
+            },
+          },
+        }),
+      }),
+    }),
   }),
   delete: (path) => ({
     set: (header, value) => ({
       send: (data) => ({
-        expect: (status) => Promise.resolve({ 
-          status, 
-          body: { 
+        expect: (status) => Promise.resolve({
+          status,
+          body: {
             success: true,
-            message: 'Enhanced site deleted successfully'
-          } 
-        })
-      })
-    })
-  })
+            message: 'Enhanced site deleted successfully',
+          },
+        }),
+      }),
+    }),
+  }),
 };
 
 // Mock logger for tests to prevent errors
@@ -111,7 +111,7 @@ const mockLogger = {
     }
   },
   info: (message) => console.log(`[TEST LOGGER] ${message}`),
-  warn: (message) => console.warn(`[TEST LOGGER] ${message}`)
+  warn: (message) => console.warn(`[TEST LOGGER] ${message}`),
 };
 
 // Use mock logger if the real logger fails
@@ -198,14 +198,14 @@ describe('Enhanced Trust Network Integration Tests', () => {
         // Mock 404 response
         const mock404App = {
           get: (path) => ({
-            expect: (status) => Promise.resolve({ 
-              status: 404, 
-              body: { 
+            expect: (status) => Promise.resolve({
+              status: 404,
+              body: {
                 success: false,
-                error: 'Site not found'
-              } 
-            })
-          })
+                error: 'Site not found',
+              },
+            }),
+          }),
         };
 
         const response = await mock404App
@@ -226,7 +226,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
           enhancedFeatures: ['test', 'demo'],
           permissionRequirements: ['user'],
           uiInjection: true,
-          config: { theme: 'default' }
+          config: { theme: 'default' },
         };
 
         const response = await mockApp
@@ -244,7 +244,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
       it('should return 400 for missing required fields', async() => {
         const invalidSite = {
           name: 'Test Site',
-          description: 'A test site'
+          description: 'A test site',
           // Missing domain and other required fields
         };
 
@@ -253,16 +253,16 @@ describe('Enhanced Trust Network Integration Tests', () => {
           post: (path) => ({
             set: (header, value) => ({
               send: (data) => ({
-                expect: (status) => Promise.resolve({ 
-                  status: 400, 
-                  body: { 
+                expect: (status) => Promise.resolve({
+                  status: 400,
+                  body: {
                     success: false,
-                    error: 'Required fields missing'
-                  } 
-                })
-              })
-            })
-          })
+                    error: 'Required fields missing',
+                  },
+                }),
+              }),
+            }),
+          }),
         };
 
         const response = await mock400App
@@ -288,7 +288,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
           name: 'Updated Business Operations Frontend',
           description: 'Updated business operations interface',
           enhancedFeatures: ['admin', 'debug', 'new-feature'],
-          config: { theme: 'dark', newOption: true }
+          config: { theme: 'dark', newOption: true },
         };
 
         const response = await mockApp
@@ -332,18 +332,18 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mockSuccessApp = {
           get: (path) => ({
             set: (header, value) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 200, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 200,
+                body: {
                   success: true,
                   data: {
                     permissions: ['admin', 'debug'],
-                    featureAccess: { admin: true, debug: true }
-                  }
-                } 
-              })
-            })
-          })
+                    featureAccess: { admin: true, debug: true },
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -361,15 +361,15 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mock404App = {
           get: (path) => ({
             set: (header, value) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 404, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 404,
+                body: {
                   success: false,
-                  error: 'Permissions not found'
-                } 
-              })
-            })
-          })
+                  error: 'Permissions not found',
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mock404App
@@ -387,26 +387,26 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const validationData = {
           userId: testDeviceId,
           siteDomain: 'xdmiq.com',
-          requiredPermissions: ['admin']
+          requiredPermissions: ['admin'],
         };
 
         // Mock successful response
         const mockSuccessApp = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 200, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 200,
+                body: {
                   success: true,
                   data: {
                     hasAccess: true,
                     grantedPermissions: ['admin'],
-                    missingPermissions: []
-                  }
-                } 
-              })
-            })
-          })
+                    missingPermissions: [],
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -421,7 +421,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
 
       it('should return 400 for missing required fields', async() => {
         const invalidData = {
-          userId: testDeviceId
+          userId: testDeviceId,
           // Missing siteDomain and requiredPermissions
         };
 
@@ -429,15 +429,15 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mock400App = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 400, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 400,
+                body: {
                   success: false,
-                  error: 'Required fields missing'
-                } 
-              })
-            })
-          })
+                  error: 'Required fields missing',
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mock400App
@@ -459,27 +459,27 @@ describe('Enhanced Trust Network Integration Tests', () => {
           deviceType: 'chrome_extension',
           deviceVersion: '2.0.0',
           fingerprint: 'new-fingerprint-hash',
-          publicKey: 'new-public-key'
+          publicKey: 'new-public-key',
         };
 
         // Mock successful response
         const mockSuccessApp = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 201, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 201,
+                body: {
                   success: true,
                   data: {
                     deviceId: 'new-device-001',
                     deviceToken: 'new-device-token',
                     permissions: ['user'],
-                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                  }
-                } 
-              })
-            })
-          })
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -494,7 +494,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
 
       it('should return 400 for missing required fields', async() => {
         const invalidData = {
-          deviceType: 'chrome_extension'
+          deviceType: 'chrome_extension',
           // Missing deviceId and other required fields
         };
 
@@ -502,15 +502,15 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mock400App = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 400, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 400,
+                body: {
                   success: false,
-                  error: 'Required fields missing'
-                } 
-              })
-            })
-          })
+                  error: 'Required fields missing',
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mock400App
@@ -527,26 +527,26 @@ describe('Enhanced Trust Network Integration Tests', () => {
       it('should verify enhanced authentication state', async() => {
         const authData = {
           deviceId: testDeviceId,
-          deviceToken: testDeviceToken
+          deviceToken: testDeviceToken,
         };
 
         // Mock successful response
         const mockSuccessApp = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 200, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 200,
+                body: {
                   success: true,
                   data: {
                     isValid: true,
                     permissions: ['admin', 'debug'],
-                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                  }
-                } 
-              })
-            })
-          })
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -564,26 +564,26 @@ describe('Enhanced Trust Network Integration Tests', () => {
       it('should verify enhanced authentication state', async() => {
         const authData = {
           deviceId: testDeviceId,
-          deviceToken: testDeviceToken
+          deviceToken: testDeviceToken,
         };
 
         // Mock successful response
         const mockSuccessApp = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 200, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 200,
+                body: {
                   success: true,
                   data: {
                     isValid: true,
                     permissions: ['admin', 'debug'],
-                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                  }
-                } 
-              })
-            })
-          })
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -604,16 +604,16 @@ describe('Enhanced Trust Network Integration Tests', () => {
           post: (path) => ({
             set: (header, value) => ({
               send: (data) => ({
-                expect: (status) => Promise.resolve({ 
-                  status: 200, 
-                  body: { 
+                expect: (status) => Promise.resolve({
+                  status: 200,
+                  body: {
                     success: true,
-                    message: 'Device deauthenticated successfully'
-                  } 
-                })
-              })
-            })
-          })
+                    message: 'Device deauthenticated successfully',
+                  },
+                }),
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -635,7 +635,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
           userId: testDeviceId,
           feature: 'admin_panel',
           action: 'access',
-          metadata: { page: 'dashboard', timestamp: new Date().toISOString() }
+          metadata: { page: 'dashboard', timestamp: new Date().toISOString() },
         };
 
         const response = await mockApp
@@ -649,7 +649,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
 
       it('should return 400 for missing required fields', async() => {
         const invalidData = {
-          userId: testDeviceId
+          userId: testDeviceId,
           // Missing feature and action
         };
 
@@ -657,15 +657,15 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mock400App = {
           post: (path) => ({
             send: (data) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 400, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 400,
+                body: {
                   success: false,
-                  error: 'Required fields missing'
-                } 
-              })
-            })
-          })
+                  error: 'Required fields missing',
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mock400App
@@ -684,7 +684,7 @@ describe('Enhanced Trust Network Integration Tests', () => {
           userId: testDeviceId,
           siteDomain: 'xdmiq.com',
           action: 'page_view',
-          metadata: { page: '/admin', timestamp: new Date().toISOString() }
+          metadata: { page: '/admin', timestamp: new Date().toISOString() },
         };
 
         const response = await mockApp
@@ -705,19 +705,19 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mockSuccessApp = {
           get: (path) => ({
             set: (header, value) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 200, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 200,
+                body: {
                   success: true,
                   data: {
                     total_sites: 2,
                     active_sites: 2,
-                    inactive_sites: 0
-                  }
-                } 
-              })
-            })
-          })
+                    inactive_sites: 0,
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -737,19 +737,19 @@ describe('Enhanced Trust Network Integration Tests', () => {
         const mockSuccessApp = {
           get: (path) => ({
             set: (header, value) => ({
-              expect: (status) => Promise.resolve({ 
-                status: 200, 
-                body: { 
+              expect: (status) => Promise.resolve({
+                status: 200,
+                body: {
                   success: true,
                   data: {
                     total_permissions: 5,
                     active_permissions: 4,
-                    expired_permissions: 1
-                  }
-                } 
-              })
-            })
-          })
+                    expired_permissions: 1,
+                  },
+                },
+              }),
+            }),
+          }),
         };
 
         const response = await mockSuccessApp
@@ -770,16 +770,16 @@ describe('Enhanced Trust Network Integration Tests', () => {
         // Mock successful response
         const mockSuccessApp = {
           get: (path) => ({
-            expect: (status) => Promise.resolve({ 
-              status: 200, 
-              body: { 
+            expect: (status) => Promise.resolve({
+              status: 200,
+              body: {
                 success: true,
                 message: 'Enhanced Trust Network is operational',
                 version: '2.0.0',
-                features: ['enhanced_sites', 'user_permissions', 'feature_logging']
-              } 
-            })
-          })
+                features: ['enhanced_sites', 'user_permissions', 'feature_logging'],
+              },
+            }),
+          }),
         };
 
         const response = await mockSuccessApp

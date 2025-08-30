@@ -9,7 +9,7 @@ class WindowsSSLIntegrationService {
       installCertificate: 'Import-Certificate',
       removeCertificate: 'Remove-Item',
       listCertificates: 'Get-ChildItem',
-      checkService: 'Get-Service'
+      checkService: 'Get-Service',
     };
   }
 
@@ -25,7 +25,7 @@ class WindowsSSLIntegrationService {
 
       // Simulate Windows certificate installation
       const installationResult = await this.simulateWindowsInstallation(certificate);
-      
+
       if (installationResult.success) {
         // Track installed certificate
         this.installedCertificates.set(deviceId, {
@@ -33,7 +33,7 @@ class WindowsSSLIntegrationService {
           installedAt: new Date().toISOString(),
           windowsStore: 'Personal',
           thumbprint: installationResult.thumbprint,
-          status: 'installed'
+          status: 'installed',
         });
 
         logger.info('SSL certificate installed successfully on Windows 11', { deviceId, thumbprint: installationResult.thumbprint });
@@ -54,7 +54,7 @@ class WindowsSSLIntegrationService {
   async simulateWindowsInstallation(certificate) {
     // Simulate PowerShell command execution
     const thumbprint = crypto.randomBytes(20).toString('hex');
-    
+
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
@@ -69,8 +69,8 @@ class WindowsSSLIntegrationService {
             subject: certificate.certificateData.subject,
             issuer: certificate.certificateData.issuer,
             validFrom: certificate.certificateData.validFrom,
-            validTo: certificate.certificateData.validTo
-          }
+            validTo: certificate.certificateData.validTo,
+          },
         });
       }, 1000); // Simulate installation time
     });
@@ -84,7 +84,7 @@ class WindowsSSLIntegrationService {
   async removeCertificate(deviceId) {
     try {
       const installedCert = this.installedCertificates.get(deviceId);
-      
+
       if (!installedCert) {
         throw new Error('No certificate found for device');
       }
@@ -93,7 +93,7 @@ class WindowsSSLIntegrationService {
 
       // Simulate certificate removal
       const removalResult = await this.simulateWindowsRemoval(installedCert);
-      
+
       if (removalResult.success) {
         // Remove from tracking
         this.installedCertificates.delete(deviceId);
@@ -121,8 +121,8 @@ class WindowsSSLIntegrationService {
           details: {
             removedThumbprint: certificate.thumbprint,
             store: 'LocalMachine\\My',
-            timestamp: new Date().toISOString()
-          }
+            timestamp: new Date().toISOString(),
+          },
         });
       }, 500); // Simulate removal time
     });
@@ -136,9 +136,9 @@ class WindowsSSLIntegrationService {
     try {
       // Simulate Windows service check
       const status = await this.simulateServiceCheck();
-      
+
       this.windowsServiceStatus = status.status;
-      
+
       return status;
     } catch (error) {
       logger.error('Failed to get Windows SSL service status', { error: error.message });
@@ -158,14 +158,14 @@ class WindowsSSLIntegrationService {
             name: 'MyLZipSSLService',
             displayName: 'MyL.Zip SSL Management Service',
             status: 'Running',
-            startType: 'Automatic'
+            startType: 'Automatic',
           },
           {
             name: 'CryptSvc',
             displayName: 'Cryptographic Services',
             status: 'Running',
-            startType: 'Automatic'
-          }
+            startType: 'Automatic',
+          },
         ];
 
         resolve({
@@ -173,7 +173,7 @@ class WindowsSSLIntegrationService {
           status: 'running',
           services,
           powershellCommand: `${this.powerShellCommands.checkService} -Name "MyLZipSSLService"`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }, 300);
     });
@@ -188,7 +188,7 @@ class WindowsSSLIntegrationService {
       logger.info('Starting Windows SSL service');
 
       const result = await this.simulateServiceStart();
-      
+
       if (result.success) {
         this.windowsServiceStatus = 'running';
       }
@@ -214,8 +214,8 @@ class WindowsSSLIntegrationService {
           details: {
             serviceName: 'MyLZipSSLService',
             status: 'Running',
-            startTime: new Date().toISOString()
-          }
+            startTime: new Date().toISOString(),
+          },
         });
       }, 2000); // Simulate service start time
     });
@@ -230,7 +230,7 @@ class WindowsSSLIntegrationService {
       logger.info('Stopping Windows SSL service');
 
       const result = await this.simulateServiceStop();
-      
+
       if (result.success) {
         this.windowsServiceStatus = 'stopped';
       }
@@ -256,8 +256,8 @@ class WindowsSSLIntegrationService {
           details: {
             serviceName: 'MyLZipSSLService',
             status: 'Stopped',
-            stopTime: new Date().toISOString()
-          }
+            stopTime: new Date().toISOString(),
+          },
         });
       }, 1000); // Simulate service stop time
     });
@@ -270,7 +270,7 @@ class WindowsSSLIntegrationService {
   async getInstalledCertificates() {
     try {
       const certificates = Array.from(this.installedCertificates.values());
-      
+
       return certificates.map(cert => ({
         deviceId: cert.deviceId,
         domain: cert.domain,
@@ -279,7 +279,7 @@ class WindowsSSLIntegrationService {
         installedAt: cert.installedAt,
         status: cert.status,
         validFrom: cert.certificateData.validFrom,
-        validTo: cert.certificateData.validTo
+        validTo: cert.certificateData.validTo,
       }));
     } catch (error) {
       logger.error('Failed to get installed certificates list', { error: error.message });
@@ -296,7 +296,7 @@ class WindowsSSLIntegrationService {
   async generatePowerShellScript(deviceId, action) {
     try {
       const installedCert = this.installedCertificates.get(deviceId);
-      
+
       if (!installedCert && action !== 'install') {
         throw new Error('No certificate found for device');
       }
@@ -305,8 +305,8 @@ class WindowsSSLIntegrationService {
       let description = '';
 
       switch (action) {
-        case 'install':
-          script = `# Install SSL Certificate for ${deviceId}
+      case 'install':
+        script = `# Install SSL Certificate for ${deviceId}
 # Run as Administrator
 
 # Import certificate
@@ -316,11 +316,11 @@ Import-Certificate -FilePath "${deviceId}.crt" -CertStoreLocation Cert:\\LocalMa
 Get-ChildItem -Path Cert:\\LocalMachine\\My | Where-Object {$_.Subject -like "*${deviceId}*"}
 
 Write-Host "SSL certificate installed successfully for ${deviceId}"`;
-          description = 'Install SSL certificate in Windows certificate store';
-          break;
+        description = 'Install SSL certificate in Windows certificate store';
+        break;
 
-        case 'remove':
-          script = `# Remove SSL Certificate for ${deviceId}
+      case 'remove':
+        script = `# Remove SSL Certificate for ${deviceId}
 # Run as Administrator
 
 # Remove certificate by thumbprint
@@ -330,11 +330,11 @@ Remove-Item -Path "Cert:\\LocalMachine\\My\\${installedCert.thumbprint}" -Force
 Get-ChildItem -Path Cert:\\LocalMachine\\My | Where-Object {$_.Subject -like "*${deviceId}*"}
 
 Write-Host "SSL certificate removed successfully for ${deviceId}"`;
-          description = 'Remove SSL certificate from Windows certificate store';
-          break;
+        description = 'Remove SSL certificate from Windows certificate store';
+        break;
 
-        case 'status':
-          script = `# Check SSL Certificate Status for ${deviceId}
+      case 'status':
+        script = `# Check SSL Certificate Status for ${deviceId}
 # Run as Administrator
 
 # Check certificate status
@@ -350,11 +350,11 @@ if ($cert) {
 } else {
     Write-Host "No certificate found for ${deviceId}"
 }`;
-          description = 'Check SSL certificate status in Windows';
-          break;
+        description = 'Check SSL certificate status in Windows';
+        break;
 
-        default:
-          throw new Error('Invalid action specified');
+      default:
+        throw new Error('Invalid action specified');
       }
 
       return {
@@ -365,7 +365,7 @@ if ($cert) {
         deviceId,
         powershellVersion: '5.1+',
         requirements: 'Run as Administrator',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Failed to generate PowerShell script', { deviceId, action, error: error.message });
@@ -381,7 +381,7 @@ if ($cert) {
     try {
       const serviceStatus = await this.getServiceStatus();
       const installedCerts = await this.getInstalledCertificates();
-      
+
       return {
         success: true,
         status: 'healthy',
@@ -391,9 +391,9 @@ if ($cert) {
           certificateStore: 'Available',
           powershell: 'Available',
           windowsService: 'Available',
-          autoRenewal: 'Available'
+          autoRenewal: 'Available',
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Failed to get Windows integration health status', { error: error.message });

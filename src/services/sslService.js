@@ -8,9 +8,9 @@ class SSLService {
     this.letsEncryptConfig = {
       staging: process.env.NODE_ENV === 'development',
       email: process.env.LETS_ENCRYPT_EMAIL || 'ssl@myl.zip',
-      server: process.env.NODE_ENV === 'development' 
+      server: process.env.NODE_ENV === 'development'
         ? 'https://acme-staging-v02.api.letsencrypt.org/directory'
-        : 'https://acme-v02.api.letsencrypt.org/directory'
+        : 'https://acme-v02.api.letsencrypt.org/directory',
     };
   }
 
@@ -32,23 +32,23 @@ class SSLService {
           return {
             success: true,
             certificate: existing,
-            message: 'Certificate already exists and is valid'
+            message: 'Certificate already exists and is valid',
           };
         }
       }
 
       // Generate certificate data (simulated for development)
       const certificate = await this.generateCertificate(deviceId, domain, options);
-      
+
       // Store certificate
       this.certificates.set(deviceId, certificate);
 
       logger.info('SSL certificate provisioned successfully', { deviceId, domain });
-      
+
       return {
         success: true,
         certificate,
-        message: 'SSL certificate provisioned successfully'
+        message: 'SSL certificate provisioned successfully',
       };
     } catch (error) {
       logger.error('Failed to provision SSL certificate', { deviceId, domain, error: error.message });
@@ -67,7 +67,7 @@ class SSLService {
     // Simulate Let's Encrypt certificate generation
     const now = new Date();
     const expiresAt = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000)); // 90 days
-    
+
     const certificate = {
       id: crypto.randomUUID(),
       deviceId,
@@ -83,12 +83,12 @@ class SSLService {
         issuer: 'Let\'s Encrypt Authority X3',
         subject: `CN=${domain}`,
         validFrom: now.toISOString(),
-        validTo: expiresAt.toISOString()
+        validTo: expiresAt.toISOString(),
       },
       privateKey: crypto.randomBytes(32).toString('hex'), // Simulated private key
       publicKey: crypto.randomBytes(64).toString('hex'), // Simulated public key
       premium: false,
-      features: this.getBasicFeatures()
+      features: this.getBasicFeatures(),
     };
 
     return certificate;
@@ -102,12 +102,12 @@ class SSLService {
   async getDeviceStatus(deviceId) {
     try {
       const certificate = this.certificates.get(deviceId);
-      
+
       if (!certificate) {
         return {
           success: false,
           message: 'No SSL certificate found for device',
-          status: 'not_provisioned'
+          status: 'not_provisioned',
         };
       }
 
@@ -120,9 +120,9 @@ class SSLService {
           ...certificate,
           expired: isExpired,
           daysUntilExpiry: Math.max(0, daysUntilExpiry),
-          needsRenewal: daysUntilExpiry <= 30
+          needsRenewal: daysUntilExpiry <= 30,
         },
-        status: isExpired ? 'expired' : 'active'
+        status: isExpired ? 'expired' : 'active',
       };
     } catch (error) {
       logger.error('Failed to get SSL device status', { deviceId, error: error.message });
@@ -138,7 +138,7 @@ class SSLService {
   async renewCertificate(deviceId) {
     try {
       const certificate = this.certificates.get(deviceId);
-      
+
       if (!certificate) {
         throw new Error('No certificate found for device');
       }
@@ -149,23 +149,23 @@ class SSLService {
 
       // Simulate certificate renewal
       const renewedCertificate = await this.generateCertificate(
-        deviceId, 
-        certificate.domain, 
-        { 
+        deviceId,
+        certificate.domain,
+        {
           certificateType: certificate.type,
-          autoRenewal: certificate.autoRenewal 
-        }
+          autoRenewal: certificate.autoRenewal,
+        },
       );
 
       // Update stored certificate
       this.certificates.set(deviceId, renewedCertificate);
 
       logger.info('SSL certificate renewed successfully', { deviceId });
-      
+
       return {
         success: true,
         certificate: renewedCertificate,
-        message: 'SSL certificate renewed successfully'
+        message: 'SSL certificate renewed successfully',
       };
     } catch (error) {
       logger.error('Failed to renew SSL certificate', { deviceId, error: error.message });
@@ -181,7 +181,7 @@ class SSLService {
   async revokeCertificate(deviceId) {
     try {
       const certificate = this.certificates.get(deviceId);
-      
+
       if (!certificate) {
         throw new Error('No certificate found for device');
       }
@@ -191,10 +191,10 @@ class SSLService {
       certificate.revokedAt = new Date().toISOString();
 
       logger.info('SSL certificate revoked successfully', { deviceId });
-      
+
       return {
         success: true,
-        message: 'SSL certificate revoked successfully'
+        message: 'SSL certificate revoked successfully',
       };
     } catch (error) {
       logger.error('Failed to revoke SSL certificate', { deviceId, error: error.message });
@@ -234,7 +234,7 @@ class SSLService {
         expiresAt: options.expiresAt || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(), // 30 days default
         createdAt: new Date().toISOString(),
         isActive: true,
-        lastUsedAt: null
+        lastUsedAt: null,
       };
 
       // Store the API key (in production, this would be in a database)
@@ -244,7 +244,7 @@ class SSLService {
       this.extensionApiKeys.set(keyHash, extensionApiKey);
 
       logger.info('Extension API key generated successfully', { deviceId, extensionName: extensionApiKey.extensionName });
-      
+
       return {
         success: true,
         data: {
@@ -254,13 +254,13 @@ class SSLService {
           permissions: extensionApiKey.permissions,
           rateLimit: extensionApiKey.rateLimit,
           expiresAt: extensionApiKey.expiresAt,
-          createdAt: extensionApiKey.createdAt
+          createdAt: extensionApiKey.createdAt,
         },
-        message: 'Extension API key generated successfully'
+        message: 'Extension API key generated successfully',
       };
     } catch (error) {
       logger.error('Failed to generate extension API key', { deviceId, error: error.message });
-            throw error;
+      throw error;
     }
   }
 
@@ -272,7 +272,7 @@ class SSLService {
   async upgradeToPremium(deviceId) {
     try {
       const certificate = this.certificates.get(deviceId);
-      
+
       if (!certificate) {
         throw new Error('No certificate found for device');
       }
@@ -280,7 +280,7 @@ class SSLService {
       if (certificate.premium) {
         return {
           success: false,
-          message: 'Device is already premium'
+          message: 'Device is already premium',
         };
       }
 
@@ -293,12 +293,12 @@ class SSLService {
       this.premiumUsers.add(deviceId);
 
       logger.info('Device upgraded to premium SSL', { deviceId });
-      
+
       return {
         success: true,
         certificate,
         message: 'Successfully upgraded to premium SSL',
-        premiumFeatures: certificate.features
+        premiumFeatures: certificate.features,
       };
     } catch (error) {
       logger.error('Failed to upgrade to premium SSL', { deviceId, error: error.message });
@@ -314,7 +314,7 @@ class SSLService {
   async getPremiumFeatures(deviceId) {
     const certificate = this.certificates.get(deviceId);
     const isPremium = certificate && certificate.premium;
-    
+
     if (!isPremium) {
       return {
         success: false,
@@ -323,15 +323,15 @@ class SSLService {
         pricing: {
           monthly: 19.00,
           currency: 'USD',
-          features: this.getPremiumFeaturesList()
-        }
+          features: this.getPremiumFeaturesList(),
+        },
       };
     }
 
     return {
       success: true,
       features: certificate.features,
-      message: 'Premium features available'
+      message: 'Premium features available',
     };
   }
 
@@ -342,7 +342,7 @@ class SSLService {
    */
   async getAdvancedManagement(deviceId) {
     const certificate = this.certificates.get(deviceId);
-    
+
     if (!certificate) {
       throw new Error('No certificate found for device');
     }
@@ -362,9 +362,9 @@ class SSLService {
         ocspStapling: true,
         apiAccess: true,
         prioritySupport: true,
-        advancedAnalytics: true
+        advancedAnalytics: true,
       },
-      message: 'Advanced SSL management features available'
+      message: 'Advanced SSL management features available',
     };
   }
 
@@ -377,7 +377,7 @@ class SSLService {
       'single_domain_certificate',
       'automatic_renewal',
       'basic_ssl_management',
-      'standard_support'
+      'standard_support',
     ];
   }
 
@@ -396,7 +396,7 @@ class SSLService {
       'api_access',
       'priority_support',
       'advanced_analytics',
-      'team_management'
+      'team_management',
     ];
   }
 
@@ -431,7 +431,7 @@ class SSLService {
       premiumUsers,
       monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
       conversionRate: parseFloat(conversionRate.toFixed(2)),
-      currency: 'USD'
+      currency: 'USD',
     };
   }
 }

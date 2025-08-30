@@ -10,19 +10,19 @@ const { validateNFTGeneration } = require('../middleware/inputValidation');
  * Generate pairing code
  * POST /api/v1/nft/pairing-code/generate
  */
-router.post('/pairing-code/generate', 
+router.post('/pairing-code/generate',
   validateApiKey,
   deviceRateLimit,
   nftGenerationRateLimit,
   validateNFTGeneration,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { format, deviceId, preferences } = req.body;
-      
+
       // TODO: Implement actual NFT generation logic
       // For now, return mock response
       const pairingCode = `nft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const response = {
         pairingCode,
         status: 'generating',
@@ -31,7 +31,7 @@ router.post('/pairing-code/generate',
         generationStartedAt: new Date().toISOString(),
         format,
         deviceId,
-        preferences: preferences || {}
+        preferences: preferences || {},
       };
 
       res.apiSuccess(response, 'NFT pairing code generation started successfully');
@@ -42,11 +42,11 @@ router.post('/pairing-code/generate',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          deviceId: req.body.deviceId
-        }
+          deviceId: req.body.deviceId,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -56,10 +56,10 @@ router.post('/pairing-code/generate',
 router.get('/pairing-code/status/:pairingCode',
   validateApiKey,
   deviceRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { pairingCode } = req.params;
-      
+
       // TODO: Implement actual status retrieval
       // For now, return mock status
       const status = {
@@ -74,7 +74,7 @@ router.get('/pairing-code/status/:pairingCode',
         queuePosition: 1,
         errorDetails: null,
         generationStartedAt: new Date(Date.now() - 30000).toISOString(),
-        lastActivityAt: new Date().toISOString()
+        lastActivityAt: new Date().toISOString(),
       };
 
       res.apiSuccess(status, 'Pairing code status retrieved successfully');
@@ -85,11 +85,11 @@ router.get('/pairing-code/status/:pairingCode',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          pairingCode: req.params.pairingCode
-        }
+          pairingCode: req.params.pairingCode,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -99,24 +99,24 @@ router.get('/pairing-code/status/:pairingCode',
 router.get('/pairing-code/status/:pairingCode/stream',
   validateApiKey,
   deviceRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { pairingCode } = req.params;
-      
+
       // Set headers for Server-Sent Events
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
+        'Access-Control-Allow-Headers': 'Cache-Control',
       });
 
       // Send initial connection message
       res.write(`data: ${JSON.stringify({
         type: 'connection',
         message: 'SSE connection established',
-        pairingCode
+        pairingCode,
       })}\n\n`);
 
       // TODO: Implement actual real-time status updates
@@ -124,11 +124,11 @@ router.get('/pairing-code/status/:pairingCode/stream',
       let progress = 0;
       const interval = setInterval(() => {
         progress += Math.random() * 20;
-        
+
         if (progress >= 100) {
           progress = 100;
           clearInterval(interval);
-          
+
           // Send completion message
           res.write(`data: ${JSON.stringify({
             type: 'status_update',
@@ -137,9 +137,9 @@ router.get('/pairing-code/status/:pairingCode/stream',
             progress: 100,
             message: 'NFT generation completed successfully',
             estimatedTime: 0,
-            completedAt: new Date().toISOString()
+            completedAt: new Date().toISOString(),
           })}\n\n`);
-          
+
           res.end();
         } else {
           // Send progress update
@@ -151,7 +151,7 @@ router.get('/pairing-code/status/:pairingCode/stream',
             currentStep: 'generating_pattern',
             message: 'Generating unique pattern...',
             estimatedTime: Math.round((100 - progress) / 10),
-            lastActivityAt: new Date().toISOString()
+            lastActivityAt: new Date().toISOString(),
           })}\n\n`);
         }
       }, 2000);
@@ -161,7 +161,6 @@ router.get('/pairing-code/status/:pairingCode/stream',
         clearInterval(interval);
         res.end();
       });
-
     } catch (error) {
       res.apiError({
         code: 'SSE_CONNECTION_FAILED',
@@ -169,11 +168,11 @@ router.get('/pairing-code/status/:pairingCode/stream',
         userAction: 'Please try again or use the regular status endpoint',
         details: {
           error: error.message,
-          pairingCode: req.params.pairingCode
-        }
+          pairingCode: req.params.pairingCode,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -184,14 +183,14 @@ router.post('/pairing-code/retry/:pairingCode',
   validateApiKey,
   deviceRateLimit,
   nftGenerationRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { pairingCode } = req.params;
-      
+
       // TODO: Implement actual retry logic
       // For now, return mock response
       const newPairingCode = `nft_retry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const response = {
         originalPairingCode: pairingCode,
         newPairingCode,
@@ -200,7 +199,7 @@ router.post('/pairing-code/retry/:pairingCode',
         queuePosition: 1,
         generationStartedAt: new Date().toISOString(),
         retryCount: 1,
-        message: 'NFT generation retry started successfully'
+        message: 'NFT generation retry started successfully',
       };
 
       res.apiSuccess(response, 'NFT generation retry started successfully');
@@ -211,11 +210,11 @@ router.post('/pairing-code/retry/:pairingCode',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          pairingCode: req.params.pairingCode
-        }
+          pairingCode: req.params.pairingCode,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -225,11 +224,11 @@ router.post('/pairing-code/retry/:pairingCode',
 router.get('/collection/:userId',
   validateApiKey,
   deviceRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { userId } = req.params;
       const { page = 1, limit = 20 } = req.query;
-      
+
       // TODO: Implement actual collection retrieval
       // For now, return mock data
       const mockNFTs = Array.from({ length: 5 }, (_, i) => ({
@@ -238,7 +237,7 @@ router.get('/collection/:userId',
         description: `Generated NFT number ${i + 1}`,
         imageUrl: `https://example.com/nft_${i + 1}.png`,
         createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-        status: 'completed'
+        status: 'completed',
       }));
 
       const total = 25;
@@ -252,11 +251,11 @@ router.get('/collection/:userId',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          userId: req.params.userId
-        }
+          userId: req.params.userId,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -266,10 +265,10 @@ router.get('/collection/:userId',
 router.get('/:nftId',
   validateApiKey,
   deviceRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { nftId } = req.params;
-      
+
       // TODO: Implement actual NFT retrieval
       // For now, return mock data
       const nft = {
@@ -280,11 +279,11 @@ router.get('/:nftId',
         metadata: {
           geometricShapes: [4, 6, 8],
           colorScheme: 'gradient',
-          patternType: 'geometric'
+          patternType: 'geometric',
         },
         createdAt: new Date().toISOString(),
         status: 'completed',
-        deviceId: 'dev_123456789'
+        deviceId: 'dev_123456789',
       };
 
       res.apiSuccess(nft, 'NFT details retrieved successfully');
@@ -295,11 +294,11 @@ router.get('/:nftId',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          nftId: req.params.nftId
-        }
+          nftId: req.params.nftId,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -309,11 +308,11 @@ router.get('/:nftId',
 router.put('/:nftId/profile-picture',
   validateApiKey,
   deviceRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { nftId } = req.params;
       const { imageData, imageFormat } = req.body;
-      
+
       if (!imageData || !imageFormat) {
         return res.apiError({
           code: 'MISSING_IMAGE_DATA',
@@ -321,8 +320,8 @@ router.put('/:nftId/profile-picture',
           userAction: 'Provide both imageData and imageFormat',
           details: {
             requiredFields: ['imageData', 'imageFormat'],
-            providedFields: Object.keys(req.body)
-          }
+            providedFields: Object.keys(req.body),
+          },
         }, 400);
       }
 
@@ -332,7 +331,7 @@ router.put('/:nftId/profile-picture',
         nftId,
         profilePictureUpdated: true,
         newImageUrl: `https://example.com/profile_${nftId}.${imageFormat}`,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       res.apiSuccess(response, 'NFT profile picture updated successfully');
@@ -343,11 +342,11 @@ router.put('/:nftId/profile-picture',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          nftId: req.params.nftId
-        }
+          nftId: req.params.nftId,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 /**
@@ -357,10 +356,10 @@ router.put('/:nftId/profile-picture',
 router.get('/stats/:userId',
   validateApiKey,
   deviceRateLimit,
-  async (req, res) => {
+  async(req, res) => {
     try {
       const { userId } = req.params;
-      
+
       // TODO: Implement actual statistics retrieval
       // For now, return mock data
       const stats = {
@@ -372,7 +371,7 @@ router.get('/stats/:userId',
         totalGenerationTime: 1035,
         lastGenerated: new Date(Date.now() - 86400000).toISOString(),
         favoriteFormats: ['uuid', 'short'],
-        successRate: 92
+        successRate: 92,
       };
 
       res.apiSuccess(stats, 'NFT statistics retrieved successfully');
@@ -383,11 +382,11 @@ router.get('/stats/:userId',
         userAction: 'Please try again or contact support',
         details: {
           error: error.message,
-          userId: req.params.userId
-        }
+          userId: req.params.userId,
+        },
       }, 500);
     }
-  }
+  },
 );
 
 module.exports = router;

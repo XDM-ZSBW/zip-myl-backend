@@ -11,7 +11,7 @@ const { errorResponse } = require('./apiResponse');
  */
 const validateApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
-  
+
   if (!apiKey) {
     return errorResponse(res, {
       code: 'API_KEY_MISSING',
@@ -19,8 +19,8 @@ const validateApiKey = (req, res, next) => {
       userAction: 'Include X-API-Key header in your request',
       details: {
         requiredHeader: 'X-API-Key',
-        example: 'X-API-Key: your-api-key-here'
-      }
+        example: 'X-API-Key: your-api-key-here',
+      },
     }, 401);
   }
 
@@ -31,9 +31,9 @@ const validateApiKey = (req, res, next) => {
       message: 'Invalid API key format',
       userAction: 'Please provide a valid API key',
       details: {
-        providedKey: apiKey ? '***' + apiKey.slice(-4) : 'none',
-        expectedFormat: 'Minimum 10 characters'
-      }
+        providedKey: apiKey ? `***${apiKey.slice(-4)}` : 'none',
+        expectedFormat: 'Minimum 10 characters',
+      },
     }, 400);
   }
 
@@ -45,17 +45,17 @@ const validateApiKey = (req, res, next) => {
       message: 'Invalid or expired API key',
       userAction: 'Please provide a valid API key or contact support',
       details: {
-        providedKey: '***' + apiKey.slice(-4),
-        reason: 'Key not found or expired'
-      }
+        providedKey: `***${apiKey.slice(-4)}`,
+        reason: 'Key not found or expired',
+      },
     }, 401);
   }
 
   // Add API key info to request for logging/auditing
   req.apiKeyInfo = {
-    key: '***' + apiKey.slice(-4),
+    key: `***${apiKey.slice(-4)}`,
     permissions: getApiKeyPermissions(apiKey), // TODO: Implement
-    expiresAt: getApiKeyExpiry(apiKey) // TODO: Implement
+    expiresAt: getApiKeyExpiry(apiKey), // TODO: Implement
   };
 
   next();
@@ -69,7 +69,7 @@ const validateApiKeyWithPermissions = (requiredPermissions = []) => {
   return (req, res, next) => {
     // First validate API key exists
     const apiKey = req.headers['x-api-key'];
-    
+
     if (!apiKey) {
       return errorResponse(res, {
         code: 'API_KEY_MISSING',
@@ -77,15 +77,15 @@ const validateApiKeyWithPermissions = (requiredPermissions = []) => {
         userAction: 'Include X-API-Key header in your request',
         details: {
           requiredHeader: 'X-API-Key',
-          requiredPermissions
-        }
+          requiredPermissions,
+        },
       }, 401);
     }
 
     // Check if API key has required permissions
     const keyPermissions = getApiKeyPermissions(apiKey); // TODO: Implement
     const missingPermissions = requiredPermissions.filter(
-      permission => !keyPermissions.includes(permission)
+      permission => !keyPermissions.includes(permission),
     );
 
     if (missingPermissions.length > 0) {
@@ -96,8 +96,8 @@ const validateApiKeyWithPermissions = (requiredPermissions = []) => {
         details: {
           requiredPermissions,
           currentPermissions: keyPermissions,
-          missingPermissions
-        }
+          missingPermissions,
+        },
       }, 403);
     }
 
@@ -110,7 +110,7 @@ const validateApiKeyWithPermissions = (requiredPermissions = []) => {
  */
 const optionalApiKeyValidation = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
-  
+
   if (apiKey) {
     // Validate if provided
     if (!isValidApiKey(apiKey)) {
@@ -119,22 +119,22 @@ const optionalApiKeyValidation = (req, res, next) => {
         message: 'Invalid API key provided',
         userAction: 'Please provide a valid API key or omit the header',
         details: {
-          providedKey: '***' + apiKey.slice(-4)
-        }
+          providedKey: `***${apiKey.slice(-4)}`,
+        },
       }, 401);
     }
 
     req.apiKeyInfo = {
-      key: '***' + apiKey.slice(-4),
+      key: `***${apiKey.slice(-4)}`,
       permissions: getApiKeyPermissions(apiKey),
-      expiresAt: getApiKeyExpiry(apiKey)
+      expiresAt: getApiKeyExpiry(apiKey),
     };
   } else {
     // Log unauthenticated request
     req.apiKeyInfo = {
       key: 'none',
       permissions: ['public'],
-      expiresAt: null
+      expiresAt: null,
     };
   }
 
@@ -150,11 +150,11 @@ const optionalApiKeyValidation = (req, res, next) => {
 const isValidApiKey = (apiKey) => {
   // TODO: Replace with actual database validation
   // For now, accept any key that meets basic format requirements
-  
+
   // Check if key exists in database and is active
   // Check if key hasn't expired
   // Check if key hasn't been revoked
-  
+
   return true; // Placeholder
 };
 
@@ -167,7 +167,7 @@ const isValidApiKey = (apiKey) => {
 const getApiKeyPermissions = (apiKey) => {
   // TODO: Replace with actual database lookup
   // For now, return default permissions
-  
+
   // Example permissions:
   // - 'nft-generation': Can generate NFTs
   // - 'device-read': Can read device information
@@ -175,7 +175,7 @@ const getApiKeyPermissions = (apiKey) => {
   // - 'thoughts-read': Can read thoughts
   // - 'thoughts-write': Can create/modify thoughts
   // - 'admin': Full administrative access
-  
+
   return ['nft-generation', 'device-read', 'thoughts-read'];
 };
 
@@ -188,7 +188,7 @@ const getApiKeyPermissions = (apiKey) => {
 const getApiKeyExpiry = (apiKey) => {
   // TODO: Replace with actual database lookup
   // For now, return null (no expiry)
-  
+
   return null;
 };
 
@@ -199,14 +199,14 @@ const getApiKeyExpiry = (apiKey) => {
 const scopeApiKeyToEndpoints = (allowedEndpoints = []) => {
   return (req, res, next) => {
     const apiKey = req.headers['x-api-key'];
-    
+
     if (!apiKey) {
       return next(); // Allow unauthenticated requests to pass through
     }
 
     const currentEndpoint = req.path;
-    const isAllowed = allowedEndpoints.some(endpoint => 
-      currentEndpoint.startsWith(endpoint)
+    const isAllowed = allowedEndpoints.some(endpoint =>
+      currentEndpoint.startsWith(endpoint),
     );
 
     if (!isAllowed) {
@@ -217,8 +217,8 @@ const scopeApiKeyToEndpoints = (allowedEndpoints = []) => {
         details: {
           requestedEndpoint: currentEndpoint,
           allowedEndpoints,
-          apiKey: '***' + apiKey.slice(-4)
-        }
+          apiKey: `***${apiKey.slice(-4)}`,
+        },
       }, 403);
     }
 
@@ -233,5 +233,5 @@ module.exports = {
   scopeApiKeyToEndpoints,
   isValidApiKey,
   getApiKeyPermissions,
-  getApiKeyExpiry
+  getApiKeyExpiry,
 };

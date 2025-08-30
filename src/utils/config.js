@@ -41,6 +41,7 @@ const config = {
       'https://*.google.com',
       'https://*.github.com',
       'https://*.myl.zip',
+      'https://*.zaido.org',
       'http://localhost:*',
       'https://localhost:*',
     ],

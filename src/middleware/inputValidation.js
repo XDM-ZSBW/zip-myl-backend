@@ -10,7 +10,7 @@ const { errorResponse } = require('./apiResponse');
  */
 const validateNFTGeneration = (req, res, next) => {
   const { format, deviceId, preferences } = req.body;
-  
+
   // Validate format
   if (!format || !['uuid', 'short', 'legacy'].includes(format)) {
     return errorResponse(res, {
@@ -19,11 +19,11 @@ const validateNFTGeneration = (req, res, next) => {
       userAction: 'Use one of: uuid, short, legacy',
       details: {
         providedFormat: format,
-        allowedFormats: ['uuid', 'short', 'legacy']
-      }
+        allowedFormats: ['uuid', 'short', 'legacy'],
+      },
     }, 400);
   }
-  
+
   // Validate device ID
   if (!deviceId) {
     return errorResponse(res, {
@@ -32,8 +32,8 @@ const validateNFTGeneration = (req, res, next) => {
       userAction: 'Include deviceId in request body',
       details: {
         requiredField: 'deviceId',
-        example: { deviceId: 'dev_123456789' }
-      }
+        example: { deviceId: 'dev_123456789' },
+      },
     }, 400);
   }
 
@@ -45,8 +45,8 @@ const validateNFTGeneration = (req, res, next) => {
       userAction: 'Provide a valid device ID starting with "dev_"',
       details: {
         providedDeviceId: deviceId,
-        expectedFormat: 'dev_ followed by alphanumeric characters'
-      }
+        expectedFormat: 'dev_ followed by alphanumeric characters',
+      },
     }, 400);
   }
 
@@ -59,8 +59,8 @@ const validateNFTGeneration = (req, res, next) => {
         userAction: 'Provide preferences as a JSON object',
         details: {
           providedPreferences: preferences,
-          expectedType: 'object'
-        }
+          expectedType: 'object',
+        },
       }, 400);
     }
 
@@ -73,14 +73,14 @@ const validateNFTGeneration = (req, res, next) => {
           userAction: 'Provide geometric shapes as an array of numbers',
           details: {
             providedShapes: preferences.geometricShapes,
-            expectedType: 'array'
-          }
+            expectedType: 'array',
+          },
         }, 400);
       }
 
       const validShapes = [3, 4, 5, 6, 8, 10, 12];
       const invalidShapes = preferences.geometricShapes.filter(
-        shape => !validShapes.includes(shape)
+        shape => !validShapes.includes(shape),
       );
 
       if (invalidShapes.length > 0) {
@@ -91,8 +91,8 @@ const validateNFTGeneration = (req, res, next) => {
           details: {
             invalidShapes,
             validShapes,
-            providedShapes: preferences.geometricShapes
-          }
+            providedShapes: preferences.geometricShapes,
+          },
         }, 400);
       }
     }
@@ -107,8 +107,8 @@ const validateNFTGeneration = (req, res, next) => {
           userAction: 'Use one of: gradient, monochrome, complementary, analogous',
           details: {
             providedScheme: preferences.colorScheme,
-            validSchemes: validColorSchemes
-          }
+            validSchemes: validColorSchemes,
+          },
         }, 400);
       }
     }
@@ -123,8 +123,8 @@ const validateNFTGeneration = (req, res, next) => {
           userAction: 'Use one of: geometric, organic, abstract, minimal',
           details: {
             providedPattern: preferences.patternType,
-            validPatterns: validPatternTypes
-          }
+            validPatterns: validPatternTypes,
+          },
         }, 400);
       }
     }
@@ -146,8 +146,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Include deviceData in request body',
       details: {
         requiredField: 'deviceData',
-        example: { deviceData: { platform: 'chrome-extension', version: '1.0.0' } }
-      }
+        example: { deviceData: { platform: 'chrome-extension', version: '1.0.0' } },
+      },
     }, 400);
   }
 
@@ -158,8 +158,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Provide device data as a JSON object',
       details: {
         providedData: deviceData,
-        expectedType: 'object'
-      }
+        expectedType: 'object',
+      },
     }, 400);
   }
 
@@ -173,8 +173,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Include platform in device data',
       details: {
         requiredField: 'platform',
-        example: 'chrome-extension'
-      }
+        example: 'chrome-extension',
+      },
     }, 400);
   }
 
@@ -185,8 +185,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Provide platform as a string',
       details: {
         providedPlatform: platform,
-        expectedType: 'string'
-      }
+        expectedType: 'string',
+      },
     }, 400);
   }
 
@@ -198,8 +198,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Include version in device data',
       details: {
         requiredField: 'version',
-        example: '1.0.0'
-      }
+        example: '1.0.0',
+      },
     }, 400);
   }
 
@@ -210,8 +210,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Provide version as a string',
       details: {
         providedVersion: version,
-        expectedType: 'string'
-      }
+        expectedType: 'string',
+      },
     }, 400);
   }
 
@@ -223,8 +223,8 @@ const validateDeviceRegistration = (req, res, next) => {
       userAction: 'Provide user agent as a string',
       details: {
         providedUserAgent: userAgent,
-        expectedType: 'string'
-      }
+        expectedType: 'string',
+      },
     }, 400);
   }
 
@@ -237,8 +237,8 @@ const validateDeviceRegistration = (req, res, next) => {
         userAction: 'Provide capabilities as an array of strings',
         details: {
           providedCapabilities: capabilities,
-          expectedType: 'array'
-        }
+          expectedType: 'array',
+        },
       }, 400);
     }
 
@@ -247,11 +247,11 @@ const validateDeviceRegistration = (req, res, next) => {
       'device-trust',
       'thoughts-read',
       'thoughts-write',
-      'admin'
+      'admin',
     ];
 
     const invalidCapabilities = capabilities.filter(
-      cap => !validCapabilities.includes(cap)
+      cap => !validCapabilities.includes(cap),
     );
 
     if (invalidCapabilities.length > 0) {
@@ -262,8 +262,8 @@ const validateDeviceRegistration = (req, res, next) => {
         details: {
           invalidCapabilities,
           validCapabilities,
-          providedCapabilities: capabilities
-        }
+          providedCapabilities: capabilities,
+        },
       }, 400);
     }
   }
@@ -285,8 +285,8 @@ const validateThoughtsInput = (req, res, next) => {
       userAction: 'Include content in request body',
       details: {
         requiredField: 'content',
-        example: { content: 'Your encrypted thought here' }
-      }
+        example: { content: 'Your encrypted thought here' },
+      },
     }, 400);
   }
 
@@ -297,8 +297,8 @@ const validateThoughtsInput = (req, res, next) => {
       userAction: 'Provide content as a string',
       details: {
         providedContent: content,
-        expectedType: 'string'
-      }
+        expectedType: 'string',
+      },
     }, 400);
   }
 
@@ -310,8 +310,8 @@ const validateThoughtsInput = (req, res, next) => {
       details: {
         contentLength: content.length,
         minLength: 1,
-        maxLength: 10000
-      }
+        maxLength: 10000,
+      },
     }, 400);
   }
 
@@ -324,8 +324,8 @@ const validateThoughtsInput = (req, res, next) => {
         userAction: 'Provide metadata as a JSON object',
         details: {
           providedMetadata: metadata,
-          expectedType: 'object'
-        }
+          expectedType: 'object',
+        },
       }, 400);
     }
 
@@ -339,8 +339,8 @@ const validateThoughtsInput = (req, res, next) => {
           userAction: 'Use one of: personal, work, ideas, notes, other',
           details: {
             providedCategory: metadata.category,
-            validCategories
-          }
+            validCategories,
+          },
         }, 400);
       }
     }
@@ -355,8 +355,8 @@ const validateThoughtsInput = (req, res, next) => {
           userAction: 'Use one of: low, medium, high, urgent',
           details: {
             providedPriority: metadata.priority,
-            validPriorities
-          }
+            validPriorities,
+          },
         }, 400);
       }
     }
@@ -370,8 +370,8 @@ const validateThoughtsInput = (req, res, next) => {
           userAction: 'Provide tags as an array of strings',
           details: {
             providedTags: metadata.tags,
-            expectedType: 'array'
-          }
+            expectedType: 'array',
+          },
         }, 400);
       }
 
@@ -382,14 +382,14 @@ const validateThoughtsInput = (req, res, next) => {
           userAction: 'Reduce the number of tags to 20 or fewer',
           details: {
             providedTagsCount: metadata.tags.length,
-            maxTags: 20
-          }
+            maxTags: 20,
+          },
         }, 400);
       }
 
       // Validate each tag
       const invalidTags = metadata.tags.filter(
-        tag => typeof tag !== 'string' || tag.length < 1 || tag.length > 50
+        tag => typeof tag !== 'string' || tag.length < 1 || tag.length > 50,
       );
 
       if (invalidTags.length > 0) {
@@ -399,8 +399,8 @@ const validateThoughtsInput = (req, res, next) => {
           userAction: 'Provide tags as strings between 1 and 50 characters',
           details: {
             invalidTags,
-            tagRequirements: 'String between 1-50 characters'
-          }
+            tagRequirements: 'String between 1-50 characters',
+          },
         }, 400);
       }
     }
@@ -415,8 +415,8 @@ const validateThoughtsInput = (req, res, next) => {
         userAction: 'Provide encryption as a JSON object',
         details: {
           providedEncryption: encryption,
-          expectedType: 'object'
-        }
+          expectedType: 'object',
+        },
       }, 400);
     }
 
@@ -431,8 +431,8 @@ const validateThoughtsInput = (req, res, next) => {
           userAction: 'Use one of: aes-256-gcm, aes-256-cbc, chacha20-poly1305',
           details: {
             providedAlgorithm: algorithm,
-            validAlgorithms
-          }
+            validAlgorithms,
+          },
         }, 400);
       }
     }
@@ -444,8 +444,8 @@ const validateThoughtsInput = (req, res, next) => {
         userAction: 'Provide key ID as a string',
         details: {
           providedKeyId: keyId,
-          expectedType: 'string'
-        }
+          expectedType: 'string',
+        },
       }, 400);
     }
   }
@@ -468,8 +468,8 @@ const validatePagination = (req, res, next) => {
         userAction: 'Provide a valid page number (1 or greater)',
         details: {
           providedPage: page,
-          expectedFormat: 'Positive integer'
-        }
+          expectedFormat: 'Positive integer',
+        },
       }, 400);
     }
   }
@@ -484,8 +484,8 @@ const validatePagination = (req, res, next) => {
         details: {
           providedLimit: limit,
           minLimit: 1,
-          maxLimit: 100
-        }
+          maxLimit: 100,
+        },
       }, 400);
     }
   }
@@ -511,8 +511,8 @@ const validateRequiredFields = (requiredFields = []) => {
           example: requiredFields.reduce((acc, field) => {
             acc[field] = `value_for_${field}`;
             return acc;
-          }, {})
-        }
+          }, {}),
+        },
       }, 400);
     }
 
@@ -525,5 +525,5 @@ module.exports = {
   validateDeviceRegistration,
   validateThoughtsInput,
   validatePagination,
-  validateRequiredFields
+  validateRequiredFields,
 };

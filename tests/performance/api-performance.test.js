@@ -12,13 +12,13 @@ const { testUtils } = require('../setup');
 // Mock app for performance testing to avoid server conflicts
 const mockApp = {
   get: (path) => ({
-    expect: (status) => Promise.resolve({ status, body: { status: 'healthy' } })
+    expect: (status) => Promise.resolve({ status, body: { status: 'healthy' } }),
   }),
   post: (path) => ({
     send: (data) => ({
-      expect: (status) => Promise.resolve({ status, body: { success: true } })
-    })
-  })
+      expect: (status) => Promise.resolve({ status, body: { success: true } }),
+    }),
+  }),
 };
 
 describe('API Performance Tests', () => {
@@ -81,7 +81,7 @@ describe('API Performance Tests', () => {
 
       for (let i = 0; i < concurrentRequests; i++) {
         promises.push(
-          mockApp.get('/health').expect(200)
+          mockApp.get('/health').expect(200),
         );
       }
 

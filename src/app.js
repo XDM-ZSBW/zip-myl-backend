@@ -56,7 +56,7 @@ app.use(cors({
   origin: ['*'], // Allow all origins for API consumption
   credentials: false, // No cookies needed for API
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-ID']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-ID'],
 }));
 
 // Compression middleware
@@ -209,9 +209,9 @@ app.use((req, res, next) => {
           '/api/v1/thoughts',
           '/api/v1/ssl',
           '/api/v1/windows-ssl',
-          '/api/v1/docs'
-        ]
-      }
+          '/api/v1/docs',
+        ],
+      },
     });
   }
 });
@@ -224,8 +224,8 @@ app.use('/api/*', (req, res) => {
     userAction: 'Check the API documentation for available endpoints',
     details: {
       requestedEndpoint: req.originalUrl,
-      documentationUrl: '/api/v1/docs'
-    }
+      documentationUrl: '/api/v1/docs',
+    },
   });
 });
 
@@ -264,9 +264,9 @@ const server = app.listen(config.PORT, config.HOST, () => {
   console.log(`🌍 Environment: ${config.NODE_ENV}`);
   console.log(`🔒 Security: ${config.SECURITY_HEADERS ? 'enabled' : 'disabled'}`);
   console.log(`📊 Metrics: ${config.ENABLE_METRICS ? 'enabled' : 'disabled'}`);
-  console.log(`🎯 Service Type: Pure API Service (No Frontend)`);
+  console.log('🎯 Service Type: Pure API Service (No Frontend)');
   console.log(`📚 API Documentation: http://localhost:${config.PORT}/api/v1/docs`);
-  console.log(`🔑 API Key Required: X-API-Key header for authenticated endpoints`);
+  console.log('🔑 API Key Required: X-API-Key header for authenticated endpoints');
 });
 
 // Initialize WebSocket service for real-time communication (optional)

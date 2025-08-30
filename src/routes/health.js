@@ -34,9 +34,9 @@ router.get('/status', (req, res) => {
         endpoints: {
           html: '/api/v1/health/status',
           json: '/api/v1/health',
-          metrics: '/api/v1/metrics'
+          metrics: '/api/v1/metrics',
         },
-        note: 'This endpoint provides minimal HTML for essential service information only'
+        note: 'This endpoint provides minimal HTML for essential service information only',
       }, 'Service status interface available');
     }
   });
@@ -57,15 +57,15 @@ router.get('/detailed', (req, res) => {
       health: '/api/v1/health',
       status: '/api/v1/health/status',
       metrics: '/api/v1/metrics',
-      docs: '/api/v1/docs'
+      docs: '/api/v1/docs',
     },
     features: {
       authentication: 'enabled',
       rateLimiting: 'enabled',
       nftService: 'enabled',
       websocket: 'enabled',
-      cors: 'enabled'
-    }
+      cors: 'enabled',
+    },
   };
 
   res.apiSuccess(healthStatus, 'Detailed health status retrieved successfully');
@@ -74,14 +74,14 @@ router.get('/detailed', (req, res) => {
 // Component-specific health checks
 router.get('/:component', (req, res) => {
   const { component } = req.params;
-  
+
   const componentChecks = {
     database: () => ({ status: 'healthy', type: 'postgresql', mocked: true }),
     redis: () => ({ status: 'fallback', type: 'memory', reason: 'Redis not available' }),
     nft: () => ({ status: 'healthy', type: 'service', encryption: 'enabled' }),
     auth: () => ({ status: 'healthy', type: 'jwt', deviceAuth: 'enabled' }),
     websocket: () => ({ status: 'healthy', type: 'service', connections: 0 }),
-    rateLimit: () => ({ status: 'healthy', type: 'memory', fallback: true })
+    rateLimit: () => ({ status: 'healthy', type: 'memory', fallback: true }),
   };
 
   if (componentChecks[component]) {
@@ -94,8 +94,8 @@ router.get('/:component', (req, res) => {
       userAction: 'Use one of the available components',
       details: {
         availableComponents: Object.keys(componentChecks),
-        example: '/api/v1/health/database'
-      }
+        example: '/api/v1/health/database',
+      },
     }, 400);
   }
 });

@@ -22,14 +22,14 @@ const deviceRateLimit = rateLimit({
       code: 'RATE_LIMIT_EXCEEDED',
       message: 'Too many requests from this device',
       userAction: 'Please wait before making another request',
-      retryAfter: null // Will be calculated
+      retryAfter: null, // Will be calculated
     },
     timestamp: new Date().toISOString(),
-    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   },
   handler: (req, res, next, options) => {
     const retryAfter = Math.ceil(options.windowMs / 1000);
-    
+
     const errorData = {
       code: 'RATE_LIMIT_EXCEEDED',
       message: 'Too many requests from this device',
@@ -39,8 +39,8 @@ const deviceRateLimit = rateLimit({
         deviceId: req.headers['x-device-id'] || 'unknown',
         ipAddress: req.ip,
         limit: options.max,
-        windowMs: options.windowMs
-      }
+        windowMs: options.windowMs,
+      },
     };
 
     return errorResponse(res, errorData, 429);
@@ -64,14 +64,14 @@ const strictDeviceRateLimit = rateLimit({
       code: 'STRICT_RATE_LIMIT_EXCEEDED',
       message: 'Too many sensitive operations from this device',
       userAction: 'Please wait before making another sensitive request',
-      retryAfter: null
+      retryAfter: null,
     },
     timestamp: new Date().toISOString(),
-    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   },
   handler: (req, res, next, options) => {
     const retryAfter = Math.ceil(options.windowMs / 1000);
-    
+
     const errorData = {
       code: 'STRICT_RATE_LIMIT_EXCEEDED',
       message: 'Too many sensitive operations from this device',
@@ -82,8 +82,8 @@ const strictDeviceRateLimit = rateLimit({
         ipAddress: req.ip,
         limit: options.max,
         windowMs: options.windowMs,
-        operationType: 'sensitive'
-      }
+        operationType: 'sensitive',
+      },
     };
 
     return errorResponse(res, errorData, 429);
@@ -107,24 +107,24 @@ const apiKeyRateLimit = rateLimit({
       code: 'API_KEY_RATE_LIMIT_EXCEEDED',
       message: 'Too many requests with this API key',
       userAction: 'Please wait before making another request',
-      retryAfter: null
+      retryAfter: null,
     },
     timestamp: new Date().toISOString(),
-    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   },
   handler: (req, res, next, options) => {
     const retryAfter = Math.ceil(options.windowMs / 1000);
-    
+
     const errorData = {
       code: 'API_KEY_RATE_LIMIT_EXCEEDED',
       message: 'Too many requests with this API key',
       userAction: `Please wait ${retryAfter} seconds before making another request`,
       retryAfter,
       details: {
-        apiKey: req.headers['x-api-key'] ? '***' + req.headers['x-api-key'].slice(-4) : 'none',
+        apiKey: req.headers['x-api-key'] ? `***${req.headers['x-api-key'].slice(-4)}` : 'none',
         limit: options.max,
-        windowMs: options.windowMs
-      }
+        windowMs: options.windowMs,
+      },
     };
 
     return errorResponse(res, errorData, 429);
@@ -148,14 +148,14 @@ const nftGenerationRateLimit = rateLimit({
       code: 'NFT_GENERATION_RATE_LIMIT_EXCEEDED',
       message: 'Too many NFT generation requests from this device',
       userAction: 'Please wait before generating another NFT',
-      retryAfter: null
+      retryAfter: null,
     },
     timestamp: new Date().toISOString(),
-    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   },
   handler: (req, res, next, options) => {
     const retryAfter = Math.ceil(options.windowMs / 1000);
-    
+
     const errorData = {
       code: 'NFT_GENERATION_RATE_LIMIT_EXCEEDED',
       message: 'Too many NFT generation requests from this device',
@@ -166,8 +166,8 @@ const nftGenerationRateLimit = rateLimit({
         ipAddress: req.ip,
         limit: options.max,
         windowMs: options.windowMs,
-        operationType: 'nft-generation'
-      }
+        operationType: 'nft-generation',
+      },
     };
 
     return errorResponse(res, errorData, 429);
@@ -191,14 +191,14 @@ const authRateLimit = rateLimit({
       code: 'AUTH_RATE_LIMIT_EXCEEDED',
       message: 'Too many authentication attempts',
       userAction: 'Please wait before trying to authenticate again',
-      retryAfter: null
+      retryAfter: null,
     },
     timestamp: new Date().toISOString(),
-    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   },
   handler: (req, res, next, options) => {
     const retryAfter = Math.ceil(options.windowMs / 1000);
-    
+
     const errorData = {
       code: 'AUTH_RATE_LIMIT_EXCEEDED',
       message: 'Too many authentication attempts',
@@ -208,8 +208,8 @@ const authRateLimit = rateLimit({
         ipAddress: req.ip,
         limit: options.max,
         windowMs: options.windowMs,
-        operationType: 'authentication'
-      }
+        operationType: 'authentication',
+      },
     };
 
     return errorResponse(res, errorData, 429);
@@ -223,5 +223,5 @@ module.exports = {
   strictDeviceRateLimit,
   apiKeyRateLimit,
   nftGenerationRateLimit,
-  authRateLimit
+  authRateLimit,
 };

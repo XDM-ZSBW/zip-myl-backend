@@ -4,9 +4,9 @@ const request = require('supertest');
 const mockApp = {
   post: (path) => ({
     set: (header, value) => ({
-      expect: (status) => Promise.resolve({ 
-        status, 
-        body: { 
+      expect: (status) => Promise.resolve({
+        status,
+        body: {
           success: true,
           message: 'Device registered successfully',
           data: {
@@ -14,14 +14,14 @@ const mockApp = {
             accessToken: 'test-access-token',
             refreshToken: 'test-refresh-token',
             expiresIn: 900,
-            refreshExpiresIn: 604800
-          }
-        } 
-      })
+            refreshExpiresIn: 604800,
+          },
+        },
+      }),
     }),
-    expect: (status) => Promise.resolve({ 
-      status, 
-      body: { 
+    expect: (status) => Promise.resolve({
+      status,
+      body: {
         success: true,
         message: 'Device registered successfully',
         data: {
@@ -29,29 +29,29 @@ const mockApp = {
           accessToken: 'test-access-token',
           refreshToken: 'test-refresh-token',
           expiresIn: 900,
-          refreshExpiresIn: 604800
-        }
-      } 
-    })
+          refreshExpiresIn: 604800,
+        },
+      },
+    }),
   }),
   get: (path) => ({
     set: (header, value) => ({
-      expect: (status) => Promise.resolve({ 
-        status, 
-        body: { 
+      expect: (status) => Promise.resolve({
+        status,
+        body: {
           success: true,
-          data: { deviceId: 'device-123', isActive: true }
-        } 
-      })
+          data: { deviceId: 'device-123', isActive: true },
+        },
+      }),
     }),
-    expect: (status) => Promise.resolve({ 
-      status, 
-      body: { 
+    expect: (status) => Promise.resolve({
+      status,
+      body: {
         success: true,
-        data: { deviceId: 'device-123', isActive: true }
-      } 
-    })
-  })
+        data: { deviceId: 'device-123', isActive: true },
+      },
+    }),
+  }),
 };
 
 // Mock Prisma client
