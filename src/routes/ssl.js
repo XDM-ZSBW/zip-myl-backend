@@ -39,8 +39,105 @@ const validateInput = (schema) => {
 };
 const logger = require('../utils/logger');
 
-// Apply API key validation to all SSL routes
-router.use(validateApiKey);
+// Apply API key validation to all SSL routes EXCEPT setup wizard endpoints
+router.use((req, res, next) => {
+  // Skip API key validation for setup wizard endpoints
+  if (req.path === '/setup-wizard/provision' || req.path === '/setup-wizard/generate-key') {
+    return next();
+  }
+  // Apply API key validation to all other routes
+  return validateApiKey(req, res, next);
+});
+
+/**
+ * @route POST /api/v1/ssl/setup-wizard/provision
+ * @desc Public endpoint for setup wizard SSL provisioning (no API key required)
+ * @access Public (Setup Wizard Only)
+ */
+router.post('/setup-wizard/provision',
+  validateInput({
+    deviceId: { type: 'string', required: true, minLength: 1 },
+    uuidSubdomain: { type: 'string', required: true, minLength: 1 },
+    userInitials: { type: 'string', required: true, minLength: 1 },
+    deviceName: { type: 'string', required: true, minLength: 1 },
+  }),
+  async(req, res) => {
+    try {
+      const { deviceId, uuidSubdomain, userInitials, deviceName } = req.body;
+
+      logger.info('Setup wizard SSL certificate provisioning request', { 
+        deviceId, 
+        uuidSubdomain, 
+        userInitials, 
+        deviceName,
+        source: 'setup-wizard'
+      });
+
+      // Verify the UUID subdomain format
+      if (!uuidSubdomain.endsWith('.myl.zip')) {
+        return res.apiError('Invalid UUID subdomain format. Must end with .myl.zip', 400);
+      }
+
+      // Use the existing wildcard certificate for *.myl.zip
+      const result = await sslService.provisionUUIDSubdomain(deviceId, uuidSubdomain, {
+        userInitials,
+        deviceName,
+        certificateType: 'wildcard',
+        autoRenewal: true,
+        source: 'setup-wizard'
+      });
+
+      res.apiSuccess(result, 'Setup wizard SSL certificate provisioned successfully');
+    } catch (error) {
+      logger.error('Setup wizard SSL certificate provisioning failed', { error: error.message, body: req.body });
+      res.apiError('Failed to provision setup wizard SSL certificate', 500, error.message);
+    }
+  },
+);
+
+/**
+ * @route POST /api/v1/ssl/setup-wizard/generate-key
+ * @desc Public endpoint for setup wizard API key generation (no API key required)
+ * @access Public (Setup Wizard Only)
+ */
+router.post('/setup-wizard/generate-key',
+  validateInput({
+    deviceId: { type: 'string', required: true, minLength: 1 },
+    deviceName: { type: 'string', required: true, minLength: 1 },
+    userInitials: { type: 'string', required: true, minLength: 1 },
+  }),
+  async(req, res) => {
+    try {
+      const { deviceId, deviceName, userInitials } = req.body;
+
+      logger.info('Setup wizard API key generation request', { 
+        deviceId, 
+        deviceName, 
+        userInitials,
+        source: 'setup-wizard'
+      });
+
+      // Verify device has UUID subdomain SSL certificate
+      const sslStatus = await sslService.getDeviceStatus(deviceId);
+      if (!sslStatus.success || !sslStatus.certificate || sslStatus.certificate.expired) {
+        return res.apiError('Device must have a valid UUID subdomain SSL certificate to generate API key', 403);
+      }
+
+      // Generate device-specific API key
+      const result = await sslService.generateDeviceApiKey(deviceId, {
+        deviceName,
+        userInitials,
+        permissions: ['ssl:read', 'device:read', 'api:access'],
+        source: 'setup-wizard'
+      });
+
+      res.apiSuccess(result, 'Setup wizard API key generated successfully');
+    } catch (error) {
+      logger.error('Setup wizard API key generation failed', { error: error.message, body: req.body });
+      res.apiError('Failed to generate setup wizard API key', 500, error.message);
+    }
+  },
+);
 
 /**
  * @route POST /api/v1/ssl/provision
