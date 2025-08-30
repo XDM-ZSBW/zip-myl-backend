@@ -21,28 +21,29 @@ class DatabaseManager {
         max: 20, // Maximum number of clients in the pool
         idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
         connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
       };
 
       this.pool = new Pool(config);
-      
+
       // Test connection
       const client = await this.pool.connect();
       await client.query('SELECT NOW()');
       client.release();
-      
+
       this.isConnected = true;
       logger.info('Database connection established successfully');
-      
+
       // Handle pool errors
       this.pool.on('error', (err) => {
         logger.error('Unexpected error on idle client', err);
         this.isConnected = false;
       });
-      
     } catch (error) {
       logger.error('Failed to initialize database connection', error);
-      throw error;
+      // Don't throw error, just set pool to null
+      this.pool = null;
+      this.isConnected = false;
     }
   }
 
@@ -61,14 +62,15 @@ class DatabaseManager {
    */
   async query(text, params = []) {
     if (!this.pool) {
+      logger.warn('Database not initialized, skipping query', { text });
       throw new Error('Database not initialized');
     }
-    
+
     const start = Date.now();
     try {
       const result = await this.pool.query(text, params);
       const duration = Date.now() - start;
-      
+
       logger.debug('Executed query', { text, duration, rows: result.rowCount });
       return result;
     } catch (error) {

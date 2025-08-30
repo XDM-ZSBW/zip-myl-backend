@@ -329,12 +329,12 @@ router.post('/status',
 
       // Check if device is authenticated/registered
       const sslStatus = await sslService.getDeviceStatus(deviceId);
-      
+
       res.json({
         success: true,
         authenticated: sslStatus.success && sslStatus.certificate && !sslStatus.certificate.expired,
-        deviceId: deviceId,
-        sslStatus: sslStatus
+        deviceId,
+        sslStatus,
       });
     } catch (error) {
       logger.error('Device status check failed', { error: error.message, body: req.body });
@@ -342,7 +342,7 @@ router.post('/status',
         success: false,
         authenticated: false,
         deviceId: req.body.deviceId,
-        error: error.message
+        error: error.message,
       });
     }
   },
@@ -372,21 +372,21 @@ router.post('/verify',
         platform,
         language,
         verified: true,
-        verifiedAt: new Date().toISOString()
+        verifiedAt: new Date().toISOString(),
       });
 
       res.json({
         success: true,
         message: 'Device verified successfully',
-        deviceId: deviceId,
-        verified: true
+        deviceId,
+        verified: true,
       });
     } catch (error) {
       logger.error('Device verification failed', { error: error.message, body: req.body });
       res.json({
         success: false,
         message: 'Device verification failed',
-        error: error.message
+        error: error.message,
       });
     }
   },

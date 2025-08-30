@@ -14,12 +14,12 @@ class SSLService {
         ? 'https://acme-staging-v02.api.letsencrypt.org/directory'
         : 'https://acme-v02.api.letsencrypt.org/directory',
     };
-    
+
     // Cache configuration
     this.cacheConfig = {
       ttl: 3600, // 1 hour
       prefix: 'cert:',
-      batchSize: 100
+      batchSize: 100,
     };
   }
 
@@ -202,7 +202,7 @@ class SSLService {
     try {
       // Try cache first
       let certificate = await this.getCertificateFromCache(deviceId);
-      
+
       // If not in cache, get from database
       if (!certificate) {
         certificate = await this.getCertificateFromDatabase(deviceId);
@@ -239,7 +239,7 @@ class SSLService {
         success: false,
         message: 'Error retrieving device status',
         status: 'error',
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -256,13 +256,41 @@ class SSLService {
         logger.warn('Database not available, skipping database lookup', { deviceId });
         return null;
       }
-      
-      const result = await database.query(
-        'SELECT * FROM device_certificates WHERE device_id = $1 AND status = $2',
-        [deviceId, 'active']
-      );
-      
-      return result.rows[0] || null;
+
+      // Check if the table exists first
+      try {
+        const tableCheck = await database.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'device_certificates'
+          );
+        `);
+
+        const tableExists = tableCheck.rows[0].exists;
+        if (!tableExists) {
+          logger.warn('device_certificates table does not exist, skipping database lookup', { deviceId });
+          return null;
+        }
+      } catch (tableCheckError) {
+        logger.warn('Could not check if device_certificates table exists, skipping database lookup', {
+          deviceId,
+          error: tableCheckError.message,
+        });
+        return null;
+      }
+
+      try {
+        const result = await database.query(
+          'SELECT * FROM device_certificates WHERE device_id = $1 AND status = $2',
+          [deviceId, 'active'],
+        );
+
+        return result.rows[0] || null;
+      } catch (queryError) {
+        logger.warn('Database query failed, returning null', { deviceId, error: queryError.message });
+        return null;
+      }
     } catch (error) {
       logger.error('Failed to get certificate from database', { deviceId, error: error.message });
       // Return null instead of throwing to allow graceful degradation
@@ -281,7 +309,7 @@ class SSLService {
         logger.warn('Database not available, skipping database save', { deviceId: certificate.deviceId });
         return certificate; // Return the certificate as if it was saved
       }
-      
+
       const result = await database.query(
         `INSERT INTO device_certificates (
           device_id, uuid_subdomain, certificate_data, status, expires_at, 
@@ -305,10 +333,10 @@ class SSLService {
           certificate.deviceName,
           certificate.type,
           certificate.autoRenewal,
-          certificate.premium
-        ]
+          certificate.premium,
+        ],
       );
-      
+
       logger.info('Certificate saved to database', { deviceId: certificate.deviceId });
       return result.rows[0];
     } catch (error) {
@@ -326,9 +354,10 @@ class SSLService {
   async getCertificateFromCache(deviceId) {
     try {
       if (!redis.isRedisConnected()) {
+        logger.debug('Redis not connected, skipping cache lookup', { deviceId });
         return null;
       }
-      
+
       const cacheKey = `${this.cacheConfig.prefix}${deviceId}`;
       return await redis.get(cacheKey);
     } catch (error) {
@@ -347,10 +376,10 @@ class SSLService {
       if (!redis.isRedisConnected()) {
         return;
       }
-      
+
       const cacheKey = `${this.cacheConfig.prefix}${deviceId}`;
       await redis.set(cacheKey, certificate, this.cacheConfig.ttl);
-      
+
       logger.debug('Certificate cache updated', { deviceId });
     } catch (error) {
       logger.warn('Failed to update certificate cache', { deviceId, error: error.message });
@@ -442,7 +471,7 @@ class SSLService {
       // For setup wizard, we'll be more lenient and not require strict certificate verification
       // since the SSL provisioning might still be propagating to the database
       logger.info('Device API key generation - using lenient certificate verification for setup wizard');
-      
+
       // Try to get device status, but don't fail if not found
       const sslStatus = await this.getDeviceStatus(deviceId);
       if (!sslStatus.success || !sslStatus.certificate) {
@@ -466,8 +495,12 @@ class SSLService {
         uuidSubdomain: sslStatus.certificate?.uuid_subdomain || `${deviceId}.myl.zip`,
       };
 
-      // Store the API key in database
-      await this.saveApiKeyToDatabase(deviceApiKey);
+      // Store the API key in database (optional for setup wizard)
+      try {
+        await this.saveApiKeyToDatabase(deviceApiKey);
+      } catch (error) {
+        logger.warn('Failed to save API key to database, but continuing', { deviceId, error: error.message });
+      }
 
       logger.info('Device API key generated successfully', { deviceId, deviceName: deviceApiKey.deviceName });
 
@@ -503,7 +536,7 @@ class SSLService {
         logger.warn('Database not available, skipping API key save', { deviceId: apiKey.deviceId });
         return apiKey; // Return the API key as if it was saved
       }
-      
+
       // First check if the table exists
       try {
         const tableCheck = await database.query(`
@@ -513,20 +546,20 @@ class SSLService {
             AND table_name = 'device_api_keys'
           );
         `);
-        
+
         const tableExists = tableCheck.rows[0].exists;
         if (!tableExists) {
           logger.warn('device_api_keys table does not exist, skipping database save', { deviceId: apiKey.deviceId });
           return apiKey; // Return the API key as if it was saved
         }
       } catch (tableCheckError) {
-        logger.warn('Could not check if device_api_keys table exists, skipping database save', { 
-          deviceId: apiKey.deviceId, 
-          error: tableCheckError.message 
+        logger.warn('Could not check if device_api_keys table exists, skipping database save', {
+          deviceId: apiKey.deviceId,
+          error: tableCheckError.message,
         });
         return apiKey; // Return the API key as if it was saved
       }
-      
+
       const result = await database.query(
         `INSERT INTO device_api_keys (
           device_id, api_key, key_hash, device_name, user_initials, 
@@ -542,10 +575,10 @@ class SSLService {
           JSON.stringify(apiKey.permissions),
           apiKey.rateLimit,
           apiKey.expiresAt,
-          apiKey.uuidSubdomain
-        ]
+          apiKey.uuidSubdomain,
+        ],
       );
-      
+
       logger.info('API key saved to database', { deviceId: apiKey.deviceId });
       return result.rows[0];
     } catch (error) {

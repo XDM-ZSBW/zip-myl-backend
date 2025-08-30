@@ -31,35 +31,34 @@ class RedisManager {
           }
           // Reconnect after
           return Math.min(options.attempt * 100, 3000);
-        }
+        },
       };
 
       this.client = redis.createClient(config);
-      
+
       // Handle connection events
       this.client.on('connect', () => {
         logger.info('Redis client connected');
         this.isConnected = true;
       });
-      
+
       this.client.on('ready', () => {
         logger.info('Redis client ready');
       });
-      
+
       this.client.on('error', (err) => {
         logger.error('Redis client error', err);
         this.isConnected = false;
       });
-      
+
       this.client.on('end', () => {
         logger.info('Redis client disconnected');
         this.isConnected = false;
       });
-      
+
       // Test connection
       await this.client.ping();
       logger.info('Redis connection established successfully');
-      
     } catch (error) {
       logger.error('Failed to initialize Redis connection', error);
       throw error;
@@ -73,16 +72,16 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
-      
+
       if (ttl) {
         await this.client.setex(key, ttl, serializedValue);
       } else {
         await this.client.set(key, serializedValue);
       }
-      
+
       logger.debug('Redis SET', { key, ttl });
     } catch (error) {
       logger.error('Redis SET error', { key, error: error.message });
@@ -95,16 +94,17 @@ class RedisManager {
    */
   async get(key) {
     if (!this.client) {
-      throw new Error('Redis not initialized');
+      logger.debug('Redis not initialized, skipping get operation', { key });
+      return null;
     }
-    
+
     try {
       const value = await this.client.get(key);
-      
+
       if (value === null) {
         return null;
       }
-      
+
       // Try to parse as JSON, fallback to string
       try {
         return JSON.parse(value);
@@ -124,7 +124,7 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       await this.client.del(key);
       logger.debug('Redis DEL', { key });
@@ -141,7 +141,7 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       await this.client.expire(key, ttl);
       logger.debug('Redis EXPIRE', { key, ttl });
@@ -158,7 +158,7 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       return await this.client.ttl(key);
     } catch (error) {
@@ -174,7 +174,7 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       const result = await this.client.exists(key);
       return result === 1;
@@ -191,10 +191,10 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       const values = await this.client.mget(keys);
-      
+
       return values.map(value => {
         if (value === null) return null;
         try {
@@ -216,20 +216,20 @@ class RedisManager {
     if (!this.client) {
       throw new Error('Redis not initialized');
     }
-    
+
     try {
       const pipeline = this.client.pipeline();
-      
+
       for (const [key, value] of Object.entries(keyValuePairs)) {
         const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
-        
+
         if (ttl) {
           pipeline.setex(key, ttl, serializedValue);
         } else {
           pipeline.set(key, serializedValue);
         }
       }
-      
+
       await pipeline.exec();
       logger.debug('Redis MSET', { keys: Object.keys(keyValuePairs), ttl });
     } catch (error) {

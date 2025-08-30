@@ -331,11 +331,11 @@ async function initializeConnections() {
     // Initialize database
     await database.initialize();
     console.log('✅ Database connection established');
-    
+
     // Initialize Redis cache
     await redis.initialize();
     console.log('✅ Redis cache connection established');
-    
+
     return true;
   } catch (error) {
     console.error('❌ Failed to initialize connections:', error.message);
@@ -348,7 +348,7 @@ async function initializeConnections() {
 async function startServer() {
   try {
     const connectionsReady = await initializeConnections();
-    
+
     if (!connectionsReady) {
       console.log('⚠️  Database connection failed, starting server with limited functionality');
       logger.warn('Server starting with limited functionality due to database connection issues');
@@ -359,7 +359,7 @@ async function startServer() {
     console.log('⚠️  Database initialization error, starting server with limited functionality');
     logger.warn('Server starting with limited functionality due to database initialization error', { error: error.message });
   }
-  
+
   const server = app.listen(config.PORT, config.HOST, () => {
     logger.info(`Server running on port ${config.PORT}`);
     logger.info(`Environment: ${config.NODE_ENV}`);
@@ -372,7 +372,7 @@ async function startServer() {
     console.log('🔑 API Key Required: X-API-Key header for authenticated endpoints');
     console.log('🗄️  Database: PostgreSQL with Redis caching');
   });
-  
+
   return server;
 }
 

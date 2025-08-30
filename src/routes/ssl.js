@@ -74,12 +74,12 @@ router.post('/setup-wizard/provision',
     try {
       const { deviceId, uuidSubdomain, userInitials, deviceName } = req.body;
 
-      logger.info('Setup wizard SSL certificate provisioning request', { 
-        deviceId, 
-        uuidSubdomain, 
-        userInitials, 
+      logger.info('Setup wizard SSL certificate provisioning request', {
+        deviceId,
+        uuidSubdomain,
+        userInitials,
         deviceName,
-        source: 'setup-wizard'
+        source: 'setup-wizard',
       });
 
       // Verify the UUID subdomain format
@@ -93,7 +93,7 @@ router.post('/setup-wizard/provision',
         deviceName,
         certificateType: 'wildcard',
         autoRenewal: true,
-        source: 'setup-wizard'
+        source: 'setup-wizard',
       });
 
       res.apiSuccess(result, 'Setup wizard SSL certificate provisioned successfully');
@@ -128,11 +128,11 @@ router.post('/setup-wizard/generate-key',
     try {
       const { deviceId, deviceName, userInitials } = req.body;
 
-      logger.info('Setup wizard API key generation request', { 
-        deviceId, 
-        deviceName, 
+      logger.info('Setup wizard API key generation request', {
+        deviceId,
+        deviceName,
         userInitials,
-        source: 'setup-wizard'
+        source: 'setup-wizard',
       });
 
       // For setup wizard, we'll be more lenient and not require database certificate check
@@ -144,7 +144,7 @@ router.post('/setup-wizard/generate-key',
         deviceName,
         userInitials,
         permissions: ['ssl:read', 'device:read', 'api:access'],
-        source: 'setup-wizard'
+        source: 'setup-wizard',
       });
 
       res.apiSuccess(result, 'Setup wizard API key generated successfully');
@@ -171,11 +171,11 @@ router.post('/provision',
     try {
       const { deviceId, uuidSubdomain, userInitials, deviceName } = req.body;
 
-      logger.info('UUID subdomain SSL certificate provisioning request', { 
-        deviceId, 
-        uuidSubdomain, 
-        userInitials, 
-        deviceName 
+      logger.info('UUID subdomain SSL certificate provisioning request', {
+        deviceId,
+        uuidSubdomain,
+        userInitials,
+        deviceName,
       });
 
       // Verify the UUID subdomain format
