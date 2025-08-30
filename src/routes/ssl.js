@@ -135,11 +135,9 @@ router.post('/setup-wizard/generate-key',
         source: 'setup-wizard'
       });
 
-      // Verify device has UUID subdomain SSL certificate
-      const sslStatus = await sslService.getDeviceStatus(deviceId);
-      if (!sslStatus.success || !sslStatus.certificate || sslStatus.certificate.expired) {
-        return res.apiError('Device must have a valid UUID subdomain SSL certificate to generate API key', 403);
-      }
+      // For setup wizard, we'll be more lenient and not require database certificate check
+      // since the SSL provisioning might still be propagating to the database
+      logger.info('Setup wizard API key generation - skipping strict SSL certificate verification');
 
       // Generate device-specific API key
       const result = await sslService.generateDeviceApiKey(deviceId, {

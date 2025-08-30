@@ -1,0 +1,90 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/build-enable-automatic-updates: 'false'
+    run.googleapis.com/build-id: 09d3e577-6b16-4f48-9546-832bbab94df5
+    run.googleapis.com/build-image-uri: us-central1-docker.pkg.dev/zip-myl-backend/cloud-run-source-deploy/zip-myl-backend
+    run.googleapis.com/build-name: projects/658472087761/locations/us-central1/builds/09d3e577-6b16-4f48-9546-832bbab94df5
+    run.googleapis.com/build-source-location: gs://run-sources-zip-myl-backend-us-central1/services/zip-myl-backend/1756226180.857842-699e3459a9d8402dbe03b3988f0faffc.zip#1756226185014761
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/invoker-iam-disabled: 'true'
+    run.googleapis.com/urls: '["https://zip-myl-backend-658472087761.us-central1.run.app","https://zip-myl-backend-lz77o54vea-uc.a.run.app"]'
+  labels:
+    cloud.googleapis.com/location: us-central1
+    commit-sha: 55ef8dcd81a87f8ae858f2b2416ddfd6caed97c9
+    gcb-build-id: 93ec0c6c-d742-46d7-8d22-f9c32e2c806a
+    gcb-trigger-id: ccd0498c-cafa-4b31-b92d-87df27c84a98
+    gcb-trigger-region: global
+    managed-by: gcp-cloud-build-deploy-cloud-run
+  name: zip-myl-backend
+  namespace: '658472087761'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '10'
+        autoscaling.knative.dev/minScale: '1'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 536.0.1
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: nhzoyxhtkv
+        commit-sha: 55ef8dcd81a87f8ae858f2b2416ddfd6caed97c9
+        gcb-build-id: 93ec0c6c-d742-46d7-8d22-f9c32e2c806a
+        gcb-trigger-id: ccd0498c-cafa-4b31-b92d-87df27c84a98
+        gcb-trigger-region: global
+        managed-by: gcp-cloud-build-deploy-cloud-run
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 100
+      containers:
+      - env:
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: JWT_SECRET
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: JWT_REFRESH_SECRET
+        - name: SERVICE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: INTERNAL_API_KEY
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: DATABASE_URL
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: REDIS_PASSWORD
+        - name: NODE_ENV
+          value: production
+        image: us-central1-docker.pkg.dev/zip-myl-backend/cloud-run-source-deploy/zip-myl-backend/zip-myl-backend:55ef8dcd81a87f8ae858f2b2416ddfd6caed97c9
+        name: placeholder-1
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: zip-myl-backend@zip-myl-backend.iam.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100
