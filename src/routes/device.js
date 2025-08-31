@@ -155,7 +155,7 @@ router.post('/register',
     try {
       const { deviceInfo, userPreferences } = req.body;
 
-      logger.info('Device registration request - UPDATED', { deviceInfo, userPreferences });
+      logger.info('Device registration request - RESTORED', { deviceInfo, userPreferences });
 
       // Generate a new UUID device ID
       const deviceId = generateUUID();
