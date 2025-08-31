@@ -277,6 +277,7 @@ app.use((req, res, next) => {
           '/api/v1/nft',
           '/api/v1/thoughts',
           '/api/v1/ssl',
+          '/api/v1/device',
           '/api/v1/windows-ssl',
           '/api/v1/docs',
         ],
