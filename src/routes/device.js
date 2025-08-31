@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
 
 // UUID generation function
 function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -155,11 +155,11 @@ router.post('/register',
     try {
       const { deviceInfo, userPreferences } = req.body;
 
-      logger.info('Device registration request - DEPLOYMENT TEST', { deviceInfo, userPreferences });
+      logger.info('Device registration request - FINAL RESTORE', { deviceInfo, userPreferences });
 
       // Generate a new UUID device ID
       const deviceId = generateUUID();
-
+      
       // Register the device with SSL service
       await sslService.registerDevice(deviceId, {
         userAgent: deviceInfo.userAgent,
