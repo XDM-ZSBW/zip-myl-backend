@@ -11,7 +11,7 @@ const extensionRateLimits = {
   // General extension API calls
   general: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_GENERAL, 10) || 100, // Configurable via env
     message: {
       success: false,
       error: 'Too many requests, please try again later',
@@ -35,7 +35,7 @@ const extensionRateLimits = {
   // Authentication and pairing operations (stricter limits)
   auth: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per window
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_AUTH, 10) || 20, // Configurable via env
     message: {
       success: false,
       error: 'Too many authentication attempts',
@@ -52,7 +52,7 @@ const extensionRateLimits = {
   // Pairing code generation (very strict)
   pairingCode: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 pairing code generations per hour
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_PAIRING, 10) || 3, // Configurable via env
     message: {
       success: false,
       error: 'Too many pairing code generation attempts',
@@ -69,7 +69,7 @@ const extensionRateLimits = {
   // Device registration (strict)
   deviceRegistration: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 2, // 2 device registrations per hour
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_DEVICE_REG, 10) || 10, // Configurable via env
     message: {
       success: false,
       error: 'Too many device registration attempts',
@@ -86,7 +86,7 @@ const extensionRateLimits = {
   // NFT operations (moderate limits)
   nft: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 NFT operations per 15 minutes
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_NFT, 10) || 20, // Configurable via env
     message: {
       success: false,
       error: 'Too many NFT operations',
@@ -131,7 +131,8 @@ const smartExtensionRateLimit = (req, res, next) => {
   const path = req.path;
 
   // Authentication endpoints
-  if (path.includes('/auth/') || path.includes('/login') || path.includes('/register')) {
+  if (path.includes('/auth/') || path.includes('/login') || 
+      (path.includes('/register') && !path.includes('/device/register'))) {
     return authExtensionLimit(req, res, next);
   }
 

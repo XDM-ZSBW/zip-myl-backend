@@ -226,7 +226,7 @@ const endpointRateLimit = (req, res, next) => {
   }
 
   // Device registration
-  if (path.includes('/device/register')) {
+  if (path.includes('/api/v1/device/register')) {
     return deviceRegistrationRateLimit(req, res, next);
   }
 
