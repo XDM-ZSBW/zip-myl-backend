@@ -161,10 +161,18 @@ const shouldRequireExtensionId = (path) => {
     '/api/v1/ssl/setup-wizard/provision',
     '/api/v1/ssl/setup-wizard/generate-key',
     '/api/v1/device/register',
+    '/api/v1/auth/device/register', // Allow web-based device registration
     '/api/v1/device/check',
     '/api/v1/device/validate-api-key',
     '/api/v1/device/status',
     '/api/v1/device/verify',
+    '/api/v1/chat/health',
+    '/api/v1/chat/broadcast',
+    '/api/v1/chat/history',
+    '/api/v1/chat/image',
+    '/api/v1/chat/devices',
+    '/api/v1/chat/suggestions',
+    '/api/v1/chat/preferences',
   ];
 
   // Check if path matches required endpoints

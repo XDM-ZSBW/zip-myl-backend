@@ -6,7 +6,7 @@
 const config = {
   // Application Configuration
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PORT: parseInt(process.env.PORT, 10) || 8080,
+  PORT: parseInt(process.env.PORT, 10) || 3333,
   HOST: process.env.HOST || '0.0.0.0',
   nodeEnv: process.env.NODE_ENV || 'development',
 

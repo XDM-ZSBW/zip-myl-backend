@@ -100,6 +100,60 @@ const authenticateDeviceOptional = async(req, res, next) => {
 };
 
 /**
+ * Authentication middleware for EventSource connections (handles tokens via query params)
+ */
+const authenticateDeviceEventSource = async(req, res, next) => {
+  try {
+    // Check for token in query parameters (for EventSource)
+    const token = req.query.token;
+    
+    if (!token) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Token is required',
+      });
+    }
+
+    const validation = await deviceAuth.validateToken(token);
+
+    if (!validation.isValid) {
+      logger.warn('Invalid device token (EventSource)', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+        error: validation.error,
+      });
+
+      return res.status(401).json({
+        error: 'Invalid token',
+        message: 'The provided token is invalid or expired',
+      });
+    }
+
+    // Attach device info to request
+    req.deviceId = validation.deviceId;
+    req.sessionId = validation.sessionId;
+
+    // Get device information
+    try {
+      const deviceInfo = await deviceAuth.getDeviceInfo(validation.deviceId);
+      req.device = deviceInfo;
+    } catch (error) {
+      logger.error('Error getting device info', { error: error.message });
+      // Continue without device info
+    }
+
+    next();
+  } catch (error) {
+    logger.error('Error in EventSource device authentication', { error: error.message });
+    return res.status(500).json({
+      error: 'Authentication error',
+      message: 'An error occurred during authentication',
+    });
+  }
+};
+
+/**
  * Require API key authentication
  */
 const requireApiKey = apiKeyValidator.validateApiKey;
@@ -230,6 +284,7 @@ const logAuthEvent = (action) => {
 module.exports = {
   authenticateDevice,
   authenticateDeviceOptional,
+  authenticateDeviceEventSource,
   requireApiKey,
   optionalApiKey,
   requirePermissions,

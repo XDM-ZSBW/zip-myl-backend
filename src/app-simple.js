@@ -94,7 +94,7 @@ app.use((err, req, res, _next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3333;
 const _server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 Simplified server started successfully on port ${PORT}`);
   logger.info(`📊 Health check available at http://localhost:${PORT}/health`);

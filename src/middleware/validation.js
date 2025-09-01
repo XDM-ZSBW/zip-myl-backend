@@ -400,6 +400,17 @@ const schemas = {
     imageData: Joi.string().max(10485760).required(), // 10MB base64
     imageFormat: Joi.string().valid('jpeg', 'png', 'gif').default('jpeg'),
   }),
+
+  // Chat schemas
+  broadcastMessage: Joi.object({
+    message: Joi.string().min(1).max(10000).required(),
+    sourceDeviceId: Joi.string().required(),
+    targetDeviceIds: Joi.array().items(Joi.string()).optional(),
+  }),
+
+  chatPreferences: Joi.object({
+    preferences: Joi.object().required(),
+  }),
 };
 
 module.exports = {

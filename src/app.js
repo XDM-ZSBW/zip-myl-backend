@@ -11,6 +11,7 @@ dotenv.config();
 
 // Import configuration and utilities
 const config = require('./utils/config');
+const { backendEnvironmentConfig } = require('./config/environment');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const { endpointRateLimit } = require('./middleware/rateLimiter');
@@ -77,6 +78,17 @@ app.use(morgan('combined', {
 app.use(express.json({ limit: config.MAX_REQUEST_SIZE }));
 app.use(express.urlencoded({ extended: true, limit: config.MAX_REQUEST_SIZE }));
 
+// File upload middleware for image handling
+const fileUpload = require('express-fileupload');
+app.use(fileUpload({
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  abortOnLimit: true,
+  createParentPath: true,
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  debug: false
+}));
+
 // ❌ REMOVED: Static file serving - This is now a pure API service
 // app.use(express.static(path.join(__dirname, '../public')));
 
@@ -86,6 +98,18 @@ app.use(apiResponseMiddleware);
 // Security middleware
 app.use(sanitizeInput);
 app.use(validateRequestSize(config.MAX_REQUEST_SIZE));
+
+// Load API routes
+logger.info('Loading API routes...');
+try {
+  const chatRoutes = require('./routes/chat');
+  app.use('/chat', chatRoutes);
+  logger.info('✅ Chat routes loaded successfully');
+} catch (error) {
+  logger.error('❌ Failed to load chat routes: ', error.message);
+  logger.error('❌ Full error details:', error);
+  logger.error('❌ Error stack:', error.stack);
+}
 
 // Enhanced extension support middleware
 app.use(validateExtension);
@@ -199,6 +223,14 @@ try {
   logger.error('❌ Failed to load encrypted routes:', error.message);
 }
 
+// Chat routes (real-time message trading and AI intelligence)
+try {
+  const chatRoutes = require('./routes/chat');
+  loadRoutes('chat routes', '/api/v1/chat', chatRoutes);
+} catch (error) {
+  logger.error('❌ Failed to load chat routes:', error.message);
+}
+
 // Thoughts routes
 try {
   const thoughtsRoutes = require('./routes/thoughts');
@@ -260,7 +292,7 @@ if (config.ENABLE_METRICS) {
 
 // ✅ ADD: API-only middleware - Redirect all non-API requests to proper error response
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/chat/')) {
     next();
   } else {
     // Use standardized API response format
@@ -279,6 +311,12 @@ app.use((req, res, next) => {
           '/api/v1/device',
           '/api/v1/windows-ssl',
           '/api/v1/docs',
+          '/chat/health',
+          '/chat/stream/:deviceId',
+          '/chat/broadcast',
+          '/chat/history/:deviceId',
+          '/chat/devices',
+          '/chat/suggestions/:deviceId',
         ],
       },
     });
@@ -361,7 +399,8 @@ async function startServer() {
   }
 
   const server = app.listen(config.PORT, config.HOST, () => {
-    logger.info(`Server running on port ${config.PORT}`);
+    logger.info(`Server running on port ${backendEnvironmentConfig.getPort()}`);
+    logger.info(`Environment: ${backendEnvironmentConfig.environment}`);
     logger.info(`Environment: ${config.NODE_ENV}`);
     logger.info(`🚀 Server started successfully on port ${config.PORT}`);
     logger.info(`🌍 Environment: ${config.NODE_ENV}`);
