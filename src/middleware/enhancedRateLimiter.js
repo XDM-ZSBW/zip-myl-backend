@@ -131,7 +131,7 @@ const smartExtensionRateLimit = (req, res, next) => {
   const path = req.path;
 
   // Authentication endpoints
-  if (path.includes('/auth/') || path.includes('/login') || 
+  if (path.includes('/auth/') || path.includes('/login') ||
       (path.includes('/register') && !path.includes('/device/register'))) {
     return authExtensionLimit(req, res, next);
   }

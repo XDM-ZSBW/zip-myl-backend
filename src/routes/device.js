@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
 
 // UUID generation function
 function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -66,7 +66,7 @@ router.post('/validate-api-key',
     try {
       const { deviceId, apiKey } = req.body;
 
-      logger.info('API key validation request', { deviceId, apiKeyPrefix: apiKey.substring(0, 10) + '...' });
+      logger.info('API key validation request', { deviceId, apiKeyPrefix: `${apiKey.substring(0, 10)}...` });
 
       // Basic API key format validation
       if (!apiKey.startsWith('dev_') || apiKey.length < 20) {
@@ -159,7 +159,7 @@ router.post('/register',
 
       // Generate a new UUID device ID
       const deviceId = generateUUID();
-      
+
       // Register the device with SSL service
       await sslService.registerDevice(deviceId, {
         userAgent: deviceInfo.userAgent,

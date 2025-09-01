@@ -833,8 +833,8 @@ class SSLService {
 
       // For now, just log the registration
       // In a production environment, this would store device info in database
-      logger.info('Device registered successfully', { 
-        deviceId, 
+      logger.info('Device registered successfully', {
+        deviceId,
         userAgent: deviceInfo.userAgent,
         platform: deviceInfo.platform,
         browser: deviceInfo.browser,
