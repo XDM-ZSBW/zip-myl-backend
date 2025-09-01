@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid BioKey Authentication System</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0 0 15px 0;
+            font-size: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .demo-section h2 {
+            color: #667eea;
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            text-align: center;
+        }
+        
+        .biokey-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .biokey-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .biokey-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .biokey-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .biokey-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .biokey-card h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+            font-size: 20px;
+        }
+        
+        .biokey-card p {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .biokey-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        
+        .biokey-features li {
+            background: rgba(102, 126, 234, 0.1);
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .free-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .mode-btn {
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .mode-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .action-btn.secondary:hover {
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+        
+        #authentication-container {
+            min-height: 600px;
+            border: 3px dashed #667eea;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(248, 249, 250, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .auth-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 500px;
+            color: #666;
+        }
+        
+        .auth-placeholder h3 {
+            margin: 0 0 15px 0;
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .auth-placeholder p {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s ease;
+        }
+        
+        .step-dot.active {
+            background: #667eea;
+            transform: scale(1.2);
+        }
+        
+        .step-dot.completed {
+            background: #28a745;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .score-display {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .score-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .score-card h4 {
+            margin: 0 0 5px 0;
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .score-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .security-score {
+            color: #dc3545;
+        }
+        
+        .educational-score {
+            color: #28a745;
+        }
+        
+        .device-simulation {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .led-display {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .led {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s ease;
+        }
+        
+        .led.active {
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .led.red { background: #dc3545; }
+        .led.blue { background: #007bff; }
+        .led.green { background: #28a745; }
+        .led.yellow { background: #ffc107; }
+        .led.purple { background: #6f42c1; }
+        .led.orange { background: #fd7e14; }
+        .led.cyan { background: #17a2b8; }
+        .led.white { background: #f8f9fa; }
+        
+        .touch-sensors {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .sensor {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .sensor:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .sensor.active {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .feature-card {
+            background: rgba(248, 249, 250, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-card h3 {
+            margin: 0 0 15px 0;
+            color: #667eea;
+            font-size: 20px;
+        }
+        
+        .feature-card p {
+            margin: 0;
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .business-model {
+            background: rgba(255, 243, 205, 0.8);
+            border: 1px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .business-model h3 {
+            margin: 0 0 20px 0;
+            color: #856404;
+            text-align: center;
+        }
+        
+        .business-model ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .business-model li {
+            margin-bottom: 10px;
+            color: #856404;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔑 Hybrid BioKey Authentication System</h1>
+        <p>Free Physical Devices + Biological Verification = Ultimate Security</p>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔬 Free BioKey Devices - Loss Leader Strategy</h2>
+        <p>These cool USB devices are given away free as loss leaders, combining physical authentication with biological learning.</p>
+        
+        <div class="biokey-showcase">
+            <div class="biokey-card">
+                <div class="biokey-icon">🛡️</div>
+                <h3>Immune BioKey</h3>
+                <p>USB device with immune system patterns</p>
+                <ul class="biokey-features">
+                    <li>LED patterns</li>
+                    <li>Touch sensors</li>
+                    <li>Biological patterns</li>
+                </ul>
+                <div class="free-badge">FREE</div>
+            </div>
+            
+            <div class="biokey-card">
+                <div class="biokey-icon">🧠</div>
+                <h3>Neural BioKey</h3>
+                <p>USB device with neural network patterns</p>
+                <ul class="biokey-features">
+                    <li>Synaptic LEDs</li>
+                    <li>Brain wave sensors</li>
+                    <li>Neural patterns</li>
+                </ul>
+                <div class="free-badge">FREE</div>
+            </div>
+            
+            <div class="biokey-card">
+                <div class="biokey-icon">🧬</div>
+                <h3>DNA BioKey</h3>
+                <p>USB device with DNA helix patterns</p>
+                <ul class="biokey-features">
+                    <li>Helix LEDs</li>
+                    <li>Genetic sensors</li>
+                    <li>DNA patterns</li>
+                </ul>
+                <div class="free-badge">FREE</div>
+            </div>
+            
+            <div class="biokey-card">
+                <div class="biokey-icon">🩸</div>
+                <h3>Circulatory BioKey</h3>
+                <p>USB device with blood flow patterns</p>
+                <ul class="biokey-features">
+                    <li>Pulse LEDs</li>
+                    <li>Heart rate sensors</li>
+                    <li>Blood patterns</li>
+                </ul>
+                <div class="free-badge">FREE</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔐 Live Hybrid Authentication Demo</h2>
+        <p>Experience the combination of physical BioKey devices with biological verification for maximum security.</p>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="hybrid_enhanced">🔗 Hybrid Enhanced</button>
+            <button class="mode-btn" data-mode="physical_only">🔑 Physical Only</button>
+            <button class="mode-btn" data-mode="biological_only">🧬 Biological Only</button>
+            <button class="mode-btn" data-mode="educational_mode">📚 Educational Mode</button>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="action-btn" id="generateDeviceBtn">Generate Free BioKey</button>
+            <button class="action-btn secondary" id="startAuthBtn">Start Authentication</button>
+            <button class="action-btn" id="simulateDeviceBtn">Simulate Device</button>
+        </div>
+        
+        <div id="authentication-container">
+            <div class="auth-placeholder">
+                <h3>🔑 Hybrid BioKey Authentication</h3>
+                <p>Generate a free BioKey device to start the authentication process</p>
+                <p>Choose your preferred authentication mode above</p>
+                <p>Experience the future of secure, educational authentication</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 How Hybrid BioKey Works</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>🎁 Free Loss Leader Strategy</h3>
+                <p>BioKey devices are given away free to drive adoption. The cost is offset by premium services, educational content, and enterprise licensing.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔗 Physical + Biological Security</h3>
+                <p>Combines the security of physical possession with the intelligence of biological verification. Two-factor authentication with educational value.</p>
+            </div>
+            <div class="feature-card">
+                <h3>📚 Educational Value</h3>
+                <p>Users learn about biology while authenticating. Each device teaches different biological concepts through interactive patterns.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🎯 Multiple Use Cases</h3>
+                <p>Perfect for schools, healthcare, research institutions, and security-conscious organizations. Educational and secure.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>📊 Comparison: Traditional vs Hybrid BioKey</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Traditional USB Keys</th>
+                    <th>Hybrid BioKey</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Cost</strong></td>
+                    <td>$20-50 per device</td>
+                    <td>FREE (loss leader)</td>
+                </tr>
+                <tr>
+                    <td><strong>Security Model</strong></td>
+                    <td>Physical possession only</td>
+                    <td>Physical + Biological + Educational</td>
+                </tr>
+                <tr>
+                    <td><strong>User Experience</strong></td>
+                    <td>Insert and authenticate</td>
+                    <td>Learn while authenticating</td>
+                </tr>
+                <tr>
+                    <td><strong>Educational Value</strong></td>
+                    <td>None</td>
+                    <td>High (biology lessons)</td>
+                </tr>
+                <tr>
+                    <td><strong>Attack Resistance</strong></td>
+                    <td>Vulnerable to theft</td>
+                    <td>Resistant to theft + cognitive attacks</td>
+                </tr>
+                <tr>
+                    <td><strong>Business Model</strong></td>
+                    <td>Device sales</td>
+                    <td>Services + Education + Enterprise</td>
+                </tr>
+                <tr>
+                    <td><strong>Accessibility</strong></td>
+                    <td>Physical access required</td>
+                    <td>Multiple authentication modes</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="business-model">
+        <h3>💼 Business Model: Free Devices as Loss Leaders</h3>
+        <ul>
+            <li><strong>Free BioKey Devices:</strong> Given away to drive adoption and create brand awareness</li>
+            <li><strong>Premium Services:</strong> Advanced authentication features, analytics, and enterprise management</li>
+            <li><strong>Educational Content:</strong> Biology courses, interactive lessons, and certification programs</li>
+            <li><strong>Enterprise Licensing:</strong> Corporate authentication systems with advanced security features</li>
+            <li><strong>Data Analytics:</strong> Insights into user behavior and security patterns (anonymized)</li>
+            <li><strong>Hardware Upgrades:</strong> Premium BioKey models with additional features</li>
+            <li><strong>Consulting Services:</strong> Security implementation and training for organizations</li>
+        </ul>
+    </div>
+
+    <script src="biologically-inspired-verification.js"></script>
+    <script src="hybrid-biokey-system.js"></script>
+    <script>
+        let hybridSystem = null;
+        let currentMode = 'hybrid_enhanced';
+        let currentDevice = null;
+        let currentSession = null;
+
+        // Initialize the system
+        document.addEventListener('DOMContentLoaded', () => {
+            hybridSystem = new HybridBioKeySystem();
+            
+            // Setup mode selector
+            const modeBtns = document.querySelectorAll('.mode-btn');
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modeBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentMode = btn.dataset.mode;
+                });
+            });
+            
+            // Setup action buttons
+            document.getElementById('generateDeviceBtn').addEventListener('click', generateBioKeyDevice);
+            document.getElementById('startAuthBtn').addEventListener('click', startAuthentication);
+            document.getElementById('simulateDeviceBtn').addEventListener('click', simulateDevice);
+        });
+
+        async function generateBioKeyDevice() {
+            const btn = document.getElementById('generateDeviceBtn');
+            btn.disabled = true;
+            btn.textContent = 'Generating BioKey...';
+            
+            try {
+                const deviceTypes = ['immune_bio', 'neural_bio', 'dna_bio', 'circulatory_bio'];
+                const randomType = deviceTypes[Math.floor(Math.random() * deviceTypes.length)];
+                
+                const result = await hybridSystem.generateBioKeyDevice(randomType);
+                
+                if (result.success) {
+                    currentDevice = result.device;
+                    console.log('BioKey device generated:', result.device);
+                    
+                    // Show device info
+                    showDeviceInfo(result.device);
+                } else {
+                    console.error('Failed to generate BioKey:', result.error);
+                    alert('Failed to generate BioKey: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error generating BioKey:', error);
+                alert('Error generating BioKey: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Free BioKey';
+            }
+        }
+
+        async function startAuthentication() {
+            if (!currentDevice) {
+                alert('Please generate a BioKey device first');
+                return;
+            }
+            
+            const btn = document.getElementById('startAuthBtn');
+            btn.disabled = true;
+            btn.textContent = 'Starting Authentication...';
+            
+            try {
+                const result = await hybridSystem.initializeHybridSession(currentDevice.id, currentMode);
+                
+                if (result.success) {
+                    currentSession = result.session;
+                    console.log('Authentication session started:', result.session);
+                    
+                    // Show authentication interface
+                    showAuthenticationInterface(result.session, result.device);
+                } else {
+                    console.error('Failed to start authentication:', result.error);
+                    alert('Failed to start authentication: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error starting authentication:', error);
+                alert('Error starting authentication: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Start Authentication';
+            }
+        }
+
+        function simulateDevice() {
+            if (!currentDevice) {
+                alert('Please generate a BioKey device first');
+                return;
+            }
+            
+            showDeviceSimulation(currentDevice);
+        }
+
+        function showDeviceInfo(device) {
+            const container = document.getElementById('authentication-container');
+            container.innerHTML = `
+                <div class="success-message">
+                    <h3>✅ ${device.name} Generated Successfully!</h3>
+                    <p><strong>Device ID:</strong> ${device.id}</p>
+                    <p><strong>Type:</strong> ${device.type}</p>
+                    <p><strong>Cost:</strong> FREE</p>
+                    <p><strong>Features:</strong> ${device.features.join(', ')}</p>
+                    <p><strong>Physical Token:</strong> ${device.physicalToken}</p>
+                    <p><strong>QR Code:</strong> ${device.qrCode}</p>
+                </div>
+                <div class="device-simulation">
+                    <h4>🔬 Device Instructions</h4>
+                    <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
+                        ${device.instructions.map(instruction => `<li>${instruction}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        function showAuthenticationInterface(session, device) {
+            const container = document.getElementById('authentication-container');
+            const steps = session.steps;
+            
+            let stepDots = '';
+            for (let i = 0; i < steps.length; i++) {
+                const status = i === 0 ? 'active' : '';
+                stepDots += `<div class="step-dot ${status}" data-step="${i}"></div>`;
+            }
+            
+            container.innerHTML = `
+                <h3>🔐 ${session.mode.replace('_', ' ').toUpperCase()} Authentication</h3>
+                <p><strong>Device:</strong> ${device.name}</p>
+                
+                <div class="step-indicator">
+                    ${stepDots}
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                
+                <div class="score-display">
+                    <div class="score-card">
+                        <h4>Security Score</h4>
+                        <div class="score-value security-score">0</div>
+                    </div>
+                    <div class="score-card">
+                        <h4>Educational Score</h4>
+                        <div class="score-value educational-score">0</div>
+                    </div>
+                </div>
+                
+                <div class="device-simulation">
+                    <h4>🔬 Current Step: ${steps[0].description}</h4>
+                    <p>Step ${session.currentStep + 1} of ${steps.length}</p>
+                    
+                    <div class="led-display">
+                        <div class="led red"></div>
+                        <div class="led blue"></div>
+                        <div class="led green"></div>
+                        <div class="led yellow"></div>
+                    </div>
+                    
+                    <div class="touch-sensors">
+                        <div class="sensor" data-sensor="1">1</div>
+                        <div class="sensor" data-sensor="2">2</div>
+                        <div class="sensor" data-sensor="3">3</div>
+                        <div class="sensor" data-sensor="4">4</div>
+                    </div>
+                    
+                    <button class="action-btn" onclick="processNextStep()">Continue to Next Step</button>
+                </div>
+            `;
+            
+            // Setup device simulation
+            setupDeviceSimulation(device);
+        }
+
+        function showDeviceSimulation(device) {
+            const container = document.getElementById('authentication-container');
+            const ledPattern = device.uniquePatterns.ledPattern;
+            
+            container.innerHTML = `
+                <h3>🔬 ${device.name} Device Simulation</h3>
+                <p>Watch the LED pattern and interact with the touch sensors</p>
+                
+                <div class="device-simulation">
+                    <h4>LED Pattern: ${ledPattern.pattern}</h4>
+                    <div class="led-display">
+                        <div class="led red"></div>
+                        <div class="led blue"></div>
+                        <div class="led green"></div>
+                        <div class="led yellow"></div>
+                    </div>
+                    
+                    <div class="touch-sensors">
+                        <div class="sensor" data-sensor="1">1</div>
+                        <div class="sensor" data-sensor="2">2</div>
+                        <div class="sensor" data-sensor="3">3</div>
+                        <div class="sensor" data-sensor="4">4</div>
+                    </div>
+                    
+                    <button class="action-btn" onclick="startLEDPattern()">Start LED Pattern</button>
+                    <button class="action-btn secondary" onclick="resetSimulation()">Reset</button>
+                </div>
+            `;
+            
+            setupDeviceSimulation(device);
+        }
+
+        function setupDeviceSimulation(device) {
+            const sensors = document.querySelectorAll('.sensor');
+            sensors.forEach(sensor => {
+                sensor.addEventListener('click', () => {
+                    sensors.forEach(s => s.classList.remove('active'));
+                    sensor.classList.add('active');
+                });
+            });
+        }
+
+        function startLEDPattern() {
+            const leds = document.querySelectorAll('.led');
+            const sequence = ['red', 'blue', 'green', 'yellow'];
+            const timing = [500, 300, 500, 300];
+            
+            let currentIndex = 0;
+            
+            const interval = setInterval(() => {
+                // Clear all LEDs
+                leds.forEach(led => {
+                    led.classList.remove('active');
+                    led.style.backgroundColor = '#ddd';
+                });
+                
+                // Activate current LED
+                if (currentIndex < sequence.length) {
+                    const led = leds[currentIndex];
+                    led.classList.add('active');
+                    led.style.backgroundColor = getColorForName(sequence[currentIndex]);
+                    currentIndex++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, timing[currentIndex] || 500);
+        }
+
+        function getColorForName(colorName) {
+            const colors = {
+                'red': '#dc3545',
+                'blue': '#007bff',
+                'green': '#28a745',
+                'yellow': '#ffc107',
+                'purple': '#6f42c1',
+                'orange': '#fd7e14',
+                'cyan': '#17a2b8',
+                'white': '#f8f9fa'
+            };
+            return colors[colorName] || '#ddd';
+        }
+
+        function resetSimulation() {
+            const leds = document.querySelectorAll('.led');
+            const sensors = document.querySelectorAll('.sensor');
+            
+            leds.forEach(led => {
+                led.classList.remove('active');
+                led.style.backgroundColor = '#ddd';
+            });
+            
+            sensors.forEach(sensor => {
+                sensor.classList.remove('active');
+            });
+        }
+
+        async function processNextStep() {
+            if (!currentSession) {
+                alert('No active session');
+                return;
+            }
+            
+            try {
+                const stepData = {
+                    deviceToken: currentDevice.physicalToken,
+                    userPattern: getCurrentPattern(),
+                    physicalScore: 75,
+                    biologicalScore: 80
+                };
+                
+                const result = await hybridSystem.processAuthenticationStep(currentSession.id, stepData);
+                
+                if (result.success) {
+                    updateAuthenticationProgress(result);
+                    
+                    if (result.accessToken) {
+                        showAuthenticationSuccess(result);
+                    }
+                } else {
+                    showAuthenticationError(result.error);
+                }
+            } catch (error) {
+                console.error('Error processing step:', error);
+                showAuthenticationError(error.message);
+            }
+        }
+
+        function getCurrentPattern() {
+            const activeSensors = document.querySelectorAll('.sensor.active');
+            return Array.from(activeSensors).map(sensor => sensor.dataset.sensor);
+        }
+
+        function updateAuthenticationProgress(result) {
+            const stepDots = document.querySelectorAll('.step-dot');
+            const progressFill = document.querySelector('.progress-fill');
+            const securityScore = document.querySelector('.security-score');
+            const educationalScore = document.querySelector('.educational-score');
+            
+            // Update step indicator
+            stepDots.forEach((dot, index) => {
+                if (index < result.progress / (100 / stepDots.length)) {
+                    dot.classList.add('completed');
+                    dot.classList.remove('active');
+                } else if (index === Math.floor(result.progress / (100 / stepDots.length))) {
+                    dot.classList.add('active');
+                }
+            });
+            
+            // Update progress bar
+            progressFill.style.width = result.progress + '%';
+            
+            // Update scores
+            securityScore.textContent = result.securityScore;
+            educationalScore.textContent = result.educationalScore;
+            
+            // Update current step description
+            const stepDescription = document.querySelector('.device-simulation h4');
+            if (stepDescription && result.nextStep) {
+                stepDescription.textContent = `🔬 Current Step: ${result.nextStep.description}`;
+            }
+        }
+
+        function showAuthenticationSuccess(result) {
+            const container = document.getElementById('authentication-container');
+            container.innerHTML = `
+                <div class="success-message">
+                    <h3>✅ Hybrid Authentication Successful!</h3>
+                    <p><strong>Access Token:</strong> ${result.accessToken}</p>
+                    <p><strong>Security Score:</strong> ${result.securityScore}/100</p>
+                    <p><strong>Educational Score:</strong> ${result.educationalScore}/100</p>
+                    <p><strong>Device:</strong> ${result.device.name}</p>
+                    <p><strong>Mode:</strong> ${result.session.mode}</p>
+                    <p><strong>Expires:</strong> 30 minutes</p>
+                </div>
+            `;
+        }
+
+        function showAuthenticationError(error) {
+            const container = document.getElementById('authentication-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<h3>❌ Authentication Error</h3><p>${error}</p>`;
+            container.appendChild(errorDiv);
+        }
+    </script>
+</body>
+</html>

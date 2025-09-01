@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
+    "dev:gcloud": "NODE_ENV=development USE_GOOGLE_CLOUD_SERVICES=true node --watch src/app.js",
+    "dev:local": "NODE_ENV=development USE_GOOGLE_CLOUD_SERVICES=false node --watch src/app.js",
+    "gcloud:setup": "bash setup-gcloud-dev.sh",
+    "gcloud:proxy": "cloud-sql-proxy --instances=zip-myl-backend:us-central1:zip-myl-backend",
+    "gcloud:deploy": "gcloud run deploy zip-myl-backend --source . --platform managed --region us-central1 --allow-unauthenticated",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
