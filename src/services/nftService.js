@@ -181,7 +181,7 @@ class NFTService {
       }
 
       const countResult = await this.db.query(countQuery, countParams);
-      const total = parseInt(countResult.rows[0].total);
+      const total = parseInt(countResult.rows[0].total, 10);
 
       return {
         nfts: decryptedNFTs,
@@ -335,16 +335,16 @@ class NFTService {
       const platformResult = await this.db.query(platformQuery, [userId]);
 
       const stats = {
-        totalNFTs: parseInt(collectionResult.rows[0]?.total_nfts || 0),
-        platforms: parseInt(collectionResult.rows[0]?.platforms || 0),
-        collections: parseInt(collectionResult.rows[0]?.collections || 0),
+        totalNFTs: parseInt(collectionResult.rows[0]?.total_nfts || 0, 10),
+        platforms: parseInt(collectionResult.rows[0]?.platforms || 0, 10),
+        collections: parseInt(collectionResult.rows[0]?.collections || 0, 10),
         platformDistribution: platformResult.rows.map(row => ({
           platform: row.platform,
-          count: parseInt(row.count),
+          count: parseInt(row.count, 10),
         })),
         profile: profileResult.rows[0] ? {
           hasProfilePicture: !!profileResult.rows[0].profile_picture_url,
-          nftCount: parseInt(profileResult.rows[0].nft_count || 0),
+          nftCount: parseInt(profileResult.rows[0].nft_count || 0, 10),
           lastNFTAdded: profileResult.rows[0].last_nft_added,
         } : null,
       };

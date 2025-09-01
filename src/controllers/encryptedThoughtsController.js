@@ -173,7 +173,7 @@ class EncryptedThoughtsController {
       const deviceThoughts = Array.from(this.thoughts.values())
         .filter(thought => thought.deviceId === deviceId)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(offset, offset + parseInt(limit));
+        .slice(offset, offset + parseInt(limit, 10));
 
       // Update device last seen
       await trustService.updateLastSeen(deviceId);
@@ -187,8 +187,8 @@ class EncryptedThoughtsController {
           updatedAt: thought.updatedAt,
         })),
         pagination: {
-          limit: parseInt(limit),
-          offset: parseInt(offset),
+          limit: parseInt(limit, 10),
+          offset: parseInt(offset, 10),
           total: deviceThoughts.length,
         },
       });

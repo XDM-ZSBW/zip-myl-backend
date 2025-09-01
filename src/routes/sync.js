@@ -113,8 +113,8 @@ router.get('/history',
       data: {
         history: [],
         total: 0,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10),
         deviceId: req.device.id,
       },
     });

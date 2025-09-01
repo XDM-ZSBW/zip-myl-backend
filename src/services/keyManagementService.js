@@ -11,7 +11,7 @@ class KeyManagementService {
     this.keyLength = 32; // 256 bits
     this.ivLength = 16; // 128 bits
     this.tagLength = 16; // 128 bits
-    this.keyDerivationIterations = parseInt(process.env.KEY_DERIVATION_ITERATIONS) || 100000;
+    this.keyDerivationIterations = parseInt(process.env.KEY_DERIVATION_ITERATIONS, 10) || 100000;
 
     // In production, these would be stored in a secure key management system
     this.masterKey = process.env.ENCRYPTION_MASTER_KEY;

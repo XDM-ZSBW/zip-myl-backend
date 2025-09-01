@@ -10,6 +10,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const logger = require('./utils/logger');
 
 // Create Express app
 const app = express();
@@ -83,8 +84,8 @@ app.use('*', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
+app.use((err, req, res, _next) => {
+  logger.error('Error:', err);
   res.status(500).json({
     error: 'Internal Server Error',
     message: err.message,
@@ -94,10 +95,10 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 8080;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Simplified server started successfully on port ${PORT}`);
-  console.log(`📊 Health check available at http://localhost:${PORT}/health`);
-  console.log(`🧪 Test route available at http://localhost:${PORT}/test`);
+const _server = app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`🚀 Simplified server started successfully on port ${PORT}`);
+  logger.info(`📊 Health check available at http://localhost:${PORT}/health`);
+  logger.info(`🧪 Test route available at http://localhost:${PORT}/test`);
 });
 
 module.exports = app;

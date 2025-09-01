@@ -181,7 +181,7 @@ class NFTQueueService {
     if (this.useFallback) {
       // Memory-based fallback - simulate job status
       if (jobId.startsWith('fallback_')) {
-        const timestamp = parseInt(jobId.split('_')[1]);
+        const timestamp = parseInt(jobId.split('_', 10)[1]);
         const elapsed = Date.now() - timestamp;
         const state = elapsed > 30000 ? 'completed' : 'active';
         const progress = Math.min(100, Math.floor((elapsed / 30000) * 100));

@@ -105,13 +105,13 @@ const mockApp = {
 const mockLogger = {
   error: (message, meta) => {
     if (meta && meta.error) {
-      console.error(`[TEST LOGGER] ${message}:`, meta.error);
+      logger.error(`[TEST LOGGER] ${message}:`, meta.error);
     } else {
-      console.error(`[TEST LOGGER] ${message}`);
+      logger.error(`[TEST LOGGER] ${message}`);
     }
   },
-  info: (message) => console.log(`[TEST LOGGER] ${message}`),
-  warn: (message) => console.warn(`[TEST LOGGER] ${message}`),
+  info: (message) => logger.info(`[TEST LOGGER] ${message}`),
+  warn: (message) => logger.warn(`[TEST LOGGER] ${message}`),
 };
 
 // Use mock logger if the real logger fails

@@ -23,7 +23,7 @@ const successResponse = (res, data, message = 'Success', statusCode = 200) => {
   if (data && data.pagination) {
     response.pagination = data.pagination;
     // Remove pagination from data to avoid duplication
-    const { pagination, ...cleanData } = data;
+    const { pagination: _pagination, ...cleanData } = data;
     response.data = cleanData;
   }
 
@@ -58,12 +58,12 @@ const paginatedResponse = (res, data, page, limit, total, totalPages) => {
     success: true,
     data,
     pagination: {
-      page: parseInt(page) || 1,
-      limit: parseInt(limit) || 20,
-      total: parseInt(total) || 0,
-      totalPages: parseInt(totalPages) || 1,
-      hasNext: (parseInt(page) || 1) < (parseInt(totalPages) || 1),
-      hasPrev: (parseInt(page) || 1) > 1,
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20,
+      total: parseInt(total, 10) || 0,
+      totalPages: parseInt(totalPages, 10) || 1,
+      hasNext: (parseInt(page, 10) || 1) < (parseInt(totalPages, 10) || 1),
+      hasPrev: (parseInt(page, 10) || 1) > 1,
     },
     timestamp: new Date().toISOString(),
     requestId: generateRequestId(),

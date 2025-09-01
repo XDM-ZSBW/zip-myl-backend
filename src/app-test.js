@@ -39,17 +39,17 @@ if (config.SECURITY_HEADERS) {
       preload: true,
     },
   }));
-  console.log('✅ Security headers enabled');
+  logger.info('✅ Security headers enabled');
 }
 
 // CORS configuration
 app.use(cors(config.cors));
-console.log('✅ CORS configured');
+logger.info('✅ CORS configured');
 
 // Compression middleware
 if (config.COMPRESSION_ENABLED) {
   app.use(compression());
-  console.log('✅ Compression enabled');
+  logger.info('✅ Compression enabled');
 }
 
 // Request parsing middleware
@@ -77,12 +77,12 @@ if (config.ENABLE_RATE_LIMITING && config.NODE_ENV !== 'test') {
       },
     });
     app.use(limiter);
-    console.log('✅ Rate limiting enabled');
+    logger.info('✅ Rate limiting enabled');
   } catch (error) {
-    console.warn('⚠️ Rate limiting disabled:', error.message);
+    logger.warn('⚠️ Rate limiting disabled:', error.message);
   }
 } else if (config.NODE_ENV === 'test') {
-  console.log('✅ Rate limiting disabled in test environment');
+  logger.info('✅ Rate limiting disabled in test environment');
 }
 
 // Health check endpoint
@@ -100,84 +100,84 @@ try {
   // Health routes
   const healthRoutes = require('./routes/health');
   app.use('/health', healthRoutes);
-  console.log('✅ Health routes loaded');
+  logger.info('✅ Health routes loaded');
 
   // Documentation routes
   const docsRoutes = require('./routes/docs');
   app.use('/docs', docsRoutes);
-  console.log('✅ Documentation routes loaded');
+  logger.info('✅ Documentation routes loaded');
 
   // Authentication routes
   const authRoutes = require('./routes/auth');
   app.use('/api/v1/auth', authRoutes);
-  console.log('✅ Authentication routes loaded');
+  logger.info('✅ Authentication routes loaded');
 
   // Device routes
   const deviceRoutes = require('./routes/device');
   app.use('/api/v1/devices', deviceRoutes);
-  console.log('✅ Device routes loaded');
+  logger.info('✅ Device routes loaded');
 
   // Enhanced Trust Network routes
   const enhancedTrustNetworkRoutes = require('./routes/enhancedTrustNetwork');
   app.use('/api/v1/trust-network', enhancedTrustNetworkRoutes);
-  console.log('✅ Enhanced Trust Network routes loaded');
+  logger.info('✅ Enhanced Trust Network routes loaded');
 
   // Plugin routes
   const pluginRoutes = require('./routes/plugin');
   app.use('/api/v1/plugins', pluginRoutes);
-  console.log('✅ Plugin routes loaded');
+  logger.info('✅ Plugin routes loaded');
 
   // Workspace routes
   const workspaceRoutes = require('./routes/workspace');
   app.use('/api/v1/workspaces', workspaceRoutes);
-  console.log('✅ Workspace routes loaded');
+  logger.info('✅ Workspace routes loaded');
 
   // Sync routes
   const syncRoutes = require('./routes/sync');
   app.use('/api/v1/sync', syncRoutes);
-  console.log('✅ Sync routes loaded');
+  logger.info('✅ Sync routes loaded');
 
   // Admin routes
   const adminRoutes = require('./routes/admin');
   app.use('/api/v1/admin', adminRoutes);
-  console.log('✅ Admin routes loaded');
+  logger.info('✅ Admin routes loaded');
 
   // API routes
   const apiRoutes = require('./routes/api');
   app.use('/api', apiRoutes);
-  console.log('✅ API routes loaded');
+  logger.info('✅ API routes loaded');
 
   // API v2 routes (Multi-Client Ecosystem)
   const apiV2Routes = require('./routes/api-v2');
   app.use('/api', apiV2Routes);
-  console.log('✅ API v2 routes loaded');
+  logger.info('✅ API v2 routes loaded');
 
   // Encrypted routes (device registration, pairing, thoughts)
   const encryptedRoutes = require('./routes/encrypted');
   app.use('/api/v1/encrypted', encryptedRoutes);
-  console.log('✅ Encrypted routes loaded');
+  logger.info('✅ Encrypted routes loaded');
 
   // Thoughts routes
   const thoughtsRoutes = require('./routes/thoughts');
   app.use('/api/v1/thoughts', thoughtsRoutes);
-  console.log('✅ Thoughts routes loaded');
+  logger.info('✅ Thoughts routes loaded');
 
   // NFT routes
   const nftRoutes = require('./routes/nft');
   app.use('/api/v1/nft', nftRoutes);
-  console.log('✅ NFT routes loaded');
+  logger.info('✅ NFT routes loaded');
 
   // Batch operations routes
   const batchRoutes = require('./routes/batch');
   app.use('/api/v1/batch', batchRoutes);
-  console.log('✅ Batch operations routes loaded');
+  logger.info('✅ Batch operations routes loaded');
 
   // Root routes (must be after API routes)
   const rootRoutes = require('./routes/root');
   app.use('/', rootRoutes);
-  console.log('✅ Root routes loaded');
+  logger.info('✅ Root routes loaded');
 } catch (error) {
-  console.error('❌ Critical error loading routes:', error.message);
+  logger.error('❌ Critical error loading routes:', error.message);
   logger.error('Critical error loading routes', { error: error.message });
 }
 
@@ -187,7 +187,7 @@ if (config.ENABLE_METRICS) {
     res.set('Content-Type', 'text/plain');
     res.send('# Metrics endpoint - Prometheus metrics will be available here');
   });
-  console.log('✅ Metrics endpoint enabled');
+  logger.info('✅ Metrics endpoint enabled');
 }
 
 // 404 handler

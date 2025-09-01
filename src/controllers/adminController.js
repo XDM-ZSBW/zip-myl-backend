@@ -90,7 +90,7 @@ class AdminController {
   async listApiKeys(req, res) {
     try {
       const { page = 1, limit = 20, clientId, isActive } = req.query;
-      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
       const where = {};
       if (clientId) where.clientId = clientId;
@@ -110,7 +110,7 @@ class AdminController {
             },
           },
           skip,
-          take: parseInt(limit),
+          take: parseInt(limit, 10),
           orderBy: { createdAt: 'desc' },
         }),
         prisma.apiKey.count({ where }),
@@ -136,10 +136,10 @@ class AdminController {
         data: {
           apiKeys: sanitizedApiKeys,
           pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10),
             total,
-            pages: Math.ceil(total / parseInt(limit)),
+            pages: Math.ceil(total / parseInt(limit, 10)),
           },
         },
       });
@@ -318,7 +318,7 @@ class AdminController {
   async listClients(req, res) {
     try {
       const { page = 1, limit = 20, clientType, isActive } = req.query;
-      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
       const where = {};
       if (clientType) where.clientType = clientType;
@@ -335,7 +335,7 @@ class AdminController {
             },
           },
           skip,
-          take: parseInt(limit),
+          take: parseInt(limit, 10),
           orderBy: { createdAt: 'desc' },
         }),
         prisma.client.count({ where }),
@@ -352,10 +352,10 @@ class AdminController {
         data: {
           clients: clientsWithApiKeyCount,
           pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10),
             total,
-            pages: Math.ceil(total / parseInt(limit)),
+            pages: Math.ceil(total / parseInt(limit, 10)),
           },
         },
       });
@@ -446,7 +446,7 @@ class AdminController {
         endDate,
       } = req.query;
 
-      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
       const where = {};
       if (action) where.action = action;
@@ -485,7 +485,7 @@ class AdminController {
             },
           },
           skip,
-          take: parseInt(limit),
+          take: parseInt(limit, 10),
           orderBy: { createdAt: 'desc' },
         }),
         prisma.auditLog.count({ where }),
@@ -497,10 +497,10 @@ class AdminController {
         data: {
           auditLogs,
           pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10),
             total,
-            pages: Math.ceil(total / parseInt(limit)),
+            pages: Math.ceil(total / parseInt(limit, 10)),
           },
         },
       });

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 class SessionManager {
   constructor() {
-    this.maxSessionsPerDevice = parseInt(process.env.MAX_SESSIONS_PER_DEVICE) || 5;
+    this.maxSessionsPerDevice = parseInt(process.env.MAX_SESSIONS_PER_DEVICE, 10) || 5;
     this.sessionCleanupInterval = 60 * 60 * 1000; // 1 hour
     this.cleanupTimer = null; // Store timer ID for cleanup
 

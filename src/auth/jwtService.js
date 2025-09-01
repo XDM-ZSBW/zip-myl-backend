@@ -183,7 +183,7 @@ class JWTService {
     if (!match) return 900; // Default 15 minutes
 
     const [, value, unit] = match;
-    return parseInt(value) * units[unit];
+    return parseInt(value, 10) * units[unit];
   }
 
   /**

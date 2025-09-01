@@ -88,7 +88,7 @@ const sanitizeInput = (req, res, next) => {
  */
 const validateRequestSize = (maxSize = '1mb') => {
   return (req, res, next) => {
-    const contentLength = parseInt(req.get('content-length') || '0');
+    const contentLength = parseInt(req.get('content-length', 10) || '0');
     const maxSizeBytes = parseSize(maxSize);
 
     if (contentLength > maxSizeBytes) {
@@ -152,8 +152,8 @@ const validateUUID = (field = 'id') => {
  * Validate pagination parameters
  */
 const validatePagination = (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 20;
 
   if (page < 1) {
     return res.status(400).json({

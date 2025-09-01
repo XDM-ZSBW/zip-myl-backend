@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 const trustService = require('../services/trustService');
-const encryptionService = require('../services/encryptionService');
+const encryptionService = require('../services/encryptionService'); // eslint-disable-line no-unused-vars
 
 /**
  * Device Trust Controller
@@ -111,7 +111,7 @@ class DeviceTrustController {
         });
       }
 
-      const result = await trustService.revokeTrust(deviceId, revokedByDeviceId);
+      const _result = await trustService.revokeTrust(deviceId, revokedByDeviceId);
 
       res.json({
         success: true,
@@ -379,7 +379,7 @@ class DeviceTrustController {
       }
 
       // Attempt retry through trust service
-      const result = await trustService.retryPairingCodeGeneration(pairingCode, deviceId);
+      const _result = await trustService.retryPairingCodeGeneration(pairingCode, deviceId);
 
       res.json({
         success: true,

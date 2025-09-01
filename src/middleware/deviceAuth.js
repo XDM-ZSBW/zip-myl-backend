@@ -278,7 +278,7 @@ async function updateDeviceLastSeen(deviceId) {
 /**
  * Check device permission
  */
-async function checkDevicePermission(deviceId, permission) {
+async function checkDevicePermission(_deviceId, _permission) {
   // TODO: Implement permission check
   // For now, return true for all permissions
   return true;
@@ -287,7 +287,7 @@ async function checkDevicePermission(deviceId, permission) {
 /**
  * Get device trust level
  */
-async function getDeviceTrustLevel(deviceId) {
+async function getDeviceTrustLevel(_deviceId) {
   // TODO: Implement trust level check
   // For now, return level 3 (trusted)
   return 3;

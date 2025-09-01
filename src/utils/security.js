@@ -97,7 +97,7 @@ class SecurityUtils {
       const [network, prefixLength] = cidr.split('/');
       const ipNum = this.ipToNumber(ip);
       const networkNum = this.ipToNumber(network);
-      const mask = (0xffffffff << (32 - parseInt(prefixLength))) >>> 0;
+      const mask = (0xffffffff << (32 - parseInt(prefixLength, 10))) >>> 0;
 
       return (ipNum & mask) === (networkNum & mask);
     } catch (error) {
@@ -110,7 +110,7 @@ class SecurityUtils {
    * Convert IP address to number
    */
   static ipToNumber(ip) {
-    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
   }
 
   /**

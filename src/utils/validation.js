@@ -305,7 +305,7 @@ function detectPairingCodeFormat(code) {
  * Check if trust level is valid
  */
 function isValidTrustLevel(level) {
-  return [1, 2, 3].includes(parseInt(level));
+  return [1, 2, 3].includes(parseInt(level, 10));
 }
 
 /**

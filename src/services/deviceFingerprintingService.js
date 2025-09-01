@@ -1,5 +1,6 @@
 const crypto = require('crypto');
-const { promisify } = require('util');
+const { promisify } = require('util'); // eslint-disable-line no-unused-vars
+const logger = require('../utils/logger');
 
 /**
  * Device Fingerprinting Service
@@ -96,7 +97,7 @@ class DeviceFingerprintingService {
       const currentFingerprint = await this.generateFingerprint(deviceInfo);
       return currentFingerprint.fingerprint === fingerprint;
     } catch (error) {
-      console.error('Fingerprint verification failed:', error);
+      logger.error('Fingerprint verification failed:', error);
       return false;
     }
   }
@@ -226,7 +227,7 @@ class DeviceFingerprintingService {
   _anonymizeScreenResolution(resolution) {
     if (!resolution || !resolution.width || !resolution.height) return 'unknown';
 
-    const { width, height } = resolution;
+    const { width } = resolution;
 
     // Common resolution categories
     if (width <= 1024) return '1024x768';

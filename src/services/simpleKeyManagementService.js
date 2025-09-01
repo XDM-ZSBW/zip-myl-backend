@@ -11,7 +11,7 @@ class SimpleKeyManagementService {
     this.keyLength = 32; // 256 bits
     this.ivLength = 16; // 128 bits
     this.tagLength = 16; // 128 bits
-    this.keyDerivationIterations = parseInt(process.env.KEY_DERIVATION_ITERATIONS) || 100000;
+    this.keyDerivationIterations = parseInt(process.env.KEY_DERIVATION_ITERATIONS, 10) || 100000;
 
     // For masterless setup, we use device-specific keys
     this.keyVersion = 1;

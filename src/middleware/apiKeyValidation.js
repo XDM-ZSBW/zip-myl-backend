@@ -147,7 +147,7 @@ const optionalApiKeyValidation = (req, res, next) => {
  * @param {string} apiKey - The API key to validate
  * @returns {boolean} - Whether the key is valid
  */
-const isValidApiKey = (apiKey) => {
+const isValidApiKey = (_apiKey) => {
   // TODO: Replace with actual database validation
   // For now, accept any key that meets basic format requirements
 
@@ -164,7 +164,7 @@ const isValidApiKey = (apiKey) => {
  * @param {string} apiKey - The API key
  * @returns {string[]} - Array of permissions
  */
-const getApiKeyPermissions = (apiKey) => {
+const getApiKeyPermissions = (_apiKey) => {
   // TODO: Replace with actual database lookup
   // For now, return default permissions
 
@@ -185,7 +185,7 @@ const getApiKeyPermissions = (apiKey) => {
  * @param {string} apiKey - The API key
  * @returns {Date|null} - Expiry date or null if no expiry
  */
-const getApiKeyExpiry = (apiKey) => {
+const getApiKeyExpiry = (_apiKey) => {
   // TODO: Replace with actual database lookup
   // For now, return null (no expiry)
 

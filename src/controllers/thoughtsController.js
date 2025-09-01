@@ -35,8 +35,8 @@ const getThoughts = async(req, res, next) => {
     const finalUserId = req.user?.id || userId;
 
     const options = {
-      page: parseInt(page) || 1,
-      limit: parseInt(limit) || 10,
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 10,
       sortBy: sortBy || 'createdAt',
       sortOrder: sortOrder || 'desc',
       url,
@@ -177,8 +177,8 @@ const searchThoughts = async(req, res, next) => {
     const finalUserId = req.user?.id || userId;
 
     const options = {
-      page: parseInt(page) || 1,
-      limit: parseInt(limit) || 10,
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 10,
       userId: finalUserId,
     };
 

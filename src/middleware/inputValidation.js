@@ -460,7 +460,7 @@ const validatePagination = (req, res, next) => {
   const { page, limit } = req.query;
 
   if (page) {
-    const pageNum = parseInt(page);
+    const pageNum = parseInt(page, 10);
     if (isNaN(pageNum) || pageNum < 1) {
       return errorResponse(res, {
         code: 'INVALID_PAGE_NUMBER',
@@ -475,7 +475,7 @@ const validatePagination = (req, res, next) => {
   }
 
   if (limit) {
-    const limitNum = parseInt(limit);
+    const limitNum = parseInt(limit, 10);
     if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
       return errorResponse(res, {
         code: 'INVALID_LIMIT',

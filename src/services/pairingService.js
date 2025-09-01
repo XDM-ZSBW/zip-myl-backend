@@ -374,10 +374,10 @@ class PairingService {
       const recentResult = await this.db.query(recentQuery, [userId]);
 
       return {
-        successfulPairings: parseInt(successResult.rows[0]?.successful_pairings || 0),
+        successfulPairings: parseInt(successResult.rows[0]?.successful_pairings || 0, 10),
         platformDistribution: platformResult.rows.map(row => ({
           platform: row.platform,
-          count: parseInt(row.count),
+          count: parseInt(row.count, 10),
         })),
         recentPairings: recentResult.rows.map(row => ({
           pairedAt: row.created_at,
