@@ -187,7 +187,7 @@
                     status.textContent = `ℹ️ Authentication required (expected) - fallback to local chat`;
                     // Generate local response
                     setTimeout(() => {
-                        addMessage('Thanks for your message! Backend chat requires authentication, but local chat is working.', 'bot');
+                        addMessage('Backend chat requires authentication, but local chat is working!', 'bot');
                     }, 1000);
                 } else {
                     status.className = 'status error';

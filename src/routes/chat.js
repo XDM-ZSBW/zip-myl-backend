@@ -20,7 +20,7 @@ class ChatIntelligence {
     this.sharedKnowledge = new Map(); // Collective knowledge across devices
     this.responseTemplates = {
       greeting: [
-        "Hello! I'm here to help personalize your experience across all devices.",
+        "Hello! I'm here to help you across all your devices.",
         "Hi there! I'll assist you with your setup and preferences.",
         "Welcome! Let me help you configure your personalized experience."
       ],
@@ -185,7 +185,7 @@ class ChatIntelligence {
         if (hasCrossDeviceData) {
           response = this.generateContextualResponse(deviceId, context);
         } else {
-          response = "Thanks for your message! I can help you with SSL certificates, MyKeys.zip integration, API key generation, USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?";
+          response = "I'm here to help! I can assist with SSL certificates, MyKeys.zip integration, API key generation, USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?";
         }
     }
 
@@ -315,7 +315,7 @@ class ChatIntelligence {
       }
     }
     
-    return "Thanks for your message! I can help you with SSL certificates, MyKeys.zip integration, API key generation, USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?";
+    return "I'm here to help! I can assist with SSL certificates, MyKeys.zip integration, API key generation, USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?";
   }
 
   generateContextualEnhancements(deviceId, context) {
