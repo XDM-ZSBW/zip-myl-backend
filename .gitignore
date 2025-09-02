@@ -62,6 +62,8 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+*.backup
+**/*.backup
 
 # Docker
 .dockerignore
