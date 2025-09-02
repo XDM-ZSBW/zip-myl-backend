@@ -11,7 +11,7 @@ const extensionRateLimits = {
   // General extension API calls
   general: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.EXTENSION_RATE_LIMIT_GENERAL, 10) || 100, // Configurable via env
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_GENERAL, 10) || 5000, // 5000 requests per window (increased from 100)
     message: {
       success: false,
       error: 'Too many requests, please try again later',
@@ -35,7 +35,7 @@ const extensionRateLimits = {
   // Authentication and pairing operations (stricter limits)
   auth: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.EXTENSION_RATE_LIMIT_AUTH, 10) || 20, // Configurable via env
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_AUTH, 10) || 500, // 500 attempts per window (increased from 20)
     message: {
       success: false,
       error: 'Too many authentication attempts',
@@ -52,7 +52,7 @@ const extensionRateLimits = {
   // Pairing code generation (very strict)
   pairingCode: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: parseInt(process.env.EXTENSION_RATE_LIMIT_PAIRING, 10) || 3, // Configurable via env
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_PAIRING, 10) || 100, // 100 pairing attempts per hour (increased from 3)
     message: {
       success: false,
       error: 'Too many pairing code generation attempts',
@@ -69,7 +69,7 @@ const extensionRateLimits = {
   // Device registration (strict)
   deviceRegistration: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: parseInt(process.env.EXTENSION_RATE_LIMIT_DEVICE_REG, 10) || 10, // Configurable via env
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_DEVICE_REG, 10) || 200, // 200 device registrations per hour (increased from 10)
     message: {
       success: false,
       error: 'Too many device registration attempts',
@@ -86,7 +86,7 @@ const extensionRateLimits = {
   // NFT operations (moderate limits)
   nft: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.EXTENSION_RATE_LIMIT_NFT, 10) || 20, // Configurable via env
+    max: parseInt(process.env.EXTENSION_RATE_LIMIT_NFT, 10) || 1000, // 1000 NFT operations per window (increased from 20)
     message: {
       success: false,
       error: 'Too many NFT operations',

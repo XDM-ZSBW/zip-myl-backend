@@ -92,7 +92,7 @@ const rateLimiter = new RateLimiter();
 const rateLimit = (action, options = {}) => {
   const {
     windowMs = 60 * 1000, // 1 minute
-    max = 100, // 100 requests per window
+    max = 5000, // 5000 requests per window (increased from 100)
     keyGenerator = (req) => req.ip,
     skipSuccessfulRequests = false,
     skipFailedRequests = false,
@@ -179,7 +179,7 @@ const userRateLimit = (action, options = {}) => {
 const strictRateLimit = (action, options = {}) => {
   return rateLimit(action, {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // 5 requests per hour
+    max: 500, // 500 requests per hour (increased from 5)
     ...options,
   });
 };
@@ -190,7 +190,7 @@ const strictRateLimit = (action, options = {}) => {
 const burstRateLimit = (action, options = {}) => {
   return rateLimit(action, {
     windowMs: 60 * 1000, // 1 minute
-    max: 1000, // 1000 requests per minute
+    max: 10000, // 10000 requests per minute (increased from 1000)
     ...options,
   });
 };
@@ -202,43 +202,43 @@ const rateLimitPresets = {
   // Device registration - very strict
   deviceRegistration: strictRateLimit('device_registration', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5,
+    max: 100,
   }),
 
   // Pairing code generation - moderate
   pairingCode: rateLimit('pairing_code', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10,
+    max: 200,
   }),
 
   // Device pairing - strict
   devicePairing: strictRateLimit('device_pairing', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
+    max: 50,
   }),
 
   // Key exchange - moderate
   keyExchange: rateLimit('key_exchange', {
     windowMs: 60 * 1000, // 1 minute
-    max: 5,
+    max: 1000,
   }),
 
   // Trust operations - moderate
   trustOperations: rateLimit('trust_operations', {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 20,
+    max: 2000,
   }),
 
   // API calls - generous
   apiCalls: burstRateLimit('api_calls', {
     windowMs: 60 * 1000, // 1 minute
-    max: 1000,
+    max: 10000,
   }),
 
   // Authentication - strict
   authentication: strictRateLimit('authentication', {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5,
+    max: 500,
   }),
 
   // Health checks - very generous

@@ -11,7 +11,7 @@ const { errorResponse } = require('./apiResponse');
  */
 const deviceRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each device to 100 requests per windowMs
+  max: 5000, // limit each device to 5000 requests per windowMs (increased from 100)
   keyGenerator: (req) => {
     // Use device ID from header, fallback to IP
     return req.headers['x-device-id'] || req.ip;
@@ -54,7 +54,7 @@ const deviceRateLimit = rateLimit({
  */
 const strictDeviceRateLimit = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 20, // limit each device to 20 requests per windowMs
+  max: 1000, // limit each device to 1000 requests per windowMs (increased from 20)
   keyGenerator: (req) => {
     return req.headers['x-device-id'] || req.ip;
   },
@@ -97,7 +97,7 @@ const strictDeviceRateLimit = rateLimit({
  */
 const apiKeyRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 60, // limit each API key to 60 requests per minute
+  max: 2000, // limit each API key to 2000 requests per minute (increased from 60)
   keyGenerator: (req) => {
     return req.headers['x-api-key'] || 'no-key';
   },
@@ -138,7 +138,7 @@ const apiKeyRateLimit = rateLimit({
  */
 const nftGenerationRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 5, // limit each device to 5 NFT generation requests per 10 minutes
+  max: 200, // limit each device to 200 NFT generation requests per 10 minutes (increased from 5)
   keyGenerator: (req) => {
     return req.headers['x-device-id'] || req.ip;
   },
@@ -181,7 +181,7 @@ const nftGenerationRateLimit = rateLimit({
  */
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 auth attempts per 15 minutes
+  max: 500, // limit each IP to 500 auth attempts per 15 minutes (increased from 10)
   keyGenerator: (req) => {
     return req.ip; // Use IP for auth rate limiting
   },

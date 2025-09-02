@@ -109,7 +109,7 @@ const rateLimitConfigs = {
   // General API rate limit
   general: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100, // 100 requests per window
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 10000, // 10,000 requests per window (increased from 100)
     message: {
       error: 'Too many requests',
       message: 'Rate limit exceeded. Please try again later.',
@@ -128,7 +128,7 @@ const rateLimitConfigs = {
   // Authentication endpoints rate limit
   auth: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per window
+    max: 100, // 100 attempts per window (increased from 5)
     message: {
       error: 'Too many authentication attempts',
       message: 'Too many authentication attempts. Please try again later.',
@@ -142,7 +142,7 @@ const rateLimitConfigs = {
   // Device registration rate limit
   deviceRegistration: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 device registrations per hour
+    max: 50, // 50 device registrations per hour (increased from 3)
     message: {
       error: 'Too many device registrations',
       message: 'Too many device registrations. Please try again later.',
@@ -156,7 +156,7 @@ const rateLimitConfigs = {
   // API key operations rate limit
   apiKey: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // 10 API key operations per hour
+    max: 1000, // 1000 API key operations per hour (increased from 10)
     message: {
       error: 'Too many API key operations',
       message: 'Too many API key operations. Please try again later.',
