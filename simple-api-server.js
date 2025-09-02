@@ -8,7 +8,16 @@ try {
 
   // Basic middleware
   app.use(cors({
-    origin: ['http://localhost:8080', 'chrome-extension://*', 'moz-extension://*', '*'],
+    origin: [
+      'http://localhost:8080', 
+      'https://myl.zip',
+      'https://www.myl.zip',
+      'https://api.myl.zip',
+      'https://api.mykeys.zip',
+      'chrome-extension://*', 
+      'moz-extension://*', 
+      '*'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-ID', 'Origin', 'X-Requested-With', 'Accept']
@@ -86,6 +95,16 @@ try {
   });
 
   // Simple chat endpoints
+  app.get('/health', (req, res) => {
+    res.json({ 
+      status: 'healthy', 
+      message: 'Chat API is running',
+      timestamp: new Date().toISOString(),
+      connectedDevices: deviceConnections.size,
+      activeSessions: chatSessions.size
+    });
+  });
+
   app.get('/chat/health', (req, res) => {
     res.json({ 
       status: 'healthy', 
@@ -270,7 +289,7 @@ try {
 
   console.log('✅ All routes configured');
 
-  const PORT = 3333;
+  const PORT = process.env.PORT || 3333;
   app.listen(PORT, () => {
     console.log(`🚀 Chat API server running on port ${PORT}`);
     console.log(`📡 Available endpoints:`);

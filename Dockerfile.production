@@ -44,6 +44,7 @@ WORKDIR /app
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/src ./src
+COPY --from=builder --chown=nodejs:nodejs /app/simple-api-server.js ./
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 # Create logs directory
@@ -71,4 +72,4 @@ USER nodejs
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["node", "src/app.js"]
+CMD ["node", "simple-api-server.js"]
