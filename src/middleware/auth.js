@@ -106,7 +106,7 @@ const authenticateDeviceEventSource = async(req, res, next) => {
   try {
     // Check for token in query parameters (for EventSource)
     const token = req.query.token;
-    
+
     if (!token) {
       return res.status(401).json({
         error: 'Authentication required',

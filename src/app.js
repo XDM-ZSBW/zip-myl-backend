@@ -86,7 +86,7 @@ app.use(fileUpload({
   createParentPath: true,
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  debug: false
+  debug: false,
 }));
 
 // ❌ REMOVED: Static file serving - This is now a pure API service

@@ -156,7 +156,7 @@ class BackendEnvironmentConfig {
           encryptionKey: process.env.ENCRYPTION_MASTER_KEY,
           apiKey: process.env.SERVICE_API_KEY,
         },
-      }
+      },
     };
 
     return configs[this.environment];

@@ -18,7 +18,7 @@ function generateTokenCode(operation, context = '') {
     .update(`${operation}${context}${timestamp}`)
     .digest('hex')
     .substring(0, 8);
-  
+
   return `${operation}_${timestamp}_${random}_${operationHash}`;
 }
 
@@ -31,12 +31,12 @@ function validateTokenCode(tokenCode) {
   if (!tokenCode || typeof tokenCode !== 'string') {
     return false;
   }
-  
+
   const parts = tokenCode.split('_');
-  return parts.length === 4 && 
-         parts[0].length > 0 && 
-         parts[1].length > 0 && 
-         parts[2].length > 0 && 
+  return parts.length === 4 &&
+         parts[0].length > 0 &&
+         parts[1].length > 0 &&
+         parts[2].length > 0 &&
          parts[3].length > 0;
 }
 
@@ -49,14 +49,14 @@ function parseTokenCode(tokenCode) {
   if (!validateTokenCode(tokenCode)) {
     return null;
   }
-  
+
   const parts = tokenCode.split('_');
   return {
     operation: parts[0],
     timestamp: parseInt(parts[1]),
     random: parts[2],
     hash: parts[3],
-    age: Date.now() - parseInt(parts[1])
+    age: Date.now() - parseInt(parts[1]),
   };
 }
 
@@ -75,6 +75,6 @@ module.exports = {
   generateTokenCode,
   validateTokenCode,
   parseTokenCode,
-  generateSimpleToken
+  generateSimpleToken,
 };
 
