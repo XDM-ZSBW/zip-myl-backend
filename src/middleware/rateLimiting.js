@@ -94,8 +94,6 @@ const rateLimit = (action, options = {}) => {
     windowMs = 60 * 1000, // 1 minute
     max = 5000, // 5000 requests per window (increased from 100)
     keyGenerator = (req) => req.ip,
-    skipSuccessfulRequests = false,
-    skipFailedRequests = false,
     message = 'Too many requests, please try again later',
   } = options;
 

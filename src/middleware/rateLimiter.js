@@ -10,7 +10,7 @@ let redisStore = null;
 let useRedis = false;
 
 // Initialize Redis for rate limiting (with better test environment handling)
-const initializeRedis = () => {
+const _initializeRedis = () => {
   // In test environment, skip Redis and use memory store
   if (process.env.NODE_ENV === 'test') {
     logger.info('Test environment detected, using memory-based rate limiting');

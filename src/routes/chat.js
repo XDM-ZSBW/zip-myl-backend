@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../utils/logger');
 const { validate, schemas } = require('../middleware/validation');
-const { rateLimit } = require('../middleware/rateLimiter');
+// const { rateLimit } = require('../middleware/rateLimiter'); // Unused import
 const { authenticateDevice, authenticateDeviceEventSource } = require('../middleware/auth');
 const redis = require('../config/redis');
 const { generateTokenCode } = require('../utils/tokenCodes');
@@ -40,14 +40,17 @@ class ChatIntelligence {
         'All your preferences and conversations are being synced seamlessly. I\'m building a comprehensive profile of your needs.',
       ],
       cross_device_insight: [
-        'I notice you\'re using this from multiple devices. Let me share some insights about your usage patterns and suggest optimizations.',
-        'Based on your cross-device activity, I can recommend some personalized features that would enhance your experience.',
-        'Your multi-device setup is impressive! I\'m learning from your behavior to provide smarter, more contextual assistance.',
+        'I notice you\'re using this from multiple devices. Let me share some insights about your ' +
+        'usage patterns and suggest optimizations.',
+        'Based on your cross-device activity, I can recommend some personalized features that would ' +
+        'enhance your experience.',
+        'Your multi-device setup is impressive! I\'m learning from your behavior to provide smarter, ' +
+        'more contextual assistance.',
       ],
     };
   }
 
-  analyzeMessage(message, deviceId, context = []) {
+  analyzeMessage(message, deviceId, _context = []) {
     const lowerMessage = message.toLowerCase();
     const analysis = {
       intent: 'general',
@@ -185,7 +188,8 @@ class ChatIntelligence {
       if (hasCrossDeviceData) {
         response = this.generateContextualResponse(deviceId, context);
       } else {
-        response = 'I\'m here to help! I can assist with SSL certificates, MyKeys.zip integration, API key generation, USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?';
+        response = 'I\'m here to help! I can assist with SSL certificates, MyKeys.zip integration, API key generation, ' +
+          'USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?';
       }
     }
 
@@ -303,7 +307,7 @@ class ChatIntelligence {
     return 'exploring features';
   }
 
-  generateContextualResponse(deviceId, context) {
+  generateContextualResponse(deviceId, _context) {
     const deviceContext = this.conversationContext.get(deviceId) || [];
 
     if (deviceContext.length > 0) {
@@ -311,14 +315,16 @@ class ChatIntelligence {
       const uniqueTopics = [...new Set(recentTopics)];
 
       if (uniqueTopics.length > 1) {
-        return `I see you've been exploring multiple aspects of MyL.Zip. Based on your recent activity, I can help you with ${uniqueTopics.join(', ')}. What would you like to focus on?`;
+        return 'I see you\'ve been exploring multiple aspects of MyL.Zip. Based on your recent activity, ' +
+          `I can help you with ${uniqueTopics.join(', ')}. What would you like to focus on?`;
       }
     }
 
-    return 'I\'m here to help! I can assist with SSL certificates, MyKeys.zip integration, API key generation, USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?';
+    return 'I\'m here to help! I can assist with SSL certificates, MyKeys.zip integration, API key generation, ' +
+      'USB device offers, security features, setup processes, and cryptocurrency integration. What would you like to know more about?';
   }
 
-  generateContextualEnhancements(deviceId, context) {
+  generateContextualEnhancements(deviceId, _context) {
     const enhancements = [];
 
     // Check if user is asking about something they've discussed before
@@ -486,7 +492,7 @@ router.post('/broadcast', authenticateDevice, validate(schemas.broadcastMessage)
       };
 
       // Broadcast AI response
-      deviceConnections.forEach((connection, deviceId) => {
+      deviceConnections.forEach((connection, _deviceId) => {
         if (connection.res.writableEnded === false) {
           connection.res.write(`data: ${JSON.stringify({
             type: 'ai_response',
@@ -748,7 +754,7 @@ router.post('/image', authenticateDevice, async(req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to upload image',
-      tokenCode,
+      tokenCode: generateTokenCode('chat', 'error'),
     });
   }
 });

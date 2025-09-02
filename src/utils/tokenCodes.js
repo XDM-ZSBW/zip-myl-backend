@@ -53,10 +53,10 @@ function parseTokenCode(tokenCode) {
   const parts = tokenCode.split('_');
   return {
     operation: parts[0],
-    timestamp: parseInt(parts[1]),
+    timestamp: parseInt(parts[1], 10),
     random: parts[2],
     hash: parts[3],
-    age: Date.now() - parseInt(parts[1]),
+    age: Date.now() - parseInt(parts[1], 10),
   };
 }
 

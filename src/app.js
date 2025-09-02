@@ -4,7 +4,7 @@ const cors = require('cors');
 const compression = require('compression');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
-const path = require('path');
+// const path = require('path'); // Unused import
 
 // Load environment variables first
 dotenv.config();
@@ -15,7 +15,7 @@ const { backendEnvironmentConfig } = require('./config/environment');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const { endpointRateLimit } = require('./middleware/rateLimiter');
-const { corsConfig } = require('./middleware/cors');
+// const { corsConfig } = require('./middleware/cors'); // Unused import
 const { sanitizeInput, validateRequestSize } = require('./middleware/validation');
 const {
   validateExtension,
@@ -395,7 +395,8 @@ async function startServer() {
     }
   } catch (error) {
     logger.info('⚠️  Database initialization error, starting server with limited functionality');
-    logger.warn('Server starting with limited functionality due to database initialization error', { error: error.message });
+    logger.warn('Server starting with limited functionality due to database initialization error',
+      { error: error.message });
   }
 
   const server = app.listen(config.PORT, config.HOST, () => {
