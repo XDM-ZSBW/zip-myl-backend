@@ -40,7 +40,7 @@ class BackendEnvironmentConfig {
         environment: 'development',
         server: {
           port: parseInt(process.env.PORT, 10) || 3333,
-          host: process.env.HOST || '0.0.0.0'
+          host: process.env.HOST || '0.0.0.0',
         },
         cors: {
           origins: [
@@ -48,19 +48,19 @@ class BackendEnvironmentConfig {
             'http://localhost:3000',
             'http://127.0.0.1:8080',
             'chrome-extension://*',
-            'moz-extension://*'
+            'moz-extension://*',
           ],
-          credentials: false
+          credentials: false,
         },
         database: {
           url: process.env.DATABASE_URL || 'postgresql://localhost:5432/myl_zip_dev',
           ssl: false,
           poolMin: 2,
-          poolMax: 10
+          poolMax: 10,
         },
         redis: {
           url: process.env.REDIS_URL || 'redis://localhost:6379',
-          enabled: false // Disabled for development
+          enabled: false, // Disabled for development
         },
         features: {
           enableDebugLogging: true,
@@ -68,19 +68,19 @@ class BackendEnvironmentConfig {
           enableTestEndpoints: true,
           authRequired: false,
           enableMetrics: true,
-          enableRateLimit: false
+          enableRateLimit: false,
         },
         security: {
           jwtSecret: 'dev-jwt-secret-change-in-production',
           encryptionKey: 'dev-encryption-key-change-in-production',
-          apiKey: 'dev-api-key-change-in-production'
-        }
+          apiKey: 'dev-api-key-change-in-production',
+        },
       },
       staging: {
         environment: 'staging',
         server: {
           port: parseInt(process.env.PORT, 10) || 8080,
-          host: process.env.HOST || '0.0.0.0'
+          host: process.env.HOST || '0.0.0.0',
         },
         cors: {
           origins: [
@@ -88,19 +88,19 @@ class BackendEnvironmentConfig {
             'https://stage.myl.zip',
             'https://dev.myl.zip',
             'chrome-extension://*',
-            'moz-extension://*'
+            'moz-extension://*',
           ],
-          credentials: true
+          credentials: true,
         },
         database: {
           url: process.env.DATABASE_URL || process.env.STAGING_DATABASE_URL,
           ssl: true,
           poolMin: 2,
-          poolMax: 20
+          poolMax: 20,
         },
         redis: {
           url: process.env.REDIS_URL || process.env.STAGING_REDIS_URL,
-          enabled: true
+          enabled: true,
         },
         features: {
           enableDebugLogging: true,
@@ -108,19 +108,19 @@ class BackendEnvironmentConfig {
           enableTestEndpoints: true,
           authRequired: true,
           enableMetrics: true,
-          enableRateLimit: true
+          enableRateLimit: true,
         },
         security: {
           jwtSecret: process.env.JWT_SECRET || 'staging-jwt-secret',
           encryptionKey: process.env.ENCRYPTION_MASTER_KEY || 'staging-encryption-key',
-          apiKey: process.env.SERVICE_API_KEY || 'staging-api-key'
-        }
+          apiKey: process.env.SERVICE_API_KEY || 'staging-api-key',
+        },
       },
       production: {
         environment: 'production',
         server: {
           port: parseInt(process.env.PORT, 10) || 8080,
-          host: process.env.HOST || '0.0.0.0'
+          host: process.env.HOST || '0.0.0.0',
         },
         cors: {
           origins: [
@@ -129,19 +129,19 @@ class BackendEnvironmentConfig {
             'https://mykeys.zip',
             'https://www.mykeys.zip',
             'chrome-extension://*',
-            'moz-extension://*'
+            'moz-extension://*',
           ],
-          credentials: true
+          credentials: true,
         },
         database: {
           url: process.env.DATABASE_URL,
           ssl: true,
           poolMin: 5,
-          poolMax: 50
+          poolMax: 50,
         },
         redis: {
           url: process.env.REDIS_URL,
-          enabled: true
+          enabled: true,
         },
         features: {
           enableDebugLogging: false,
@@ -149,13 +149,13 @@ class BackendEnvironmentConfig {
           enableTestEndpoints: false,
           authRequired: true,
           enableMetrics: true,
-          enableRateLimit: true
+          enableRateLimit: true,
         },
         security: {
           jwtSecret: process.env.JWT_SECRET,
           encryptionKey: process.env.ENCRYPTION_MASTER_KEY,
-          apiKey: process.env.SERVICE_API_KEY
-        }
+          apiKey: process.env.SERVICE_API_KEY,
+        },
       }
     };
 
@@ -211,12 +211,19 @@ class BackendEnvironmentConfig {
 
   logEnvironmentInfo() {
     if (this.shouldLog('info')) {
+      // eslint-disable-next-line no-console
       console.log(`🌍 Myl.Zip Backend Environment: ${this.environment.toUpperCase()}`);
+      // eslint-disable-next-line no-console
       console.log(`🚀 Server: ${this.config.server.host}:${this.config.server.port}`);
+      // eslint-disable-next-line no-console
       console.log(`🗄️  Database: ${this.config.database.url ? 'Configured' : 'Not configured'}`);
+      // eslint-disable-next-line no-console
       console.log(`📊 Redis: ${this.config.redis.enabled ? 'Enabled' : 'Disabled'}`);
+      // eslint-disable-next-line no-console
       console.log(`🔐 Auth Required: ${this.config.features.authRequired}`);
+      // eslint-disable-next-line no-console
       console.log(`📈 Metrics: ${this.config.features.enableMetrics ? 'Enabled' : 'Disabled'}`);
+      // eslint-disable-next-line no-console
       console.log(`⚡ Rate Limiting: ${this.config.features.enableRateLimit ? 'Enabled' : 'Disabled'}`);
     }
   }
