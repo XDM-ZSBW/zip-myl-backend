@@ -111,6 +111,17 @@ try {
   logger.error('❌ Error stack:', error.stack);
 }
 
+// Load chat popup route for Chrome extension
+try {
+  const chatPopupRoutes = require('./routes/chat-popup');
+  app.use('/chat-popup', chatPopupRoutes);
+  logger.info('✅ Chat popup routes loaded successfully');
+} catch (error) {
+  logger.error('❌ Failed to load chat popup routes: ', error.message);
+  logger.error('❌ Full error details:', error);
+  logger.error('❌ Error stack:', error.stack);
+}
+
 // Enhanced extension support middleware
 app.use(validateExtension);
 app.use(smartExtensionRateLimit);
@@ -269,6 +280,14 @@ try {
   loadRoutes('device routes', '/api/v1/device', deviceRoutes);
 } catch (error) {
   logger.error('❌ Failed to load device routes:', error.message);
+}
+
+// Secrets routes (for MyKeys API integration)
+try {
+  const secretsRoutes = require('./routes/secrets');
+  loadRoutes('secrets routes', '/api/v1', secretsRoutes);
+} catch (error) {
+  logger.error('❌ Failed to load secrets routes:', error.message);
 }
 
 // Windows SSL Integration routes
